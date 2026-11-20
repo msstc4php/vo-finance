@@ -804,6 +804,7 @@ fields in chapter 4.2.2" (revision history), so only address type `S` remains.
 | Reference | Table 8 Ref: QR reference "Always 27 characters - Numeric - Check-digit calculation as per modulo 10 recursive"; creditor reference "5 to 25 characters - Alphanumeric - ... modulo 97-10"; "The element must not be filled in for the reference type NON."; "The banks draw no distinction between lower and upper case when processing." | enforced (`QrReference`, `CreditorReference`; lowercase accepted) |
 | Message and billing | Table 8: Ustrd "Maximum 140", StrdBkgInf "Maximum 140", "may contain a common total of up to 140 characters"; Trailer "Fixed value "EPD"" | enforced |
 | Alternative procedures | Table 8 AltPmt: "A maximum of two occurrences ... Maximum of 100 characters per alternative procedure" | enforced |
+| Maximum size | 6.2: "The maximum Swiss QR Code data content permitted is 997 characters (including the element separators)." | not enforced as a payload cap (the element limits above give at most 902 characters with CRLF); the Doctrine column length is 997 |
 | Postal code "without a country"; billing-information syntax (4.3.3, Annex D) | | not checked (no testable rule) |
 
 Annex A examples are the tests: example 1 (QR-IBAN `CH6431961000004421557`, QRR `000008207791225857421286694`), 2 (QR-IBAN
