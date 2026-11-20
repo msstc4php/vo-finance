@@ -24,14 +24,24 @@ final class FisnTest extends TestCase
         yield 'short' => ['APPLE INC/SH'];
         yield 'issuer of 15' => ['ABCDEFGHIJKLMNO/PREF SHS'];
         yield 'description of 19' => ['ISSUER/ABCDEFGHIJKLMNOPQRS'];
-        yield 'total of 35' => ['ABCDEFGHIJKLMNOPQRSTUVWXYZ/ABCDEFG'];
+        yield 'total of 35' => ['ABCDEFGHIJKLMNOPQRSTUVWXYZ/ABCDEFGH'];
         yield 'digits' => ['BOND 5/2030 NTS'];
+        yield 'ISO 8859-1 capitals' => ["CAF\u{C9} \u{DE}/SH"];
+        yield 'leading blank' => [' APPLE/SH'];
+        yield 'trailing blank' => ['APPLE/SH '];
+        yield 'blank next to delimiter' => ['APPLE /SH'];
+        yield '35 multibyte characters' => ["\u{C9}BCDEFGHIJKLMNOPQRSTUVWXYZ/ABCDEFGH"];
     }
 
     #[DataProvider('valid')]
     public function testAccepts(string $value): void
     {
         self::assertSame($value, (new Fisn($value))->value);
+    }
+
+    public function testLowercaseIsStoredUppercase(): void
+    {
+        self::assertSame('APPLE INC/SH', (string) new Fisn('Apple Inc/sh'));
     }
 
     public function testParts(): void
@@ -49,16 +59,16 @@ final class FisnTest extends TestCase
     {
         yield 'over 35' => ['ABCDEFGHIJKLMNOPQRSTUVWXYZAB/ABCDEFG'];
         yield 'description over 19' => ['ISSUER/ABCDEFGHIJKLMNOPQRST'];
+        yield '36 multibyte characters' => ["\u{C9}BCDEFGHIJKLMNOPQRSTUVWXYZ/ABCDEFGHI"];
         yield 'no delimiter' => ['APPLE INC SH'];
         yield 'two delimiters' => ['APPLE/INC/SH'];
         yield 'empty issuer' => ['/SH'];
         yield 'empty description' => ['APPLE/'];
-        yield 'lowercase' => ['Apple Inc/SH'];
         yield 'double blank' => ['APPLE  INC/SH'];
-        yield 'leading blank' => [' APPLE/SH'];
-        yield 'trailing blank' => ['APPLE/SH '];
+        yield 'lowercase accented' => ["caf\u{E9}/SH"];
+        yield 'multiplication sign' => ["A\u{D7}B/SH"];
+        yield 'invalid UTF-8' => ["APPLE\xC9/SH"];
         yield 'control character' => ["APPLE\n/SH"];
-        yield 'non ASCII' => ["CAF\u{C9}/SH"];
         yield 'empty' => [''];
     }
 

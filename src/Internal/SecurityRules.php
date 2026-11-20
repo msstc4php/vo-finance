@@ -13,6 +13,9 @@ use MSSTC4PHP\ValueObject\Financial\Exception\InvalidSecurityIdentifierException
  */
 final class SecurityRules
 {
+    /**
+     * @param non-empty-string $type
+     */
     public static function fail(string $type, string $reason): InvalidSecurityIdentifierException
     {
         return new InvalidSecurityIdentifierException(\sprintf('%s %s.', $type, $reason));

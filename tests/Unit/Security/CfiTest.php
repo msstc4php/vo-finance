@@ -28,6 +28,11 @@ final class CfiTest extends TestCase
         self::assertSame('Common/ordinary shares', $cfi->group());
     }
 
+    public function testLowercaseIsStoredUppercase(): void
+    {
+        self::assertSame('ESVUFR', (string) new Cfi('esvufr'));
+    }
+
     public function testUnknownCodeIsAcceptedUndecoded(): void
     {
         $cfi = new Cfi('AAAAAA');
@@ -57,7 +62,6 @@ final class CfiTest extends TestCase
         yield 'short' => ['ESVUF'];
         yield 'long' => ['ESVUFRX'];
         yield 'digit' => ['ESVUF1'];
-        yield 'lowercase' => ['esvufr'];
         yield 'empty' => [''];
     }
 

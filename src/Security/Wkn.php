@@ -20,6 +20,8 @@ final class Wkn extends AbstractStringValueObject
     #[Override]
     protected function parse(string $value): string
     {
+        $value = \strtoupper($value);
+
         SecurityRules::shape($value, 'WKN', 6, '/^[0-9A-HJ-NP-Z]{6}$/D', 'digits or uppercase letters except I and O');
 
         return $value;

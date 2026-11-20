@@ -20,6 +20,8 @@ final class Mic extends AbstractStringValueObject
     #[Override]
     protected function parse(string $value): string
     {
+        $value = \strtoupper($value);
+
         SecurityRules::shape($value, 'MIC', 4, '/^[A-Z0-9]{4}$/D', 'uppercase letters or digits');
 
         return $value;

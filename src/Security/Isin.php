@@ -15,11 +15,14 @@ use Override;
  * and a check digit. Lowercase input is stored uppercase. The prefix is never refused for being outside ISO 3166
  * (`XS`, `EU`, `EZ`, `XT` and others exist); {@see countryCode()} is null for them.
  *
- * {@see cusip()} and {@see sedol()} read the NSIN of US and CA, or GB and IE, ISINs as a CUSIP or a SEDOL. No official
- * publication reached states that mapping, so they are conveniences that return null rather than refusing anything.
+ * {@see cusip()} reads the NSIN of a US or CA ISIN as a CUSIP, which CGS states ("A CUSIP or CINS identifier will always
+ * appear in positions 3-11 of a CGS ISIN"). {@see sedol()} reads the NSIN of a GB or IE ISIN, behind two zeros, as a
+ * SEDOL; no official publication reached states that, so it is a convenience that returns null rather than refusing
+ * anything.
  *
  * @see https://anna-web.org/identifiers/ ANNA, the ISIN structure and its "Double-Add-Double" check digit
  * @see https://www.set.or.th/en/tsd/information/isin-calculate Stock Exchange of Thailand, worked check-digit examples
+ * @see https://www.cusip.com/identifiers.html CUSIP Global Services, the CUSIP inside a US or CA ISIN
  * @see docs/sources/FINANCE.md "ISIN, ISO 6166"
  */
 final class Isin extends AbstractStringValueObject

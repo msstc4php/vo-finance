@@ -23,9 +23,11 @@ use MSSTC4PHP\ValueObject\Financial\Security\Lei;
 use MSSTC4PHP\ValueObject\Financial\Security\Mic;
 use MSSTC4PHP\ValueObject\Financial\Security\SecurityIdentifierFactory;
 use MSSTC4PHP\ValueObject\Financial\Security\Sedol;
+use MSSTC4PHP\ValueObject\Financial\Security\Upi;
 use MSSTC4PHP\ValueObject\Financial\Security\Valor;
 use MSSTC4PHP\ValueObject\Financial\Security\Wkn;
 use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\UsesClass;
 use PHPUnit\Framework\TestCase;
 
@@ -47,6 +49,7 @@ use PHPUnit\Framework\TestCase;
 #[UsesClass(Cusip::class)]
 #[UsesClass(Sedol::class)]
 #[UsesClass(Wkn::class)]
+#[UsesClass(Upi::class)]
 #[UsesClass(Valor::class)]
 final class SecurityIdentifierFactoryTest extends TestCase
 {
@@ -54,6 +57,7 @@ final class SecurityIdentifierFactoryTest extends TestCase
     {
         self::assertInstanceOf(Isin::class, SecurityIdentifierFactory::fromString('US0378331005'));
         self::assertInstanceOf(Lei::class, SecurityIdentifierFactory::fromString('F50EOCWSQFAUVO9Q8Z97'));
+        self::assertInstanceOf(Upi::class, SecurityIdentifierFactory::fromString('QZ4TM8GJN9XW'));
         self::assertInstanceOf(Figi::class, SecurityIdentifierFactory::fromString('BBG000BLNQ16'));
         self::assertInstanceOf(Cfi::class, SecurityIdentifierFactory::fromString('OCAFPS'));
         self::assertInstanceOf(Fisn::class, SecurityIdentifierFactory::fromString('APPLE INC/SH'));
@@ -61,6 +65,7 @@ final class SecurityIdentifierFactoryTest extends TestCase
         self::assertInstanceOf(Sedol::class, SecurityIdentifierFactory::fromString('B1F3M59'));
         self::assertInstanceOf(Cusip::class, SecurityIdentifierFactory::fromString('037833AL4'));
         self::assertInstanceOf(Wkn::class, SecurityIdentifierFactory::fromString('A0D9PT'));
+        self::assertInstanceOf(Valor::class, SecurityIdentifierFactory::fromString('12345678'));
     }
 
     public function testLowercaseIsin(): void
@@ -68,46 +73,42 @@ final class SecurityIdentifierFactoryTest extends TestCase
         self::assertInstanceOf(Isin::class, SecurityIdentifierFactory::fromString('us0378331005'));
     }
 
-    public function testIsinAndFigiAreAmbiguous(): void
+    /**
+     * @return iterable<string, array{string, list<class-string>}>
+     */
+    public static function ambiguous(): iterable
+    {
+        yield 'ISIN and FIGI' => ['MWG26Z8NW5M4', [Isin::class, Figi::class]];
+        yield 'WKN and Valor' => ['519000', [Wkn::class, Valor::class]];
+        yield 'CFI and WKN' => ['ESVUFR', [Cfi::class, Wkn::class]];
+        yield 'CUSIP and Valor' => ['037833100', [Cusip::class, Valor::class]];
+        yield 'SEDOL and Valor' => ['1222171', [Sedol::class, Valor::class]];
+        yield 'MIC and Valor' => ['1234', [Mic::class, Valor::class]];
+    }
+
+    /**
+     * @param list<class-string> $candidates
+     */
+    #[DataProvider('ambiguous')]
+    public function testOverlapsListEveryAcceptingType(string $value, array $candidates): void
     {
         try {
-            SecurityIdentifierFactory::fromString('MWG26Z8NW5M4');
+            SecurityIdentifierFactory::fromString($value);
             self::fail('Expected an exception.');
         } catch (AmbiguousValueException $e) {
-            self::assertSame([Isin::class, Figi::class], $e->candidates());
+            self::assertSame($candidates, $e->candidates());
         }
-    }
-
-    public function testWknAndValorAreAmbiguous(): void
-    {
-        try {
-            SecurityIdentifierFactory::fromString('519000');
-            self::fail('Expected an exception.');
-        } catch (AmbiguousValueException $e) {
-            self::assertSame([Wkn::class, Valor::class], $e->candidates());
-        }
-    }
-
-    public function testCfiAndWknAreAmbiguous(): void
-    {
-        $this->expectException(AmbiguousValueException::class);
-        SecurityIdentifierFactory::fromString('ESVUFR');
-    }
-
-    public function testDigitsOnlyValorIsFound(): void
-    {
-        self::assertInstanceOf(Valor::class, SecurityIdentifierFactory::fromString('12345678'));
-    }
-
-    public function testLetteredValueIsNeverAValor(): void
-    {
-        $this->expectException(InvalidSecurityIdentifierException::class);
-        SecurityIdentifierFactory::fromString('ABC');
     }
 
     public function testNothingMatches(): void
     {
         $this->expectException(InvalidSecurityIdentifierException::class);
         SecurityIdentifierFactory::fromString('not an identifier!');
+    }
+
+    public function testLetteredShortValueIsNotAValor(): void
+    {
+        $this->expectException(InvalidSecurityIdentifierException::class);
+        SecurityIdentifierFactory::fromString('ABC');
     }
 }

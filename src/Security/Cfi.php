@@ -35,6 +35,8 @@ final class Cfi extends AbstractStringValueObject
     #[Override]
     protected function parse(string $value): string
     {
+        $value = \strtoupper($value);
+
         SecurityRules::shape($value, 'CFI', 6, '/^[A-Z]{6}$/D', 'uppercase letters');
 
         return $value;

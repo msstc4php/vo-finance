@@ -24,6 +24,8 @@ final class Figi extends AbstractStringValueObject
     #[Override]
     protected function parse(string $value): string
     {
+        $value = \strtoupper($value);
+
         SecurityRules::shape(
             $value,
             self::TYPE,

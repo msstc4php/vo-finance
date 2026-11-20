@@ -13,7 +13,7 @@ Outcome per rule (revised after review round 1):
 | ISIN check digit | enforced: three worked examples of a numbering agency (SET), the formula named by ANNA and ISO 6166 |
 | ISIN prefix | format only: two letters (alpha-2 country codes, reserved codes, `XS`, `EZ`, `ZZ` or other RA-determined prefixes per ISO 6166:2021 clause 4.1); never refused for being outside ISO 3166 |
 | LEI check pair | enforced (ISO 17442:2012, text reached) |
-| UPI | format only (ISO 4914 Annex C and the ANNA DSB technical guidance unreachable) |
+| UPI | format enforced (ROC: `QZ`, 12 characters, no vowels or `Y`); check character not verified (ISO 4914 Annex C and the ANNA DSB guidance unreachable) |
 | CFI | six letters; decoding from SIX's list (Task 4) |
 | FISN, MIC, FIGI, SEDOL, WKN | as quoted below |
 | CUSIP check digit | enforced for an all-digit CUSIP only; **format only for any CUSIP with a letter, `*`, `@` or `#`** (no official value table) |
@@ -293,26 +293,41 @@ characters; a web-search summary attributed "characters 1-4: prefix ensuring uni
 the fetch did not reproduce. `Lei::louPrefix()` is therefore a plain slice of the first four characters with no check
 and no registry; the docblock says the meaning is GLEIF's description, not verified.
 
-**ISIN `cusip()` and `sedol()` (not confirmed).** No official publication reached says that the NSIN of a US or CA
-ISIN is the CUSIP, or that a GB or IE ISIN carries a SEDOL padded with two zeros (CGS guide: "a 12-character ISIN is
-also included" only; the LSEG guide lists ISIN as a field). Both accessors are conveniences resting on the plan
-decision: they refuse nothing and return null when the NSIN does not form a valid `Cusip` or `Sedol`.
+**ISIN `cusip()` (sourced) and `sedol()` (not confirmed).** CGS, <https://www.cusip.com/identifiers.html>: a CUSIP fills
+the national-number position of a US or Canadian ISIN ("A CUSIP or CINS identifier will always appear in positions 3-11
+of a CGS ISIN"); examples there: Amazon `US0231351067` from CUSIP `023135106`, Air Canada `CA0089117034` from
+`008911703` (both check digits agree with `IsinCheckDigit`; they are test vectors). For `sedol()` (GB, IE, SEDOL behind
+two zeros) the targeted attempt found nothing: the ANNA identifiers page and ISIN Guidelines (June 2026) say only that
+national numbers are zero-padded and name no SEDOL, and the LSEG technical guide lists ISIN as a data field only. The
+accessor is a convenience that refuses nothing and returns null when the NSIN is not a valid `Sedol`.
 
-**UPI.** Format only, and the length of 12 uppercase letters or digits is **not quoted** from an official text (ISO
-4914 clause 4 and the ANNA DSB guidance unreachable); the class is excluded from `SecurityIdentifierFactory`, because
-this format would make every ISIN ambiguous.
+**UPI format (reached, Regulatory Oversight Committee).** <https://www.leiroc.org/international_bodies.htm>: "The UPI
+is a 12-character reference code", a two-character prefix `QZ`, nine alphanumeric body characters of uppercase A-Z and
+0-9 "excluding the vowel characters (A, E, I, O, U) and the character Y", and one final alphanumeric check character
+under the same restriction. `Upi` enforces `QZ` + ten such characters. The check-character algorithm is not stated
+there (ISO 4914 Annex C, the ANNA DSB guidance, and the CPMI-IOSCO technical guidance PDF at bis.org, which served only
+an HTML landing page, were not reachable), so it is not verified. The `[A-Z0-9]{1,64}` fallback was not needed.
 
-**FISN enforced.** From the ANNA Guidelines section 3.2 quoted above: at most 35 characters including `/`, a description
-of at most 19, uppercase only, single blanks, exactly one `/`. The issuer length of 15 is not enforced (CIVs and OTC
-derivatives may extend it up to the total). The guidelines' list of permitted special characters was not reached, so
-the class takes printable ASCII except lowercase letters and refuses non-ASCII (ISO 8859-1 letters).
+**Valor.** Digits only follows the owner's ruling; no SIX text reached states it (search results quote only
+low-authority pages). One to nine digits; the bound is the inference above.
 
-**Case.** Only `Isin` normalises (lowercase to uppercase, plan Review Focus 4); every other class takes its canonical
-uppercase form only, and `Valor` keeps the case given.
+**FISN enforced.** From the ANNA Guidelines section 3.2 quoted above: at most 35 characters including `/` (counted as
+characters, the text being UTF-8), a description of at most 19, uppercase only, single blanks ("Use only maximum of a
+single blank"), exactly one `/`. "alphanumeric characters (as defined in ISO/IEC 8859-1)": the class takes ASCII capitals,
+digits, punctuation and the ISO 8859-1 capitals U+00C0 to U+00DE without U+00D7; lowercase ASCII input is folded to
+uppercase. A leading, trailing or `/`-adjacent blank is not refused: the guidelines quoted here do not forbid it. The
+issuer length of 15 is not enforced (CIVs and OTC derivatives may extend it up to the total). The guidelines' list of
+permitted special characters was not reached, so printable ASCII punctuation is accepted.
 
-**Factory.** `SecurityIdentifierFactory` offers Isin, Lei, Figi, Cfi, Fisn, Mic, Cusip, Sedol, Wkn and, for digit
-strings only, Valor. Genuine overlaps throw `AmbiguousValueException`: an ISIN that is also a FIGI (`MWG26Z8NW5M4`),
-six digits (WKN, Valor), six letters without `I` and `O` (CFI, WKN).
+**Case.** Every identifier folds input to uppercase (ASCII `strtoupper`) before checking, as `Isin` does.
+
+**Test vectors without a source** are marked synthetic in the tests: `QZ4TM8GJN9XW`, the `*`, `@`, `#` CUSIPs, `XNAS`
+and `1234` (MIC), `519000` and `A0D9PT` (WKN), the valor numbers.
+
+**Factory.** Every type takes part (Isin, Lei, Upi, Figi, Cfi, Fisn, Mic, Cusip, Sedol, Wkn, Valor). Overlaps throw
+`AmbiguousValueException` with every accepting type, never a subset: ISIN and FIGI (`MWG26Z8NW5M4`), WKN and Valor (six
+digits), CFI and WKN (six letters without `I`, `O`), CUSIP and Valor (nine digits), SEDOL and Valor (seven digits), MIC
+and Valor (four digits).
 
 ## ISO/IEC 7812-1, IIN and PAN
 

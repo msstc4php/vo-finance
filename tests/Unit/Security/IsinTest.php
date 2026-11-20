@@ -38,6 +38,8 @@ final class IsinTest extends TestCase
         yield 'SET example 2' => ['TH0646010007'];
         yield 'SET example 3' => ['TH0268010Z11'];
         yield 'US' => ['US0378331005'];
+        yield 'CGS Amazon' => ['US0231351067'];
+        yield 'CGS Air Canada' => ['CA0089117034'];
     }
 
     #[DataProvider('valid')]

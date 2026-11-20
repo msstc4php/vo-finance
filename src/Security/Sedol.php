@@ -23,6 +23,8 @@ final class Sedol extends AbstractStringValueObject
     #[Override]
     protected function parse(string $value): string
     {
+        $value = \strtoupper($value);
+
         SecurityRules::shape($value, self::TYPE, 7, '/^[0-9BCDFGHJKLMNPQRSTVWXYZ]{6}[0-9]$/D', 'digits or capital consonants, then a digit');
 
         if (!SedolCheckDigit::isValid($value)) {

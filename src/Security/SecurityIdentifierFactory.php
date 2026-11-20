@@ -7,19 +7,20 @@ namespace MSSTC4PHP\ValueObject\Financial\Security;
 use MSSTC4PHP\ValueObject\Contract\ValueObject;
 use MSSTC4PHP\ValueObject\Exception\AmbiguousValueException;
 use MSSTC4PHP\ValueObject\Financial\Exception\InvalidSecurityIdentifierException;
+use MSSTC4PHP\ValueObject\Support\AbstractStringValueObject;
 
 /**
- * Builds the one identifier type that accepts the value, or throws {@see AmbiguousValueException} naming the types
- * that do (a 12-character value can be an ISIN and a FIGI, six digits a WKN and a Valor). Never picks silently.
- *
- * {@see Upi} does not take part, because its unconfirmed 12-character format would make every ISIN ambiguous.
- * {@see Valor} takes part for digit strings only, because it accepts letters too and would match nearly everything.
+ * Builds the one identifier type that accepts the value, or throws {@see AmbiguousValueException} listing every type
+ * that does (a 12-character value can be an ISIN and a FIGI, six digits a WKN and a Valor, nine digits a CUSIP and a
+ * Valor). Every type takes part; the factory never picks silently and never narrows to a subset.
  */
 final class SecurityIdentifierFactory
 {
+    /** @var non-empty-list<class-string<AbstractStringValueObject>> */
     private const array CANDIDATES = [
         Isin::class,
         Lei::class,
+        Upi::class,
         Figi::class,
         Cfi::class,
         Fisn::class,
@@ -34,10 +35,6 @@ final class SecurityIdentifierFactory
     {
         $matches = [];
         foreach (self::CANDIDATES as $class) {
-            if ($class === Valor::class && !\ctype_digit($value)) {
-                continue;
-            }
-
             $candidate = $class::tryFrom($value);
             if ($candidate !== null) {
                 $matches[] = $candidate;
