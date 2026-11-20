@@ -10,6 +10,7 @@ use MSSTC4PHP\ValueObject\Finance\Bic;
 use MSSTC4PHP\ValueObject\Finance\Decimal;
 use MSSTC4PHP\ValueObject\Finance\Iban;
 use MSSTC4PHP\ValueObject\Financial\Exception\InvalidPaymentQrException;
+use MSSTC4PHP\ValueObject\Financial\Internal\Iso8859;
 use MSSTC4PHP\ValueObject\Financial\Internal\Mask;
 use MSSTC4PHP\ValueObject\Financial\Internal\ProfileRule;
 use MSSTC4PHP\ValueObject\Financial\Internal\TextLines;
@@ -25,8 +26,7 @@ use Override;
  * 140), never both, and the beneficiary to originator information (1 to 70): 7 to 12 elements, separated by LF or CRLF,
  * the last one populated and not followed by a separator. At most 331 bytes; a payload longer in UTF-8 whose every
  * character has one byte in one of the ISO 8859 sets of section 2.1 is held to 331 characters instead, since the
- * transcoded form of {@see fromBytes()} input must still parse (needs ext-mbstring; without it such a payload is
- * refused).
+ * transcoded form of {@see fromBytes()} input must still parse (checked by `Internal\Iso8859`, no extension needed).
  *
  * The payload is kept byte for byte, its separators included. {@see __construct()} takes
  * UTF-8 text: a declared set other than `1` is accepted only for ASCII text, whose bytes are the same in every set;
@@ -245,7 +245,7 @@ final class EpcQr extends AbstractStringValueObject implements Maskable
     private function withinSize(string $value): bool
     {
         return \strlen($value) <= self::MAX_LENGTH
-            || (\preg_match_all('/./su', $value) <= self::MAX_LENGTH && Transcoder::fitsOneOf($value, \array_values(self::ENCODINGS)));
+            || (\preg_match_all('/./su', $value) <= self::MAX_LENGTH && Iso8859::fitsOneSet($value));
     }
 
     /**

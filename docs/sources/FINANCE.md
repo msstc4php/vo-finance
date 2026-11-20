@@ -752,7 +752,7 @@ and `002` of the payload are both defined by it.
 | Purpose | 2.2: "1..4an" | enforced (length) |
 | Reference / text | 2.2: "{Or 1..35an" structured, "Or} 1..140an" unstructured, "{Or}: Only one of the elements may be populated."; "Creditor Reference (ISO 11649 RF Creditor Reference may be used)" | enforced; `creditorReference()` decodes an RF reference, never refuses another |
 | Information | 2.2: "1..70an Beneficiary to Originator information" | enforced (length) |
-| Payload size | 2.2: "The total payload is limited to 331 bytes." | enforced: 331 bytes; a payload whose every character has one byte in one ISO 8859 set of 2.1 is held to 331 characters (fix round 1 ruling, option a: the transcoded form of `fromBytes()` input must still parse). Residual gap: such text given directly as UTF-8 is not held to 331 UTF-8 bytes |
+| Payload size | 2.2: "The total payload is limited to 331 bytes." | enforced: 331 bytes; a payload whose every character has one byte in one ISO 8859 set of 2.1 is held to 331 characters (fix round 1 ruling, option a: the transcoded form of `fromBytes()` input must still parse). The sets are checked without an extension (fix round 2 ruling): ISO 8859-1 as U+0000 to U+00FF, the others from the Unicode Consortium's mapping tables (below). Residual gap: such text given directly as UTF-8 is not held to 331 UTF-8 bytes |
 | Separators | 2.2: "The elements separator is either a line feed (LF) or a carriage return line feed (CRLF)." | enforced; mixing is not forbidden and is accepted |
 | Last element | 2.2: "The last populated element is not followed by any character or element separator." | enforced (fix round 1 ruling: source over plan): a trailing separator or a trailing empty element is refused, so Review Focus 3's trailing-newline round trip does not hold for EPC |
 
@@ -762,6 +762,14 @@ byte UTF-8 code payload" (the test checks 96 bytes); V2 `BCD / 002 / 2 / SCT / (
 FR1420041010050500013M02606 / EUR12.3 / (empty purpose) / (empty reference) / Client:Marie Louise La Lune`, "103
 characters including spaces (5) and line feeds (10), 103 byte ISO 8859-1 code payload" (the test encodes it in ISO
 8859-1, checks 103 bytes and reads it through `fromBytes()`).
+
+Mapping tables of `Internal\Iso8859` (fix round 2), Unicode Consortium, <https://www.unicode.org/Public/MAPPINGS/ISO8859/>,
+table version 2.0 (2015-12-02 for 8859-2), downloaded 2026-11-20 13:15 UTC, status **reached**: `8859-2.TXT` (SHA-256
+`3441c373...`), `8859-4.TXT` (`bc72d7bd...`), `8859-5.TXT` (`020946e1...`), `8859-7.TXT` (`e7176999...`), `8859-10.TXT`
+(`9a2efea3...`), `8859-15.TXT` (`94f4a1c8...`). Each maps 0x00 to 0x9F to U+0000 to U+009F (checked while generating
+the tables); the 0xA0 to 0xFF rows are the per-set character classes. 8859-7 leaves 0xAE, 0xD2 and 0xFF unmapped (93
+characters) and maps 0xA4 to U+20AC, 0xA5 to U+20AF and 0xAA to U+037A (the 2003 additions). ISO 8859-1 needs no table
+(0x00 to 0xFF map to U+0000 to U+00FF).
 
 ### SIX QR-bill layout
 

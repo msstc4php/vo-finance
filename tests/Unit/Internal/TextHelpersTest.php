@@ -104,11 +104,6 @@ final class TextHelpersTest extends TestCase
 
     public function testTranscoderNeedsMbstring(): void
     {
-        self::assertFalse(Transcoder::fitsOneOf('abc', ['ISO-8859-1'], false));
-        self::assertTrue(Transcoder::fitsOneOf('abc', ['ISO-8859-1']));
-        self::assertTrue(Transcoder::fitsOneOf('Ж', ['ISO-8859-1', 'ISO-8859-5']));
-        self::assertFalse(Transcoder::fitsOneOf('Жé', ['ISO-8859-1', 'ISO-8859-5']));
-
         $this->expectException(LogicException::class);
         $this->expectExceptionMessage('Test::fromBytes() requires ext-mbstring.');
 

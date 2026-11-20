@@ -36,27 +36,6 @@ final class Transcoder
         return $utf8;
     }
 
-    /**
-     * Whether every character of the UTF-8 text has one byte in one of the encodings; false without ext-mbstring.
-     *
-     * @param list<non-empty-string> $encodings mbstring encoding names
-     */
-    public static function fitsOneOf(string $utf8, array $encodings, ?bool $mbstring = null): bool
-    {
-        if (!($mbstring ?? self::hasMbstring())) {
-            return false;
-        }
-
-        foreach ($encodings as $encoding) {
-            $encoded = \mb_convert_encoding($utf8, $encoding, 'UTF-8');
-            if ($encoded !== false && \mb_convert_encoding($encoded, 'UTF-8', $encoding) === $utf8) {
-                return true;
-            }
-        }
-
-        return false;
-    }
-
     private static function hasMbstring(): bool
     {
         return \function_exists('mb_convert_encoding');

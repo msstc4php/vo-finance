@@ -11,6 +11,7 @@ use MSSTC4PHP\ValueObject\Financial\Internal\EmvcoMask;
 use MSSTC4PHP\ValueObject\Financial\Internal\EmvcoMerchantPresented;
 use MSSTC4PHP\ValueObject\Financial\Internal\EmvcoTlv;
 use MSSTC4PHP\ValueObject\Financial\Internal\Iso7064Mod97;
+use MSSTC4PHP\ValueObject\Financial\Internal\Iso8859;
 use MSSTC4PHP\ValueObject\Financial\Internal\Mask;
 use MSSTC4PHP\ValueObject\Financial\Internal\Mod10Recursive;
 use MSSTC4PHP\ValueObject\Financial\Internal\ProfilePayload;
@@ -67,6 +68,7 @@ use PHPUnit\Framework\TestCase;
 #[UsesClass(QueryString::class)]
 #[UsesClass(RussianAccountKey::class)]
 #[UsesClass(Mask::class)]
+#[UsesClass(Iso8859::class)]
 #[UsesClass(Transcoder::class)]
 #[UsesClass(QrReference::class)]
 #[UsesClass(CreditorReference::class)]

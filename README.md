@@ -80,9 +80,10 @@ Checked for length and character set, never for a check digit or a range no offi
   the content of the Bakong templates beyond their sub-tags, JPQR currency 392, country JP, language `JA` and the
   maxima of 59, 60 and 62 (none stated). `JpqrCode` refuses a payload over 512 bytes (Payments Japan's own bound).
 - `EpcQr`: at most 331 bytes, except a payload whose every character has one byte in one of the ISO 8859 sets of
-  section 2.1, which is held to 331 characters (the transcoded form of `fromBytes()` input must still parse). Residual
-  gap: such a payload given directly as UTF-8 may exceed 331 bytes in UTF-8, and without ext-mbstring it is refused. The
-  content of the purpose code and of a non-RF reference is not checked.
+  section 2.1, which is held to 331 characters (the transcoded form of `fromBytes()` input must still parse; the sets
+  are checked without any extension, from the Unicode Consortium's mapping tables). Residual gap: such a payload given
+  directly as UTF-8 may exceed 331 bytes in UTF-8. The content of the purpose code and of a non-RF reference is not
+  checked.
 - `QrBill`: the postal code "without a country", the billing-information syntax (`//` and an agreed code) and the
   alternative-procedure syntax are not checked; amount 0.00 is accepted (the "DO NOT USE FOR PAYMENT" notification).
   SIX IG 2.3's own Annex A example 4 (`RF72 0191 ...`) fails the ISO 11649 check and is refused.
@@ -91,8 +92,8 @@ Checked for length and character set, never for a check digit or a range no offi
   legal database); since the payload does not say whether an account is opened at an RKC or a credit institution, either
   conditional number gives a valid key. Treasury accounts of the Federal Treasury (first digit 0, e.g. `03100...`) are
   outside the order's scope (accounts of credit institutions and RKCs) and are never refused for their key. `masked()`
-  hides `PersonalAcc`, `PersAcc`, `PersonalAccount`, `PensAcc` and `PayerIdNum`. The separator must be an ASCII graphic character (inferred from the eight-byte
-  service block).
+  hides `PersonalAcc`, `PersAcc`, `PersonalAccount`, `PensAcc` and `PayerIdNum`. The separator must be an ASCII
+  graphic character (inferred from the eight-byte service block).
 - `SbpPaymentLink`: format only. NSPK keeps the link layout in its SBP OPKTs standards on a closed portal, so neither
   the identifier length nor any query field (`type`, `bank`, `sum`, `cur`, `crc`) is checked.
 - `UpiPaymentUri`: the NPCI linking specification was not reached; NPCI's circular OC 18 gives `pa` and `pn` as

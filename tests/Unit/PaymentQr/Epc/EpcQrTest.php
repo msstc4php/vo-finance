@@ -7,6 +7,7 @@ namespace MSSTC4PHP\ValueObject\Financial\Tests\Unit\PaymentQr\Epc;
 use MSSTC4PHP\ValueObject\Financial\Exception\InvalidPaymentQrException;
 use MSSTC4PHP\ValueObject\Financial\Internal\EmvcoTlv;
 use MSSTC4PHP\ValueObject\Financial\Internal\Iso7064Mod97;
+use MSSTC4PHP\ValueObject\Financial\Internal\Iso8859;
 use MSSTC4PHP\ValueObject\Financial\Internal\Mask;
 use MSSTC4PHP\ValueObject\Financial\Internal\ProfileRule;
 use MSSTC4PHP\ValueObject\Financial\Internal\TextLines;
@@ -24,6 +25,7 @@ use PHPUnit\Framework\TestCase;
 #[UsesClass(EmvcoTlv::class)]
 #[UsesClass(Transcoder::class)]
 #[UsesClass(Mask::class)]
+#[UsesClass(Iso8859::class)]
 #[UsesClass(CreditorReference::class)]
 #[UsesClass(Iso7064Mod97::class)]
 final class EpcQrTest extends TestCase
@@ -514,5 +516,43 @@ final class EpcQrTest extends TestCase
 
         self::assertGreaterThan(331, \strlen($qr->value));
         self::assertTrue($qr->equals(EpcQr::from($qr->value)));
+    }
+
+    /**
+     * @return iterable<string, array{string}>
+     */
+    public static function isoCharacters(): iterable
+    {
+        // A character with one byte in each set of EPC069-12 v3.0 section 2.1 (Unicode Consortium 8859-N.TXT) and two or
+        // three in UTF-8.
+        yield '8859-1' => ['é'];
+        yield '8859-2' => ['ő'];
+        yield '8859-4' => ['ĸ'];
+        yield '8859-5' => ['Ж'];
+        yield '8859-7' => ['Ω'];
+        yield '8859-10' => ['―'];
+        yield '8859-15' => ['Ÿ'];
+    }
+
+    #[DataProvider('isoCharacters')]
+    public function testA331CharacterPayloadOfOneIsoSetParsesWithoutAnExtension(string $character): void
+    {
+        $lines = self::V2;
+        [$lines[2], $lines[5], $lines[10]] = ['1', \str_repeat($character, 70), \str_repeat($character, 140)];
+        $lines[] = \str_repeat($character, 66);
+        $payload = \implode("\n", $lines);
+        self::assertSame(331, \preg_match_all('/./su', $payload));
+        self::assertGreaterThan(331, \strlen($payload));
+
+        self::assertSame($payload, EpcQr::from($payload)->value);
+    }
+
+    public function testA332CharacterPayloadOfOneIsoSetIsRefused(): void
+    {
+        $lines = self::V2;
+        [$lines[2], $lines[5], $lines[10]] = ['1', \str_repeat('Ж', 70), \str_repeat('Ж', 140)];
+        $lines[] = \str_repeat('Ж', 67);
+
+        self::assertFalse(EpcQr::isValid(\implode("\n", $lines)));
     }
 }
