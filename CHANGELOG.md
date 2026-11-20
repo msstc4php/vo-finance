@@ -17,3 +17,6 @@
   UnionPay) and `InvalidPaymentCardNumberException`. IIN ranges come only from Discover's IIN Range Summary (JCB and
   UnionPay rows) and American Express's page; Mastercard, Visa, Mir and RuPay have no listed range, and the summary's
   unmarked rows are shared by Discover, Diners Club International and PULSE and name no single scheme.
+- EMVCo merchant-presented QR: `MerchantPresentedQr` (TLV parser with nested templates 26-51 and 62, CRC, accessors,
+  `masked()`), `MerchantPresentedQrBuilder`, `MerchantAccount`, `DataObject`, `PointOfInitiation` and
+  `InvalidPaymentQrException`.

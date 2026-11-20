@@ -15,3 +15,9 @@
 - `PaymentCardNumber::masked()` uses `*` for hidden digits, keeps `min(6, length - 5)` leading and 4 trailing digits.
 - `IinRanges` takes its table in the constructor (`IinRanges::default()` is the real one) so tests can use a synthetic
   table with a co-badged range; the real table has no overlaps.
+- EMVCo QRCPS 1.1 is reached only through a third-party copy (emvco.com 404, no archive copy); HKMA and BCB quote the same tables. The 512-character payload limit is a "should" there and appears in neither HKMA nor BCB.
+- EMVCo lengths count characters, not bytes: `Internal\EmvcoTlv` splits the payload with `preg_split('//u')` before slicing, so a multi-byte merchant name keeps the length counted in characters.
+- `MerchantPresentedQr::additionalData()` returns `array<array-key, string>`: PHP turns the key `"10"` into an integer; look values up with the string ID.
+- `Decimal` normalizes `10.50` to `10.5`; the written form stays in `get('54')`. A trailing mark (`98.`) is valid in EMVCo and is trimmed before parsing.
+- BCB sets the postal code (ID 61) up to 99 characters where EMVCo and HKMA say 10: root value maxima are not enforced.
+- The GUI (sub-ID 00) is accepted anywhere in its template (EMV QRCPS 4.6.1); `MerchantPresentedQrBuilder` writes it first.

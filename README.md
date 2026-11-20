@@ -25,6 +25,9 @@ Checked for length and character set, never for a check digit or a range no offi
   UnionPay rows of Discover's IIN Range Summary). Mastercard, Visa, Mir and RuPay decode as an empty list, and so do
   the summary's unmarked rows, which are shared by Discover, Diners Club International and PULSE and name no single
   scheme.
+- `MerchantPresentedQr`: the TLV shape, the CRC, the mandatory data objects and the 512-character limit are enforced;
+  the "var. up to" lengths of the other objects, the content of IDs 02-25 and of the templates 64 and 80-99 are not.
+  The EMVCo document is read through a third-party copy and two official publications (HKMA, Banco Central do Brasil).
 
 ## License
 
