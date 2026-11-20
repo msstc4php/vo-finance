@@ -18,8 +18,10 @@ final class LuhnTest extends TestCase
      */
     public static function bodies(): iterable
     {
-        // The ISIN of the CUSIP Global Services guide's Apple example, letters expanded to digits (U=30, S=28).
-        yield 'ISIN US037833100 expanded' => ['3028037833100', '5'];
+        // The Stock Exchange of Thailand, "ISIN calculation": the expanded digits of its three worked examples.
+        yield 'TH0013057B0 expanded' => ['29170013057110', '5'];
+        yield 'TH064601000 expanded' => ['2917064601000', '7'];
+        yield 'TH0268010Z1 expanded' => ['29170268010351', '1'];
         yield 'single digit' => ['0', '0'];
         yield 'doubling carries' => ['5', '9'];
         yield 'doubled nine' => ['9', '1'];
@@ -40,8 +42,8 @@ final class LuhnTest extends TestCase
 
     public function testRejectsAWrongCheckDigit(): void
     {
-        self::assertFalse(Luhn::isValid('30280378331004'));
-        self::assertFalse(Luhn::isValid('30280378331006'));
+        self::assertFalse(Luhn::isValid('29170646010006'));
+        self::assertFalse(Luhn::isValid('29170646010008'));
     }
 
     public function testRejectsTooShortAndNonDigitValues(): void

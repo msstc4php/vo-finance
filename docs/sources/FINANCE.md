@@ -3,7 +3,24 @@
 Every rule that `vo-finance` enforces is quoted here from an official source: the issuing body or registration
 authority, a regulator's publication, a standard cited by number (a publisher's unmodified preview counts), or an
 unmodified Internet Archive copy of one. An aggregator counts only "as quoted from". What could not be quoted is marked
-**unreachable** or **not confirmed**, and the class checks the format only (or uses the rule with the gap stated).
+**unreachable** or **not confirmed**; for it the outcome is **format only** (the class checks length and character set,
+never a check digit or a range that no official source gives). No test vector comes from Wikipedia or a library.
+
+Outcome per rule (revised after review round 1):
+
+| Rule | Outcome |
+|---|---|
+| ISIN check digit | enforced: three worked examples of a numbering agency (SET), the formula named by ANNA and ISO 6166 |
+| ISIN prefix | format only (two letters or digits as in the prefix list; never refused for being outside ISO 3166) |
+| LEI check pair | enforced (ISO 17442:2012, text reached) |
+| UPI | format only (ISO 4914 Annex C and the ANNA DSB technical guidance unreachable) |
+| CFI | six letters; decoding from SIX's list (Task 4) |
+| FISN, MIC, FIGI, SEDOL, WKN | as quoted below |
+| CUSIP check digit | enforced for an all-digit CUSIP only; **format only for any CUSIP with a letter, `*`, `@` or `#`** (no official value table) |
+| Valor | format only; the nine-character bound is an inference |
+| Card Luhn | enforced; the doubling position is cross-confirmed, the Annex B text is a gap (see Luhn) |
+| PAN length | 10 to 19 digits (ISO/IEC 7812-1:2017 preview) |
+| Card schemes | only what a reached publication states (Discover's summary); no no-Luhn range exists in any reached publication |
 
 Research date: 2026-11-20 (UTC). Scope of this file at Task 2: the sources of the check-digit helpers and of the
 securities and card classes (Tasks 3 and 4). The EMVCo QR body, the national profiles, EPC069-12, the QR-bill layout,
@@ -17,26 +34,26 @@ statement).
 
 | Topic | Source | Status | What it fixes |
 |---|---|---|---|
-| ISIN structure | ISO 6166:2013 preview; ANNA identifiers page; ANNA ISIN Guidelines Jun 2026 | preview, reached | 12 characters: prefix, 9-character basic number, check digit |
+| ISIN structure | ISO 6166:2021 preview (clause 4.1, unchanged from 2013); ANNA identifiers page; ANNA ISIN Guidelines Jun 2026 | preview, reached | 12 characters: prefix, 9-character basic number, check digit |
 | ISIN prefixes | ANNA, RA list of ISIN prefixes, January 2024 | reached | `XS`, `EU`, `EZ`, `XA`-`XD` and `XT` exist beside ISO 3166 codes: the prefix is never refused |
-| ISIN check digit | ISO 6166 Annex C; ANNA | **not confirmed** | the formula is named by ANNA and ISO 6166 clause 4.1; the Annex C text is paywalled |
-| LEI | ISO 17442:2012 preview (full text of clauses 4 to 5 and Annex A); GLEIF | preview, reached | 20 characters, check pair by ISO/IEC 7064 MOD 97-10, examples |
-| UPI (ISO 4914) | ANNA DSB; ISO 4914 | **unreachable** | format and check character are researched by Task 3 |
-| CFI | ISO 10962:1997 preview; SIX CFI page | preview, reached | six letters, `X` is "not applicable"; the code list is a SIX download |
+| ISIN check digit | Stock Exchange of Thailand "ISIN calculation" (three worked examples); ANNA; ISO 6166 Annex C | reached (examples); Annex C text paywalled | the doubling position and the letter values T, H, B, Z; the formula name |
+| LEI | ISO 17442:2012 preview (full text of clauses 4 to 5 and Annex A); GLEIF; ISO 17442-1:2020 not reached | preview, reached | 20 characters, check pair by ISO/IEC 7064 MOD 97-10, examples |
+| UPI (ISO 4914) | ISO 4914:2021 preview (iteh); ANNA DSB | preview reached (contents only); rest **unreachable** | the preview lists Annex C "Check character calculation" as normative; no format or algorithm text |
+| CFI | ISO 10962:2021 preview; ISO 10962:1997 preview; SIX CFI page | preview, reached | six letters, `X` is "not applicable"; the code list is a SIX download |
 | FISN | ANNA FISN Guidelines, June 2026 (ISO 18774 2nd edition) | reached | at most 35 characters, issuer name at most 15, `/`, description |
 | MIC | ISO 10383 RA FAQ (January 2023) and Release 2.0 factsheet | reached | four alphanumeric characters, `[A-Z0-9]{4}` |
 | FIGI | OMG FIGI 1.0, formal/2015-12-01 | reached | syntax, excluded prefixes, check digit |
-| CUSIP | CUSIP Global Services publications | reached, partly | nine characters; "Modulus 10 Double Add Double"; the PPN characters; the letter and `*@#` values are **not confirmed** |
+| CUSIP | CUSIP Global Services publications | reached, partly | nine characters; "Modulus 10 Double Add Double"; the PPN characters; check digit enforced for digit-only CUSIPs; letter and `*@#` values **not available**: format only |
 | SEDOL | LSE SEDOL Masterfile Service and Technical Guide v8.8 | reached | structure, alphabet, weights, check digit |
 | WKN | WM Datenservice, "Struktur und Aufbau der deutschen WKN", July 2012 | reached | six characters, no check digit |
-| Valor | SIX | **not confirmed** | SIX issues the Valor; no published length or check rule found |
-| ISO/IEC 7812-1 | Pay.UK (BSI's IIN agent); ISO/IEC 7812-1 itself | reached (secondary), standard **unreachable** | eight-digit IIN, at most 19 digits, Luhn |
-| Luhn | US patent 2,950,048 | reached | the algorithm |
-| Card schemes | Discover Global Network IIN Range Summary (2026); Mastercard FAQ | Discover reached; Mastercard **not confirmed**; Visa, Amex, Mir **unreachable** | see "Card IIN publications" |
+| Valor | SIX | **not confirmed** | SIX issues the Valor; no published length, character set or check rule found: format only |
+| ISO/IEC 7812-1:2017 | iteh preview (clauses 1-4.2); Pay.UK (BSI's IIN agent) | preview reached; clause 4.4 and Annex B not in it | eight-digit IIN, PAN 10 to 19 digits, Annex B named "Luhn formula ... modulus-10 double-add-double" |
+| Luhn | US patent 2,950,048; SET ISIN examples; ISO/IEC 7812-1 Annex B (title only) | reached | the algorithm; doubling position cross-confirmed. **Gap:** no official card-number vector (scheme test-card pages are script-rendered; none read) |
+| Card schemes | Discover IIN Range Summary (2026); Amex UK merchant page; Visa Core Rules (public); NPCI RuPay circular | Discover, Amex reached; Visa, RuPay reached without ranges; Mastercard, Mir **unreachable** | see "Card IIN publications" |
 | PCI DSS 3.4.1 | PCI SSC FAQ 1492 | reached | "no more than the BIN and last four digits" |
-| CRC | HKMA Common QR Code Specification 1.0 (quoting EMV QRCPS) | reached | polynomial 1021, initial value FFFF, ISO/IEC 13239 |
+| CRC | BCB Manual do BR Code 2.0.1 (complete payload with CRC AD38); HKMA Common QR Code Specification 1.0 | reached | polynomial 1021, initial value FFFF, and the printed result that fixes no reflection and no final XOR |
 | QR reference | SIX Swiss Implementation Guidelines for the QR-bill 2.3, Annex B | reached | the recursive modulo 10 matrix |
-| Creditor reference | ISO 11649:2009 preview (full normative clauses) | preview, reached | `RF`, check pair, MOD 97-10 |
+| Creditor reference | ISO 11649:2009 preview (full normative clauses); SIX IG 2.3 Annex A; EPC069-12 v3.0 section 2.3 | preview, reached | `RF`, check pair, MOD 97-10; RF18 5390 0754 7034 |
 
 ## ISIN, ISO 6166
 
@@ -62,19 +79,31 @@ ISO 3166 codes it lists `EU` (European Union, exceptionally reserved), `EZ` (OTC
 (Euroclear/Clearstream, user-assigned) and `XT` (tokenized referential instruments, user-assigned); the Guidelines name
 `XA`-`XD` for substitute numbering agencies. A prefix outside ISO 3166 is therefore normal.
 
-**Check digit, not confirmed.** The text of Annex C is not public. ANNA and ISO 6166 name the formula; the operational
-description is not quoted from any official source reached. OMG FIGI 1.0 section 6.1 (below) describes the
-"familiar Modulus 10 algorithm developed initially by Hans Peter Luhn" and says "A familiar instantiation of this
-algorithm is specified in ISO 6166 and is used in generating the check digit for ISIN identifiers", differing from the
-FIGI's in which character is doubled. `Internal\IsinCheckDigit` implements: letters as two digits (`A` = 10 ...
-`Z` = 35), then the Luhn check of `Internal\Luhn` on the digit string. The letter table is the one ISO 17442 and ISO
-11649 print (identical `A` = 10 ... `Z` = 35). The test values `US0378331005` (CGS's Apple example, 037833 10 0, gives
-the same CUSIP part) and `AU0000XVGZA3` come from Wikipedia, which does not cite them. **Decision for the owner:**
-the Isin class either enforces this check on the strength of ANNA's naming plus the cross-checks above, or is format
-only until Annex C is obtained.
+ISO 6166:2021 (8th edition), preview
+<https://cdn.standards.iteh.ai/samples/78502/82ffc17dd05c47bd962b9769222010f9/ISO-6166-2021.pdf>, clause 4.1 repeats the
+rule: prefixes are "the alpha-2 country codes or reserved codes specified in the ISO 3166 series; “XS”, “EZ” or “ZZ” as
+specified in Annex A, Table A.1; or other prefixes as may be determined by the RA", "The basic code, which is nine
+characters (alphanumeric) in length", and "A check digit, computed using the modulus 10 “double-add-double” formula as
+specified in Annex C." The 2013 and 2021 clause 4.1 agree on the structure; the 2021 text uses "ZZ" too.
 
-Test vector sources: Apple's CUSIP 037833100 is quoted by CGS (see CUSIP); the ISIN check digit 5 of `US037833100`
-follows from the helper and agrees with Wikipedia and with every open-source implementation consulted (aggregators).
+**Check digit.** The text of Annex C is paywalled, but the Stock Exchange of Thailand (SET; the Thai numbering agency's
+group publishes it under TSD, the Thailand Securities Depository) prints the method with worked examples at
+<https://www.set.or.th/en/tsd/information/isin-calculate>: "Computed according to modules 10 " Double-Add-Double "". Each
+example writes the 11 characters of ISIN without its check digit, expands letters to their numbers, aligns the weights
+`1 2 1 2 ...` so that the last digit of the body is doubled, adds the digits of the products, and takes the check digit
+as the complement to ten:
+
+| ISIN body | Expanded digits (T = 29, H = 17, B = 11, Z = 35) | Sum | Check digit |
+|---|---|---|---|
+| `TH0013057B0` | `2 9 1 7 0 0 1 3 0 5 7 1 1 0` | 35 | 5 |
+| `TH064601000` | `2 9 1 7 0 6 4 6 0 1 0 0 0` | 43 | 7 |
+| `TH0268010Z1` | `2 9 1 7 0 2 6 8 0 1 0 3 5 1` | 49 | 1 |
+
+These are the ISINs `TH0013057B05`, `TH0646010007` and `TH0268010Z11`, and they are the test vectors of
+`Internal\IsinCheckDigit` and (as digit strings) `Internal\Luhn`. The letter table `A` = 10 ... `Z` = 35 is printed by ISO
+17442:2012 clause 5.2.1 and ISO 11649:2009 clause 6.2.3 and agrees with SET's T, H, B, Z. OMG FIGI 1.0 section 6.1 says the ISIN's formula is a "familiar instantiation" of the Luhn modulus 10 algorithm,
+differing from the FIGI's in which character is doubled first. **Outcome:** `Isin` enforces the check digit.
+Wikipedia and open-source libraries (which also give `US0378331005`, `AU0000XVGZA3`) are not used as vectors.
 
 ## LEI, ISO 17442
 
@@ -89,7 +118,7 @@ convert letters (`A` = 10 ... `Z` = 35), "Apply the check character system, MOD 
 number is valid."; generating: "Add "00" to the right-hand end of the LEI", convert, apply MOD 97-10. Annex A.1: `A123456702`;
 Annex A.2: `F50EOCWSQFAUVO9Q8Z97`, both valid.
 
-The edition is superseded by ISO 17442-1:2020 (the part 1 text is not reached); GLEIF publishes `506700GE1G29325QX363`
+The 2012 edition is superseded by ISO 17442-1:2020, whose text is **not reached** (the iteh page for the 2020 edition served no preview; the 2012 rules, 20 characters with a MOD 97-10 check pair, are the ones the ISO 10383 factsheet's LEI pattern `[A-Z0-9]{18,18}[0-9]{2,2}` and the SIX/GLEIF material still match, but the unchanged-ness of clause 5 is an inference); GLEIF publishes `506700GE1G29325QX363`
 as its own LEI at <https://www.gleif.org/en/about-lei/iso-17442-the-lei-code-structure> and says it "adheres to four
 necessary principles of ISO 17442". The LOU prefix (characters 1 to 4) is not defined in the 2012 text. The GLEIF
 structure page does not state it; the ISO 10383 factsheet's LEI pattern `[A-Z0-9]{18,18}[0-9]{2,2}` agrees with 18!an2!n.
@@ -97,18 +126,28 @@ structure page does not state it; the ISO 10383 factsheet's LEI pattern `[A-Z0-9
 
 ## UPI, ISO 4914
 
-**Unreachable.** ISO 4914:2021 has its check character calculation in a normative annex; ISO is paywalled. The ANNA DSB
-site (<https://www.anna-dsb.com/>) links "UPI Technical Guidance" at cosp.anna-dsb.com, which is not reachable without
-an account; the pages reached (anna-dsb.com home, `?p=22405`) carry no format or check rule. A python-stdnum pull
-request (unmerged, aggregator) describes `QZ` prefix, 12 characters and ISO 7064 MOD 31,30; **not used**. Per the
-controller's ruling the helper, if the DSB defines a check character, is added in Task 3; at this point the `Upi` class
-would be format only.
+ISO 4914:2021 preview, <https://cdn.standards.iteh.ai/samples/80506/11803bc283ce4b6d8c633ca72ef6ab03/ISO-4914-2021.pdf>:
+contents "4 UPI code structure", "5 UPI reference data library", "Annex C (normative) Check character calculation". The
+preview stops before clause 4: no length, character set or algorithm text. The ANNA DSB site
+(<https://www.anna-dsb.com/>) links "UPI Technical Guidance" at cosp.anna-dsb.com, which is not reachable without an
+account; the pages reached carry no format or check rule. **Outcome:** `Upi` is format only at Task 2; the controller's
+ruling stands that a helper is added in Task 3 only if the DSB's own publication defines the check character and is
+reached. (An unmerged python-stdnum pull request describing a `QZ` prefix and ISO 7064 MOD 31,30 is an aggregator and is
+not used.)
 
 ## CFI, ISO 10962
 
-ISO 10962:1997 preview, <https://cdn.standards.iteh.ai/samples/1636/f4fe59e339b841149b7a05f1f93935e3/ISO-10962-1997.pdf>:
+ISO 10962:2021 preview (a redline against the 2019 edition),
+<https://cdn.standards.iteh.ai/samples/81140/575a3327c8d34576ad2932719988f966/ISO-10962-2021.pdf>, clause 5:
 
-> "The CFI Code consists of six alphabetic characters."; "X = not applicable, unknown, not available."
+> "The CFI code consists of six alphabetical characters."; "X  Not applicable/ or undefined: the character 'X' may be used
+> for any respective Attribute if the information is unknown, not available or applicable at the time of assignment";
+> "The character 'X' shall not be used as a value in the above described manner for Category or Group."
+
+The 1997 edition (<https://cdn.standards.iteh.ai/samples/1636/f4fe59e339b841149b7a05f1f93935e3/ISO-10962-1997.pdf>)
+says "The CFI Code consists of six alphabetic characters." and "X = not applicable, unknown, not available."; the six-letter
+rule is the same in both. In 2021 `X` is refused for Category and Group; the class accepts any six letters, so this is
+decode-only.
 
 SIX (maintenance agency secretariat), <https://www.six-group.com/en/products-services/financial-information/market-reference-data/data-standards/iso-cfi.html>:
 "The six-letter code describes the structure and function of each financial instrument"; updates are published as
@@ -180,12 +219,15 @@ is always a number". CGS Private Placement Numbers fact sheet
 (<https://www.cusip.com/pdf/fact_sheet/CGS_Private_Placement_Numbers.pdf>): "The following characters *, @, # are utilized
 in position 6, 7 or 8 of the CUSIP number to identify PPNs".
 
-**Not confirmed:** the value of letters (`A` = 10 ... `Z` = 35) and of `*`, `@`, `#` in the check-digit sum is not
-printed in any CGS publication reached; ANSI X9.6 (the standard) is paywalled (the ANSI preview returned 403). The helper
-uses 36, 37, 38 for `*`, `@`, `#`, from aggregators (Wikipedia and open-source libraries disagree among themselves in
-places). The Apple, Apple bond and FactSet vectors contain letters only in `AL` and agree with the helper. **Decision for
-the owner:** `Cusip` enforces the check digit for digit and letter bodies; for `*`, `@`, `#` it either does the same on
-the aggregator values or skips the check for PPNs.
+**Not available, so format only.** The value of letters and of `*`, `@`, `#` in the check-digit sum is printed in no CGS
+publication reached (the CGS pages, guide and fact sheet were all read); ANSI X9.6, the standard, is paywalled (its ANSI
+preview returned 403); the NAIC, SEC, FINRA, DTCC and Federal Reserve sites searched do not state it; isin.org, which
+spells out an ISIN letter table, says on its about page that it "has no affiliation with" ANNA or any numbering agency,
+so it is not an official source. CGS's three examples have no `*@#` and only one letter pair: the Apple bond
+`037833AL4` agrees with `A` = 10 and `L` = 21, which is consistent with the ISIN letter table but is one
+example, not a rule. **Outcome:** `Internal\CusipCheckDigit` serves digit-only CUSIPs (`037833100`, `303075105`, which
+fix the doubling of every second digit starting with the second); `Cusip` checks the format only for any CUSIP with a
+letter, `*`, `@` or `#`, and the README's "Format only" list says why.
 
 ## SEDOL, London Stock Exchange Group
 
@@ -222,24 +264,29 @@ reservation conventions, not validity rules. Format only: six characters from `0
 
 SIX is "the official securities numbering agency in Switzerland, Liechtenstein, and Belgium. We issue Valor (Swiss
 National Number) and/or ISIN identifiers" (<https://www.six-group.com/en/products-services/financial-information/data-standards.html>).
-**Not confirmed:** no SIX publication reached states the length, the digits-only rule or a check digit. ISO 6166 clause
-4.1 caps a national number at nine characters ("zeros shall be inserted in front of the national number"), so a Valor
-is at most nine characters in an ISIN. Format only, and only the bound that clause gives: digits, at most nine; the class
-does not claim a lower bound. WKN and Valor overlap for six digits (factory ambiguity).
+**Not confirmed:** no SIX publication reached states the length, the character set or a check digit. The only bound is
+an **inference**: ISO 6166:2021 clause 4.1 b) makes the basic code of an ISIN nine characters with "zeros ... inserted in
+front of the national code", so a national number fits in nine characters. **Outcome:** format only, and the class
+claims only what the inference supports: a non-empty value of at most nine ASCII alphanumerics; it does not claim
+digits-only. WKN and Valor can overlap for six digits (factory ambiguity).
 
 ## ISO/IEC 7812-1, IIN and PAN
 
-ISO/IEC 7812-1 is **unreachable** (paid; the ANSI blog and preview returned 403). Pay.UK, which "acts as agent for the
-British Standards Institute in assigning UK national and international IINs",
-<https://www.wearepay.uk/what-we-do/standards-authority/obtaining-a-standard-or-identifier-number/iin/>:
+ISO/IEC 7812-1:2017 (fifth edition) preview,
+<https://cdn.standards.iteh.ai/samples/70484/1b747b382337445fbbdae5584d268bcc/ISO-IEC-7812-1-2017.pdf>; the preview
+ends before clause 4.4 and Annex B:
 
-> "an IIN is the first eight digits of the long account number"; "In January 2017, ISO/IEC 7812 expanded from six digits
-> to eight digits."; the PAN "can be up to a maximum of 19 digits"; "an accompanying check digit (1 digit), calculated by
-> the Luhn formula"
+> "Clause 4: revised the length of an IIN to 8 digits (from 6 digits)"; "Clause 4: revised the minimum length of a PAN to
+> 10 digits (from 8 digits)"; "primary account number ... number consisting of a maximum of 19 digits that identifies the
+> card issuer and the cardholder"; "the IIN, 8 numeric digits in length"; "the individual account number"; "a check digit
+> (see 4.4)". Contents: "Annex B (normative) Luhn formula for computing modulus-10 “double-add-double” check digits".
 
-The standard's minimum PAN length is not stated by any source reached. **Decision for the owner:** the minimum is
-needed for the "ISO/IEC 7812-1" length rule; a floor equal to the shortest published scheme length in Discover's table
-(14, Diners) is recorded here as the evidence, not as the standard's rule.
+So the PAN is 10 to 19 digits; the earlier proposal of a 14-digit floor is withdrawn (it would refuse valid 12-digit
+Maestro numbers and the standard's own 10). Pay.UK, which "acts as agent for the British Standards Institute in assigning
+UK national and international IINs",
+<https://www.wearepay.uk/what-we-do/standards-authority/obtaining-a-standard-or-identifier-number/iin/>, agrees: "an IIN is
+the first eight digits of the long account number"; "up to a maximum of 19 digits"; "an accompanying check digit (1 digit),
+calculated by the Luhn formula".
 
 ## Luhn
 
@@ -248,20 +295,25 @@ US patent 2,950,048, "Computer for verifying numbers" (H. P. Luhn, IBM, filed 6 
 around carry"; the check digit "is derived by adding to this sum its tens complement"; "A number with its check digit
 appended is verified when the cross addition yields zero." OMG FIGI 1.0 section 6.1 cites it: "the familiar Modulus 10
 algorithm developed initially by Hans Peter Luhn and described in U.S. Patent No. 2,950,048 and part of the public
-domain". Which end the doubling starts from for a card number is not in the patent text reached (OCR); ISO/IEC 7812-1
-Annex B is unreachable. `Internal\Luhn` doubles the digit next to the check digit and every second one to its left,
-which is the common reading and agrees with every vector below.
+domain".
+
+Doubling position: the patent text (an OCR scan) does not fix it for a card number. ISO/IEC 7812-1 names its Annex B "Luhn
+formula for computing modulus-10 “double-add-double” check digits" (contents of the preview); the text of Annex B is not
+in the preview. The same "Double-Add-Double" formula, with the last digit of the body doubled, is shown with three
+worked examples by SET for the ISIN (see ISIN). `Internal\Luhn` follows that, and its tests are those three examples
+expanded to digit strings. **Gap:** no official card-number vector was reached (Mastercard's and Visa's test-card pages
+are rendered by script and returned no numbers; ISO/IEC 7812-1's Annex B example is outside the preview).
 
 ## Card IIN publications
 
 | Scheme | Publication | Status | Fixes |
 |---|---|---|---|
 | Discover, Diners Club International, JCB, UnionPay | Discover Global Network, "Global Payment Network – IIN Range Summary", © 2026, <https://www.discoverglobalnetwork.com/content/dam/discover/en_us/dgn/docs/IPP-VAR-Enabler-Compliance.pdf> | reached | the ranges and lengths below |
-| Mastercard | Mastercard FAQ, <https://www.mastercard.us/en-us/frequently-asked-questions.html> | **not confirmed** (the page returned 403; a search snippet of it states 222100-272099, "processed the same as 51-55") | needs a direct read |
-| Visa | Visa 8-Digit BIN Expansion FAQ (Visa-hosted PDF) | reached, but it states no prefix or length list | "no change to the length of the PAN" only |
-| American Express | none reached | **unreachable** | not listed |
-| Mir (NSPK) | none reached (secondary articles only) | **unreachable** | not listed |
-| RuPay | not in Discover's 2026 summary | **unreachable** | not listed |
+| American Express | American Express UK merchant page, <https://www.americanexpress.com/uk/merchant/get-started.html> | reached | "Card account numbers begin with "34" or "37" and consist of 15 digits in a four-six-five formation." (no Luhn statement) |
+| Visa | Visa Core Rules and Visa Product and Service Rules (public), 24 October 2026, <https://usa.visa.com/content/dam/VCOM/download/about-visa/visa-rules-public.pdf>; Visa 8-Digit BIN Expansion FAQ | reached, searched for "Luhn", "modulus 10", "check digit" and account-number lengths: nothing | no prefix, length or Luhn statement; the FAQ says only "There is no change to the length of the PAN" |
+| Mastercard | Mastercard FAQ (`mastercard.us/en-us/frequently-asked-questions.html`, 403 live); Internet Archive raw copies of it and of `checkout.mastercard.com/faq/` | archive copies reached, they do not contain the 2-series Q&A | **not confirmed** (a search snippet states 222100-272099, "processed the same as 51-55"; not usable as a quote) |
+| Mir (NSPK) | nspk.ru pages found; the product standard `support.nspk.ru/documents/642` | **unreachable** (certificate error) | not listed |
+| RuPay | NPCI RuPay Consolidated Circular V1.0, <https://www.npci.org.in/uploads/Ru_Pay_Consolidated_Circular_V1_0_b9a1bd52b3.pdf> | reached | "the first six or eight digits of the Card that identifies the Issuer"; new issuance "exclusively using the 8-digit IIN structure"; revision list "withdrawal of 81/82 files". No prefix list or length statement: not listed |
 
 Discover's summary (start, end, PAN length min-max), with its footnotes `a` = JCB, `b` = UnionPay:
 
@@ -280,9 +332,10 @@ the latest IIN range table publication", which is under NDA: the summary does no
 the `a`/`b` footnotes and, in the text, Diners Club International and Discover). Task 4 assigns a range to a scheme only
 where this summary or another publication names it, and decodes the rest as an empty list.
 
-**No-Luhn ranges: none found.** No publication reached states that a scheme's numbers carry no Luhn digit. Baymard
-(an aggregator) says some China UnionPay cards fail Luhn; it names no UnionPay publication, so it is **not used**. Until a
-scheme's own publication says so, Luhn is enforced for every range.
+**No-Luhn ranges: none found.** No publication reached (Discover's summary, the Amex page, Visa's public rules and FAQ,
+NPCI's circular) states that a scheme's numbers carry no Luhn digit. Baymard (an aggregator) says some China UnionPay
+cards fail Luhn; it names no UnionPay publication, so it is **not used**. ISO/IEC 7812-1 gives the PAN a check digit.
+Luhn is enforced for every range.
 
 ## PCI DSS 4.0 requirement 3.4.1
 
@@ -297,23 +350,31 @@ digits and any other 4 digits in a 16 digit PAN."
 
 ## CRC of the EMVCo merchant-presented QR
 
-The EMV QRCPS document itself (version 1.1, 27 November 2020; <https://www.emvco.com/specifications/>) is **unreachable**
-(no direct PDF link served; the archive was offline). The HKMA, a regulator, quotes the rule in its Common QR Code
-Specification for Retail Payments in Hong Kong 1.0 (December 2017, "uses ... EMV QRCPS ... as a basis"),
-<https://www.hkma.gov.hk/media/chi/doc/key-functions/financial-infrastructure/infrastructure/retail-payment-initiatives/Common_QR_Code_Specification.pdf>,
-section 4.1:
+The EMV QRCPS document itself (version 1.1, 27 November 2020) is **unreachable** (the specification page serves no PDF
+link). Two official publications quote its rule. Banco Central do Brasil, "Manual do BR Code" 2.0.1 (31 August 2020),
+<https://www.bcb.gov.br/content/estabilidadefinanceira/spb_docs/ManualBRCode.pdf>, note 10 to its example:
 
-> "The CRC (ID “63”) shall be calculated according to [ISO/IEC 13239] using the polynomial '1021' (hex) and initial value
-> 'FFFF' (hex). The data over which the checksum is calculated shall cover all data objects, including their ID, Length
-> and Value ... as well as the ID and Length of the CRC itself (but excluding its Value)."; "the resulting 2-byte
-> hexadecimal value shall be encoded as a 4-character Alphanumeric Special value ... a CRC with a two-byte hexadecimal
-> value of '007B' is included in the QR Code as "6304007B"."
+> "Segundo seção 4.7.3 CRC (ID “63”) da referência #1, utiliza-se para o cálculo do CRC, o polinômio ‘1021’ (hexa) e valor
+> inicial ‘FFFF’ (hexa), que corresponde ao CRC “CRC-16-CCITT-FFFF”."
 
-Reflection and final XOR are not stated in that text; ISO/IEC 13239's default CRC-16 has none, which is the
-CRC-16/CCITT-FALSE parametrisation. Its catalogue check value, `29B1` for `123456789`, comes from the brief and the RevEng
-CRC catalogue (<https://reveng.sourceforge.io/crc-catalogue/16.htm>, unreachable at Task 2: HTTP 503); the helper computes
-it. Task 5 re-reads the EMV QRCPS text and records the payload marker `000201` (HKMA: "Payload Format Indicator (ID “00”)
-... A fixed value of “01”", ID `00` length `02`).
+The HKMA, in its Common QR Code Specification for Retail Payments in Hong Kong 1.0 (December 2017), section 4.1: "The CRC
+(ID “63”) shall be calculated according to [ISO/IEC 13239] using the polynomial '1021' (hex) and initial value 'FFFF'
+(hex). The data over which the checksum is calculated shall cover all data objects, including their ID, Length and Value
+... as well as the ID and Length of the CRC itself (but excluding its Value)", and "a CRC with a two-byte hexadecimal
+value of '007B' is included in the QR Code as "6304007B"". Pix's EMV-QRCPS profile (the BCB manual) writes the CRC as
+`6304` plus four hexadecimal digits.
+
+**Reflection and final XOR are not stated in words by either publication.** The BCB manual prints a complete payload (270
+characters, section 2.2: `00020104141234567890123426580014BR.GOV.BCB.PIX0136123e4567-e12b-12d1-a456-426655440000` and on,
+ending `6304AD38`) with the table entry "63 CRC16-CCITT (0xffff) 04 0xAD38". The checksum over the payload up to and
+including `6304` is `AD38` only with no input or output reflection and no final XOR; the reflected, XOR-final and both
+variants of the same text give `BFA2`, `52C7` and `405D`. That payload, with its printed CRC, is the test of
+`Internal\Crc16CcittFalse`. (An earlier draft of this file claimed that ISO/IEC 13239's default CRC-16 has no reflection;
+that is false: ISO/IEC 13239 / HDLC FCS is the reflected X.25 variant, and the claim is deleted.) The catalogue check value
+`29B1` for `123456789` is from the RevEng catalogue (<https://reveng.sourceforge.io/crc-catalogue/16.htm>, unreachable:
+HTTP 503); the helper's test keeps it as a second vector, agreeing with the BCB payload. Task 5 re-reads the EMV QRCPS text
+and records the payload marker `000201` (HKMA table 4.1: ID `00`, length `02`, "A fixed value of “01”"; the BCB payload
+starts `000201`).
 
 ## SIX QR reference, recursive modulo 10
 
@@ -343,16 +404,22 @@ ISO 11649:2009 preview (clauses 4 to 6 and Annex A and B in full),
 Checking: delete blanks, "Move the first four characters to the right-hand end", convert letters, MOD 97-10, "If the
 remainder is 1 (one), the number is valid." Generating: add "RF" and "00" at the right, convert, mod 97, "Subtract the
 remainder from 98 and, if the result is less than ten, insert a leading zero." Annex B example: `2348231` -> `RF712348231`.
-The ISO text converts "upper and lower case letters" without giving a lowercase table; the helper accepts capital
-letters only and Task 4 decides the case policy.
+**Lowercase is allowed.** Clause 5 permits "upper and lower case letters (A to Z and a to z)" in the reference part and
+clause 6.2.3 converts "upper and lower case letters to digits" with one table (`A` = 10 ... `Z` = 35, printed for capitals
+only). Task 7 must not refuse lowercase references; `Internal\Iso7064Mod97` takes capitals only, so the caller
+upper-cases a copy for the check and keeps the value as given. Whether `RF` itself may be lowercase is not stated.
 
 **Discrepancy in the standard:** Annex A.3 prints `RF68539007547034` / `RF68 5390 0754 7034` as its layout example, but the
-check of clause 6.2 on that string leaves a remainder other than 1 (the check pair of `539007547034` is `18`, as
-Wikipedia and the EPC and SIX documents that reuse it show). The helper follows clause 6, not the example, and a test
-records that the printed example fails the standard's own check. The Finance Finland note
+check of clause 6.2 on that string leaves a remainder other than 1. The check pair of `539007547034` is `18`: SIX
+Implementation Guidelines 2.3, Annex A (page 57, the "Reference" row of the example, `RF18539007547034`) and EPC069-12 v3.0,
+section 2.3 "Examples" (V1, "Remittance (Reference) RF18539007547034") both print the valid `RF18`. The helper follows
+clause 6, not the example, and a test records that the printed `RF68` example fails the standard's own check; the valid
+`RF18` reference is a test of the helper with the SIX and EPC source.
+
+The Finance Finland note
 (<https://www.finanssiala.fi/wp-content/uploads/2024/04/structure-of-the-rf-creditor-reference-iso-11649.pdf>) states
 "The check digit algorithm is the same as the algorithm used for calculating the check digit for the IBAN account
-transfer" and gives `RF54 1234` and `RF98 REF1 234` as examples; those two examples were not checked.
+transfer" and gives `RF54 1234` and `RF98 REF1 234` as examples; both pass the clause 6.2 check and are tests of the helper.
 
 SIX requires "a minimum of 5 and a maximum of 25 alphanumerical characters. Starting with RF, followed by the check
 digits" (IG 2.3, section 2.12.2); ISO 11649 allows a shorter reference (2 + 2 + at least one). The QR-bill profile applies
@@ -364,9 +431,9 @@ For `PaymentQrFactory` (Task 7).
 
 | Payload | Marker | Source | Status |
 |---|---|---|---|
-| EMVCo merchant-presented QR | `000201` (ID 00, length 02, value 01) | HKMA Common QR Code Specification 1.0, table 4.1, quoting EMV QRCPS | reached (via HKMA) |
+| EMVCo merchant-presented QR | `000201` (ID 00, length 02, value 01) | HKMA Common QR Code Specification 1.0, table 4.1; BCB Manual do BR Code 2.0.1 example payload | reached (via HKMA and BCB) |
 | EPC QR | line 1 `BCD`, version `001` or `002`, identification `SCT` | EPC069-12 v3.0, <https://europeanpaymentscouncil.eu/sites/default/files/kb/file/2022-09/EPC069-12%20v3.0%20Quick%20Response%20Code%20-%20Guidelines%20to%20Enable%20the%20Data%20Capture%20for%20the%20Initiation%20of%20an%20SCT_0.pdf> "Service Tag: ‘BCD’", "V1: ‘001’ V2: ‘002’" | reached |
-| Swiss QR-bill | `SPC` ("Swiss Payments Code") | SIX IG QR-bill 2.3, data structure, "QRType" | reached |
+| Swiss QR-bill | `SPC` ("Swiss Payments Code") | SIX IG QR-bill 2.3, section 4.2 data structure, "QRType" `"SPC" (Swiss Payments Code)`; Annex A examples | reached |
 | GOST R 56042-2014 | `ST0001` followed by the charset digit | text of the standard as mirrored at <https://files.stroyinf.ru/Data2/1/4293771/4293771168.htm> ("Версия стандарта ... "0001" ST0001") | reached via a mirror; Task 7 confirms against the standard |
 | SBP link | `https://qr.nspk.ru/` | NSPK documentation | **unreachable** (secondary articles only) |
 | UPI | `upi://pay?` | NPCI UPI Linking Specification; a third-party copy of version 1.6 and an NPCI circular were found | **not confirmed** (the NPCI document itself was not read) |

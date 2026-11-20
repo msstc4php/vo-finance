@@ -10,10 +10,11 @@ use LogicException;
  * @internal
  *
  * The ISIN check digit, the modulus 10 "double-add-double" formula: each letter of the prefix and basic number becomes
- * two digits (`A` = 10 ... `Z` = 35) and the digit string is checked with {@see Luhn}.
+ * two digits (`A` = 10 ... `Z` = 35) and the digit string is checked with {@see Luhn}, which doubles the rightmost digit of the body, as the Thai examples do.
  *
+ * @see https://www.set.or.th/en/tsd/information/isin-calculate The Stock Exchange of Thailand (the Thai numbering agency's site), three worked examples of the "Double-Add-Double" check digit on the expanded digits
  * @see https://anna-web.org/identifiers/ ANNA, "The final character is a check digit computed according to the modulus 10 "Double-Add-Double" formula"
- * @see https://standards.iteh.ai/catalog/standards/sist/b80d38b9-fca3-47d4-b4f1-ae10b5f2ca62/iso-6166-2013 ISO 6166:2013, clause 4.1 (preview; Annex C is not in it)
+ * @see https://cdn.standards.iteh.ai/samples/78502/82ffc17dd05c47bd962b9769222010f9/ISO-6166-2021.pdf ISO 6166:2021, clause 4.1 c) (preview; Annex C is not in it)
  */
 final class IsinCheckDigit
 {

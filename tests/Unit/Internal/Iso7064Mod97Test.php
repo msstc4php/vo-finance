@@ -25,8 +25,11 @@ final class Iso7064Mod97Test extends TestCase
         yield 'GLEIF LEI' => ['506700GE1G29325QX3', '63'];
         // ISO 11649:2009 Annex B.1: the reference 2348231 with "RF" moved behind it.
         yield 'ISO 11649 B.1' => ['2348231RF', '71'];
-        // Valid pair of the reference whose ISO 11649 Annex A.3 print example shows 68; see FINANCE.md.
-        yield 'ISO 11649 A.3' => ['539007547034RF', '18'];
+        // SIX Swiss Implementation Guidelines for the QR-bill 2.3, Annex A, and EPC069-12 v3.0 section 2.3: RF18 5390 0754 7034.
+        yield 'SIX and EPC example' => ['539007547034RF', '18'];
+        // Finance Finland, "Structure of the RF Creditor Reference": RF54 1234 and RF98 REF1 234.
+        yield 'Finance Finland 1' => ['1234RF', '54'];
+        yield 'Finance Finland 2' => ['REF1234RF', '98'];
     }
 
     #[DataProvider('bodies')]
@@ -46,6 +49,8 @@ final class Iso7064Mod97Test extends TestCase
     {
         self::assertTrue(Iso7064Mod97::isValid('2348231RF71'));
         self::assertTrue(Iso7064Mod97::isValid('539007547034RF18'));
+        self::assertTrue(Iso7064Mod97::isValid('1234RF54'));
+        self::assertTrue(Iso7064Mod97::isValid('REF1234RF98'));
     }
 
     public function testTheStandardsPrintedExampleFailsItsOwnCheck(): void

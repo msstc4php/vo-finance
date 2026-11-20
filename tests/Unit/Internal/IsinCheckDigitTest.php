@@ -21,8 +21,10 @@ final class IsinCheckDigitTest extends TestCase
      */
     public static function isins(): iterable
     {
-        yield 'Apple (CUSIP 037833100)' => ['US037833100', '5'];
-        yield 'Treasury Corporation of Victoria' => ['AU0000XVGZA', '3'];
+        // The Stock Exchange of Thailand, "ISIN calculation": the three worked examples.
+        yield 'Industrial Finance Corporation of Thailand warrant' => ['TH0013057B0', '5'];
+        yield 'PTT ordinary share (local)' => ['TH064601000', '7'];
+        yield 'Advanced Info Service ordinary share (foreign)' => ['TH0268010Z1', '1'];
     }
 
     #[DataProvider('isins')]
@@ -39,15 +41,15 @@ final class IsinCheckDigitTest extends TestCase
 
     public function testRejectsAWrongDigitAndAWrongLength(): void
     {
-        self::assertFalse(IsinCheckDigit::isValid('US0378331004'));
-        self::assertFalse(IsinCheckDigit::isValid('US037833100'));
-        self::assertFalse(IsinCheckDigit::isValid('US03783310050'));
-        self::assertFalse(IsinCheckDigit::isValid('us0378331005'));
+        self::assertFalse(IsinCheckDigit::isValid('TH0646010006'));
+        self::assertFalse(IsinCheckDigit::isValid('TH064601000'));
+        self::assertFalse(IsinCheckDigit::isValid('TH06460100070'));
+        self::assertFalse(IsinCheckDigit::isValid('th0646010007'));
     }
 
     public function testRejectsABodyOutsideTheAlphabet(): void
     {
         $this->expectException(LogicException::class);
-        IsinCheckDigit::compute('us037833100');
+        IsinCheckDigit::compute('th064601000');
     }
 }
