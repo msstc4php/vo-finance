@@ -36,5 +36,7 @@
   case-insensitively; failures in the generic format name the profile; `PaymentQrFactory::fromString()` returns the
   union of the four classes.
 - National profiles fix round 2: `AmbiguousPaymentQrFieldException` thrown by single-value accessors facing several
-  distinct values; the 7089-character bound runs on the original payload only (`MerchantPresentedQr::withoutLengthBound()`,
-  internal); a Pix template in 80-99 without sub-ID 25 is refused again; `DuitNowQr` compares the AID case-insensitively.
+  distinct values; the 7089-character bound runs on the original payload only (internal `EmvcoMerchantPresented`); a Pix template in 80-99 without sub-ID 25 is refused again; `DuitNowQr` compares the AID case-insensitively.
+- National profiles fix round 3: the generic validation moved to the stateless internal `EmvcoMerchantPresented`
+  (`MerchantPresentedQr::withoutLengthBound()` and its static flag are gone; profiles validate a modified copy without a
+  twin instance); `AmbiguousPaymentQrFieldException` takes a reason from the call site.

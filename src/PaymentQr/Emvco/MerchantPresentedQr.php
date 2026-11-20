@@ -4,14 +4,10 @@ declare(strict_types=1);
 
 namespace MSSTC4PHP\ValueObject\Financial\PaymentQr\Emvco;
 
-use LogicException;
 use MSSTC4PHP\ValueObject\Contract\Maskable;
-use MSSTC4PHP\ValueObject\Exception\InvalidValueObjectException;
 use MSSTC4PHP\ValueObject\Finance\Decimal;
-use MSSTC4PHP\ValueObject\Financial\Exception\InvalidPaymentQrException;
-use MSSTC4PHP\ValueObject\Financial\Internal\Crc16CcittFalse;
 use MSSTC4PHP\ValueObject\Financial\Internal\EmvcoMask;
-use MSSTC4PHP\ValueObject\Financial\Internal\EmvcoTlv;
+use MSSTC4PHP\ValueObject\Financial\Internal\EmvcoMerchantPresented;
 use MSSTC4PHP\ValueObject\I18n\CountryCode;
 use MSSTC4PHP\ValueObject\I18n\CurrencyCode;
 use MSSTC4PHP\ValueObject\Support\AbstractStringValueObject;
@@ -43,39 +39,12 @@ use Override;
  */
 final class MerchantPresentedQr extends AbstractStringValueObject implements Maskable
 {
-    private const string TYPE = 'MerchantPresentedQr';
-
-    private const int MAX_GUI_LENGTH = 32;
-
-    private static bool $withoutLengthBound = false;
-
     /** @var list<DataObject> */
     private array $objects = [];
 
-    /**
-     * Builds the payload without the 7089-character bound, for a profile's modified copy whose placeholders may exceed it
-     * while the original does not; the profile checks the bound on the original.
-     *
-     * @internal
-     *
-     * @throws InvalidPaymentQrException
-     */
-    public static function withoutLengthBound(string $value): self
-    {
-        self::$withoutLengthBound = true;
-
-        try {
-            return new self($value);
-        } finally {
-            self::$withoutLengthBound = false;
-        }
-    }
-
     public function pointOfInitiation(): ?PointOfInitiation
     {
-        $value = $this->get('01');
-
-        return $value === null ? null : PointOfInitiation::tryFrom($value);
+        return EmvcoMerchantPresented::pointOfInitiation($this->objects);
     }
 
     /**
@@ -83,32 +52,7 @@ final class MerchantPresentedQr extends AbstractStringValueObject implements Mas
      */
     public function merchantAccounts(): array
     {
-        $accounts = [];
-        foreach ($this->objects as $object) {
-            if (!$this->isMerchantAccountId($object->id)) {
-                continue;
-            }
-
-            if ((int) $object->id < 26) {
-                $accounts[] = new MerchantAccount($object->id, $object->value);
-
-                continue;
-            }
-
-            $guid = null;
-            $subFields = [];
-            foreach (EmvcoTlv::parse($object->value) as $subField) {
-                if ($subField->id === '00' && $guid === null) {
-                    $guid = $subField->value;
-                } else {
-                    $subFields[] = $subField;
-                }
-            }
-
-            $accounts[] = new MerchantAccount($object->id, $object->value, $guid, $subFields);
-        }
-
-        return $accounts;
+        return EmvcoMerchantPresented::accounts($this->objects);
     }
 
     /**
@@ -124,11 +68,7 @@ final class MerchantPresentedQr extends AbstractStringValueObject implements Mas
      */
     public function currency(): ?CurrencyCode
     {
-        try {
-            return CurrencyCode::fromNumeric($this->required('53'));
-        } catch (InvalidValueObjectException) {
-            return null;
-        }
+        return EmvcoMerchantPresented::currency($this->objects);
     }
 
     /**
@@ -137,12 +77,7 @@ final class MerchantPresentedQr extends AbstractStringValueObject implements Mas
      */
     public function amount(): ?Decimal
     {
-        $amount = $this->get('54');
-        if ($amount === null || \preg_match('/^([0-9]+\.?[0-9]*|\.[0-9]+)$/D', $amount) !== 1) {
-            return null;
-        }
-
-        return Decimal::tryFrom(\rtrim(\str_starts_with($amount, '.') ? '0' . $amount : $amount, '.'));
+        return EmvcoMerchantPresented::amount($this->objects);
     }
 
     /**
@@ -150,7 +85,7 @@ final class MerchantPresentedQr extends AbstractStringValueObject implements Mas
      */
     public function countryCode(): ?CountryCode
     {
-        return CountryCode::tryFrom($this->required('58'));
+        return EmvcoMerchantPresented::countryCode($this->objects);
     }
 
     /**
@@ -184,17 +119,7 @@ final class MerchantPresentedQr extends AbstractStringValueObject implements Mas
      */
     public function additionalData(): array
     {
-        $template = $this->get('62');
-        if ($template === null) {
-            return [];
-        }
-
-        $data = [];
-        foreach (EmvcoTlv::parse($template) as $subField) {
-            $data[$subField->id] = $subField->value;
-        }
-
-        return $data;
+        return EmvcoMerchantPresented::additionalData($this->objects);
     }
 
     /**
@@ -204,7 +129,7 @@ final class MerchantPresentedQr extends AbstractStringValueObject implements Mas
      */
     public function get(string $id): ?string
     {
-        return array_find($this->objects, static fn (DataObject $object): bool => $object->id === $id)?->value;
+        return EmvcoMerchantPresented::get($this->objects, $id);
     }
 
     #[Override]
@@ -216,105 +141,9 @@ final class MerchantPresentedQr extends AbstractStringValueObject implements Mas
     #[Override]
     protected function parse(string $value): string
     {
-        if (!self::$withoutLengthBound && (\strlen($value) > EmvcoTlv::MAX_PAYLOAD_LENGTH * 4 || EmvcoTlv::length($value) > EmvcoTlv::MAX_PAYLOAD_LENGTH)) {
-            throw new InvalidPaymentQrException(\sprintf('%s must not exceed %d characters.', self::TYPE, EmvcoTlv::MAX_PAYLOAD_LENGTH));
-        }
-
-        $objects = EmvcoTlv::parse($value);
-
-        $ids = \array_map(static fn (DataObject $object): string => $object->id, $objects);
-        if (\count(\array_unique($ids)) !== \count($ids)) {
-            throw new InvalidPaymentQrException(\sprintf('%s repeats a root data object ID.', self::TYPE));
-        }
-
-        $last = $objects[\count($objects) - 1] ?? null;
-        if ($last === null || $last->id !== '63' || EmvcoTlv::length($last->value) !== 4 || !Crc16CcittFalse::isValid($value)) {
-            throw new InvalidPaymentQrException(\sprintf('%s must end with a correct CRC.', self::TYPE));
-        }
-
-        $this->objects = $objects;
-        $this->assertRootObjects();
+        $this->objects = EmvcoMerchantPresented::validate($value, true);
 
         return $value;
-    }
-
-    private function assertRootObjects(): void
-    {
-        if ($this->get('00') !== '01') {
-            throw new InvalidPaymentQrException(\sprintf('%s needs the payload format indicator 01.', self::TYPE));
-        }
-
-        $hasAccount = false;
-        foreach ($this->objects as $object) {
-            $this->assertCharacterSet($object);
-            if (!$this->isMerchantAccountId($object->id)) {
-                continue;
-            }
-
-            $hasAccount = true;
-            if ((int) $object->id >= 26) {
-                $this->assertTemplate($object->value);
-            }
-        }
-
-        if (!$hasAccount) {
-            throw new InvalidPaymentQrException(\sprintf('%s needs a merchant account data object (ID 02 to 51).', self::TYPE));
-        }
-
-        $pointOfInitiation = $this->get('01');
-        if ($pointOfInitiation !== null && PointOfInitiation::tryFrom($pointOfInitiation) === null) {
-            throw new InvalidPaymentQrException(\sprintf('%s has a point of initiation other than 11 or 12.', self::TYPE));
-        }
-
-        foreach ([['52', 4], ['53', 3], ['58', 2]] as [$id, $length]) {
-            $value = $this->get($id);
-            if ($value === null || EmvcoTlv::length($value) !== $length) {
-                throw new InvalidPaymentQrException(\sprintf('%s needs data object %s with %d characters.', self::TYPE, $id, $length));
-            }
-        }
-
-        foreach (['59', '60'] as $id) {
-            if ($this->get($id) === null) {
-                throw new InvalidPaymentQrException(\sprintf('%s needs data object %s.', self::TYPE, $id));
-            }
-        }
-
-        $additional = $this->get('62');
-        if ($additional !== null) {
-            foreach (EmvcoTlv::parse($additional) as $subField) {
-                if ($subField->id >= '01' && $subField->id <= '11') {
-                    $this->assertAlphanumeric($subField->value);
-                }
-            }
-        }
-    }
-
-    private function assertCharacterSet(DataObject $object): void
-    {
-        if (\in_array($object->id, ['00', '01', '52', '53', '55'], true)) {
-            if (\preg_match('/^[0-9]+$/D', $object->value) !== 1) {
-                throw new InvalidPaymentQrException(\sprintf('%s has a numeric data object with other characters than digits.', self::TYPE));
-            }
-        } elseif (($object->id >= '02' && $object->id <= '25') || \in_array($object->id, ['54', '56', '57', '58', '59', '60', '61', '63'], true)) {
-            $this->assertAlphanumeric($object->value);
-        }
-    }
-
-    private function assertAlphanumeric(string $value): void
-    {
-        if (\preg_match('/^[\x20-\x7E]+$/D', $value) !== 1) {
-            throw new InvalidPaymentQrException(\sprintf('%s has an alphanumeric data object outside the Common Character Set.', self::TYPE));
-        }
-    }
-
-    private function assertTemplate(string $template): void
-    {
-        $guid = array_find(EmvcoTlv::parse($template), static fn (DataObject $object): bool => $object->id === '00');
-        if ($guid === null || EmvcoTlv::length($guid->value) > self::MAX_GUI_LENGTH) {
-            throw new InvalidPaymentQrException(\sprintf('%s needs a globally unique identifier of at most %d characters in every template 26 to 51.', self::TYPE, self::MAX_GUI_LENGTH));
-        }
-
-        $this->assertAlphanumeric($guid->value);
     }
 
     /**
@@ -322,11 +151,6 @@ final class MerchantPresentedQr extends AbstractStringValueObject implements Mas
      */
     private function required(string $id): string
     {
-        return $this->get($id) ?? throw new LogicException('A validated payload lacks a mandatory data object.');
-    }
-
-    private function isMerchantAccountId(string $id): bool
-    {
-        return $id >= '02' && $id <= '51';
+        return EmvcoMerchantPresented::required($this->objects, $id);
     }
 }

@@ -8,16 +8,15 @@ use MSSTC4PHP\ValueObject\Finance\Decimal;
 use MSSTC4PHP\ValueObject\Financial\Exception\InvalidPaymentQrException;
 use MSSTC4PHP\ValueObject\Financial\PaymentQr\Emvco\DataObject;
 use MSSTC4PHP\ValueObject\Financial\PaymentQr\Emvco\MerchantAccount;
-use MSSTC4PHP\ValueObject\Financial\PaymentQr\Emvco\MerchantPresentedQr;
 use MSSTC4PHP\ValueObject\Financial\PaymentQr\Emvco\PointOfInitiation;
 use MSSTC4PHP\ValueObject\I18n\CountryCode;
 use MSSTC4PHP\ValueObject\I18n\CurrencyCode;
 
 /**
- * A national profile's payload read through {@see MerchantPresentedQr}. A profile may differ from the generic format in
+ * A national profile's payload read through the generic {@see EmvcoMerchantPresented} validation. A profile may differ from the generic format in
  * the payload format indicator (DuitNow uses 02) or leave the merchant category code or the city out (BOT's Thai QR
  * makes both optional). The original objects are kept as given; the generic structure, character-set and template
- * checks run on a twin where the indicator is 01 and the missing objects hold a placeholder, with the CRC recomputed.
+ * checks run, without the length bound (checked on the original), on a modified copy where the indicator is 01 and the missing objects hold a placeholder, with the CRC recomputed.
  * Accessors answer from the original objects, so no placeholder ever shows.
  *
  * @internal
@@ -32,10 +31,11 @@ final readonly class ProfilePayload
 
     /**
      * @param list<DataObject> $objects the root data objects as written
+     * @param list<DataObject> $twinObjects the objects of the validated modified copy
      */
     private function __construct(
         private array $objects,
-        private MerchantPresentedQr $twin,
+        private array $twinObjects,
     ) {
     }
 
@@ -80,7 +80,7 @@ final readonly class ProfilePayload
 
         $body = \implode('', \array_map(EmvcoTlv::encode(...), $twinObjects)) . '6304';
 
-        return new self($objects, self::twinOf($body . Crc16CcittFalse::compute($body), $profile));
+        return new self($objects, self::validatedTwin($body . Crc16CcittFalse::compute($body), $profile));
     }
 
     /**
@@ -96,7 +96,7 @@ final readonly class ProfilePayload
      */
     public function accounts(): array
     {
-        return $this->twin->merchantAccounts();
+        return EmvcoMerchantPresented::accounts($this->twinObjects);
     }
 
     /**
@@ -106,7 +106,7 @@ final readonly class ProfilePayload
      */
     public function additional(string $subId): ?string
     {
-        return $this->twin->additionalData()[$subId] ?? null;
+        return EmvcoMerchantPresented::additionalData($this->twinObjects)[$subId] ?? null;
     }
 
     public function pointOfInitiation(): ?PointOfInitiation
@@ -118,17 +118,17 @@ final readonly class ProfilePayload
 
     public function amount(): ?Decimal
     {
-        return $this->twin->amount();
+        return EmvcoMerchantPresented::amount($this->twinObjects);
     }
 
     public function currency(): ?CurrencyCode
     {
-        return $this->twin->currency();
+        return EmvcoMerchantPresented::currency($this->twinObjects);
     }
 
     public function countryCode(): ?CountryCode
     {
-        return $this->twin->countryCode();
+        return EmvcoMerchantPresented::countryCode($this->twinObjects);
     }
 
     /**
@@ -158,17 +158,25 @@ final readonly class ProfilePayload
     /**
      * @param non-empty-string $profile
      *
+     * @return list<DataObject>
+     *
      * @throws InvalidPaymentQrException naming the profile instead of the generic class
      */
-    private static function twinOf(string $payload, string $profile): MerchantPresentedQr
+    private static function validatedTwin(string $payload, string $profile): array
     {
         try {
-            return MerchantPresentedQr::withoutLengthBound($payload);
+            return EmvcoMerchantPresented::validate($payload, false);
         } catch (InvalidPaymentQrException $e) {
             throw self::notValid($profile, $e);
         }
     }
 
+    /**
+     * @param non-empty-string $profile
+     */
+    /**
+     * @param non-empty-string $profile
+     */
     private static function notValid(string $profile, InvalidPaymentQrException $previous): InvalidPaymentQrException
     {
         return new InvalidPaymentQrException(\sprintf('%s is not a valid EMVCo merchant-presented payload.', $profile), 0, $previous);

@@ -66,13 +66,13 @@ final class PromptPayQr extends AbstractStringValueObject implements Maskable
     /**
      * The only proxy type of the credit transfer; null without a credit transfer.
      *
-     * @throws AmbiguousPaymentQrFieldException when the template carries several proxies; see {@see proxyTypes()}
+     * @throws AmbiguousPaymentQrFieldException when the template carries several proxies; {@see proxyTypes()} lists them
      */
     public function proxyType(): ?PromptPayProxyType
     {
         $types = $this->proxyTypes();
         if (\count($types) > 1) {
-            throw new AmbiguousPaymentQrFieldException(self::TYPE, 'the proxy');
+            throw new AmbiguousPaymentQrFieldException(self::TYPE, 'the proxy', 'several distinct values');
         }
 
         return $types[0] ?? null;

@@ -7,6 +7,7 @@ namespace MSSTC4PHP\ValueObject\Financial\Tests\Unit\Internal;
 use MSSTC4PHP\ValueObject\Financial\Exception\InvalidPaymentQrException;
 use MSSTC4PHP\ValueObject\Financial\Internal\Crc16CcittFalse;
 use MSSTC4PHP\ValueObject\Financial\Internal\EmvcoMask;
+use MSSTC4PHP\ValueObject\Financial\Internal\EmvcoMerchantPresented;
 use MSSTC4PHP\ValueObject\Financial\Internal\EmvcoTlv;
 use MSSTC4PHP\ValueObject\Financial\Internal\ProfilePayload;
 use MSSTC4PHP\ValueObject\Financial\Internal\ProfileRule;
@@ -22,6 +23,7 @@ use PHPUnit\Framework\TestCase;
 #[CoversClass(ProfilePayload::class)]
 #[CoversClass(ProfileRule::class)]
 #[CoversClass(EmvcoMask::class)]
+#[UsesClass(EmvcoMerchantPresented::class)]
 #[UsesClass(EmvcoTlv::class)]
 #[UsesClass(Crc16CcittFalse::class)]
 #[UsesClass(MerchantPresentedQr::class)]

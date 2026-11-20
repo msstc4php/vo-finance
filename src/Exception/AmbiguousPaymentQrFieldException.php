@@ -8,16 +8,17 @@ use DomainException;
 
 /**
  * Thrown by a single-value accessor of a payment QR profile when the payload carries several distinct values for the
- * field. The message names the profile and the field, never a value.
+ * field. The message names the profile, the field and the reason, never a value.
  */
 final class AmbiguousPaymentQrFieldException extends DomainException
 {
     /**
      * @param non-empty-string $profile
      * @param non-empty-string $field
+     * @param non-empty-string $reason why no single value exists, e.g. "several distinct values"
      */
-    public function __construct(string $profile, string $field)
+    public function __construct(string $profile, string $field, string $reason)
     {
-        parent::__construct(\sprintf('%s carries several distinct values for %s; use the list accessor.', $profile, $field));
+        parent::__construct(\sprintf('%s cannot give a single value for %s: %s.', $profile, $field, $reason));
     }
 }

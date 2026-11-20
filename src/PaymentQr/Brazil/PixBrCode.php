@@ -51,7 +51,7 @@ final class PixBrCode extends AbstractStringValueObject implements Maskable
      *
      * @return non-empty-string|null
      *
-     * @throws AmbiguousPaymentQrFieldException when several Pix templates carry different keys; see {@see pixKeys()}
+     * @throws AmbiguousPaymentQrFieldException when several Pix templates carry different keys; {@see pixKeys()} lists them
      */
     public function pixKey(): ?string
     {
@@ -71,7 +71,7 @@ final class PixBrCode extends AbstractStringValueObject implements Maskable
      *
      * @return non-empty-string|null
      *
-     * @throws AmbiguousPaymentQrFieldException when several Pix templates carry different URLs; see {@see paymentUrls()}
+     * @throws AmbiguousPaymentQrFieldException when several Pix templates carry different URLs; {@see paymentUrls()} lists them
      */
     public function paymentUrl(): ?string
     {
@@ -91,7 +91,7 @@ final class PixBrCode extends AbstractStringValueObject implements Maskable
      *
      * @return non-empty-string|null
      *
-     * @throws AmbiguousPaymentQrFieldException when several templates carry different URLs; see {@see recurrenceUrls()}
+     * @throws AmbiguousPaymentQrFieldException when several templates carry different URLs; {@see recurrenceUrls()} lists them
      */
     public function recurrenceUrl(): ?string
     {
@@ -191,7 +191,7 @@ final class PixBrCode extends AbstractStringValueObject implements Maskable
     {
         $distinct = \array_values(\array_unique($values));
         if (\count($distinct) > 1) {
-            throw new AmbiguousPaymentQrFieldException(self::TYPE, $field);
+            throw new AmbiguousPaymentQrFieldException(self::TYPE, $field, 'several distinct values');
         }
 
         return $distinct[0] ?? null;
@@ -206,7 +206,7 @@ final class PixBrCode extends AbstractStringValueObject implements Maskable
     {
         $values = $this->subFields($subId);
         if ($values !== [] && \count($values) !== \count($this->accounts)) {
-            throw new AmbiguousPaymentQrFieldException(self::TYPE, $field);
+            throw new AmbiguousPaymentQrFieldException(self::TYPE, $field, 'present in only some Pix templates');
         }
 
         return $this->single($values, $field);

@@ -20,9 +20,11 @@ the CRC with asterisks.
 | `PaymentQr\Malaysia\DuitNowQr` | DuitNow QR (PayNet): `acquirerId()`, `qrId()`, `isJomPay()` |
 | `PaymentQr\PaymentQrFactory` | the profile that accepts an EMVCo payload; several profiles throw `AmbiguousValueException`; none gives `MerchantPresentedQr` |
 
-The single-value accessors (`pixKey()`, `paymentUrl()`, `recurrenceUrl()`, `additionalInfo()`, `withdrawalProvider()`,
-`proxyType()`, `proxy()`) throw `Exception\AmbiguousPaymentQrFieldException` when the payload carries several distinct
-values; the list accessors above return all of them and never throw.
+The single-value accessors (`pixKey()`, `paymentUrl()`, `recurrenceUrl()`, `proxyType()`, `proxy()`) throw
+`Exception\AmbiguousPaymentQrFieldException` when the payload carries several distinct values; their list accessors
+(`pixKeys()`, `paymentUrls()`, `recurrenceUrls()`, `proxyTypes()`, `proxyOf()`) return all of them and never throw. On
+`PixBrCode`, `additionalInfo()` and `withdrawalProvider()` throw the same exception when several Pix templates do not
+all carry the same value; they have no list accessor.
 
 ## Format only
 

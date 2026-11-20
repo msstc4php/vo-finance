@@ -8,6 +8,7 @@ use MSSTC4PHP\ValueObject\Finance\Decimal;
 use MSSTC4PHP\ValueObject\Financial\Exception\InvalidPaymentQrException;
 use MSSTC4PHP\ValueObject\Financial\Internal\Crc16CcittFalse;
 use MSSTC4PHP\ValueObject\Financial\Internal\EmvcoMask;
+use MSSTC4PHP\ValueObject\Financial\Internal\EmvcoMerchantPresented;
 use MSSTC4PHP\ValueObject\Financial\Internal\EmvcoTlv;
 use MSSTC4PHP\ValueObject\Financial\PaymentQr\Emvco\DataObject;
 use MSSTC4PHP\ValueObject\Financial\PaymentQr\Emvco\MerchantAccount;
@@ -26,6 +27,7 @@ use PHPUnit\Framework\TestCase;
 #[CoversClass(PointOfInitiation::class)]
 #[CoversClass(InvalidPaymentQrException::class)]
 #[UsesClass(EmvcoMask::class)]
+#[UsesClass(EmvcoMerchantPresented::class)]
 #[UsesClass(EmvcoTlv::class)]
 #[UsesClass(Crc16CcittFalse::class)]
 final class MerchantPresentedQrTest extends TestCase
