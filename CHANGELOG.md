@@ -26,8 +26,8 @@
   validates its input. `DataObject` is a public type and `additionalData()` is `array<array-key, non-empty-string>` (PHP
   turns the key "10" into an integer).
 - National EMVCo QR profiles: `PixBrCode` (BCB), `PromptPayQr` with `PromptPayProxyType` (Bank of Thailand), `DuitNowQr`
-  (PayNet) and `PaymentQrFactory`. SGQR, QRIS, VietQR, KHQR, HK FPS, JPQR, QR Ph and Bharat QR are not built: no official
-  specification was reached (README, `docs/sources/FINANCE.md`). `MerchantPresentedQr::masked()` now shares
+  (PayNet) and `PaymentQrFactory`. SGQR, QRIS, VietQR, KHQR, HK FPS, JPQR, QR Ph and Bharat QR are not built: no
+  official specification was reached (README, `docs/sources/FINANCE.md`). `MerchantPresentedQr::masked()` now shares
   `Internal\EmvcoMask` with the profiles (no behaviour change); `MerchantAccount::subField()` is typed
   `non-empty-string|null`.
 - National profiles fix round 1: `PixBrCode` accepts several Pix templates and a key with a URL (list accessors
@@ -36,7 +36,9 @@
   case-insensitively; failures in the generic format name the profile; `PaymentQrFactory::fromString()` returns the
   union of the four classes.
 - National profiles fix round 2: `AmbiguousPaymentQrFieldException` thrown by single-value accessors facing several
-  distinct values; the 7089-character bound runs on the original payload only (internal `EmvcoMerchantPresented`); a Pix template in 80-99 without sub-ID 25 is refused again; `DuitNowQr` compares the AID case-insensitively.
+  distinct values; the 7089-character bound runs on the original payload only
+  (`MerchantPresentedQr::withoutLengthBound()`, internal); a Pix template in 80-99 without sub-ID 25 is refused again;
+  `DuitNowQr` compares the AID case-insensitively.
 - National profiles fix round 3: the generic validation moved to the stateless internal `EmvcoMerchantPresented`
   (`MerchantPresentedQr::withoutLengthBound()` and its static flag are gone; profiles validate a modified copy without a
   twin instance); `AmbiguousPaymentQrFieldException` takes a reason from the call site.

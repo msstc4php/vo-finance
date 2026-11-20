@@ -332,7 +332,9 @@ final class PromptPayQrTest extends TestCase
             }
 
             $size = $remaining <= 103 ? $remaining - 4 : ($remaining - 103 >= 5 ? 99 : $remaining - 9);
-            $value = $id >= 26 && $id <= 51 ? self::tlv('00', 'com.fill') . self::tlv('01', \str_repeat('x', $size - 16)) : \str_repeat('x', $size);
+            $template = $id >= 26 && $id <= 51;
+            self::assertGreaterThan($template ? 16 : 0, $size, \sprintf('fillTo(%d) cannot fill ID %02d.', $total, $id));
+            $value = $template ? self::tlv('00', 'com.fill') . self::tlv('01', \str_repeat('x', $size - 16)) : \str_repeat('x', $size);
             $objects[] = self::tlv(\sprintf('%02d', $id), $value);
             $length += $size + 4;
         }

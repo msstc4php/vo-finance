@@ -88,7 +88,7 @@ final readonly class ProfilePayload
      */
     public function get(string $id): ?string
     {
-        return array_find($this->objects, static fn (DataObject $object): bool => $object->id === $id)?->value;
+        return EmvcoMerchantPresented::get($this->objects, $id);
     }
 
     /**
@@ -111,9 +111,7 @@ final readonly class ProfilePayload
 
     public function pointOfInitiation(): ?PointOfInitiation
     {
-        $value = $this->get('01');
-
-        return $value === null ? null : PointOfInitiation::tryFrom($value);
+        return EmvcoMerchantPresented::pointOfInitiation($this->objects);
     }
 
     public function amount(): ?Decimal
@@ -171,9 +169,6 @@ final readonly class ProfilePayload
         }
     }
 
-    /**
-     * @param non-empty-string $profile
-     */
     /**
      * @param non-empty-string $profile
      */
