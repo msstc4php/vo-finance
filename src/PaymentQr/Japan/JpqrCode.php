@@ -16,12 +16,13 @@ use Override;
 
 /**
  * JPQR unified merchant-presented code as the Payments Japan MPM guideline defines it: a merchant account template (ID
- * 26 to 51) with the GUI `jp.or.paymentsjapan` (compared case-insensitively, as DNS names are; RFC 4343) carrying the unified store ID, 29 digits in
- * four management levels (sub-IDs 01 to 04 of 13, 4, 6 and 6 digits). Enforced besides: the point of initiation, the
- * postal code (61) and the language template (64) with its language and merchant name are mandatory, and a dynamic code
- * (12) carries the amount, and the payload has at most 512 bytes ("512byte を上限とする"). No source forbids several JPQR templates; {@see storeIds()} lists them. Not enforced:
- * currency 392 and country JP (the guideline gives them as the yen and Japan entries, not as fixed values) and the
- * language value `JA` (decided per merchant by the Payments Japan secretariat).
+ * 26 to 51) with the GUI `jp.or.paymentsjapan` (compared case-insensitively, as DNS names are; RFC 4343) carrying the
+ * unified store ID, 29 digits in four management levels (sub-IDs 01 to 04 of 13, 4, 6 and 6 digits). Enforced besides:
+ * the point of initiation, the postal code (61) and the language template (64) with its language and merchant name are
+ * mandatory, and a dynamic code (12) carries the amount, and the payload has at most 512 bytes ("512byte を上限とする"). No
+ * source forbids several JPQR templates; {@see storeIds()} lists them. Not enforced: currency 392 and country JP (the
+ * guideline gives them as the yen and Japan entries, not as fixed values) and the language value `JA` (decided per
+ * merchant by the Payments Japan secretariat).
  *
  * @see https://web.archive.org/web/20200918130533id_/https://www.paymentsjapan.or.jp/wordpress/wp-content/uploads/2020/04/MPM_Guideline_2.0.pdf Payments Japan, Unified technical specification guidelines for code payments, merchant-presented mode (MPM) 2.0 (27 April 2020), part 1 and part 2, tables 2.1-1, 2.1-2 and 3.2
  * @see https://www.rfc-editor.org/rfc/rfc4343 RFC 4343, Domain Name System (DNS) Case Insensitivity Clarification
