@@ -13,9 +13,11 @@ use MSSTC4PHP\ValueObject\Financial\Internal\EmvcoTlv;
 use MSSTC4PHP\ValueObject\Financial\Internal\ProfilePayload;
 use MSSTC4PHP\ValueObject\Financial\Internal\ProfileRule;
 use MSSTC4PHP\ValueObject\Financial\PaymentQr\Brazil\PixBrCode;
+use MSSTC4PHP\ValueObject\Financial\PaymentQr\Cambodia\KhqrCode;
 use MSSTC4PHP\ValueObject\Financial\PaymentQr\Emvco\DataObject;
 use MSSTC4PHP\ValueObject\Financial\PaymentQr\Emvco\MerchantAccount;
 use MSSTC4PHP\ValueObject\Financial\PaymentQr\Emvco\MerchantPresentedQr;
+use MSSTC4PHP\ValueObject\Financial\PaymentQr\Japan\JpqrCode;
 use MSSTC4PHP\ValueObject\Financial\PaymentQr\Malaysia\DuitNowQr;
 use MSSTC4PHP\ValueObject\Financial\PaymentQr\PaymentQrFactory;
 use MSSTC4PHP\ValueObject\Financial\PaymentQr\Thailand\PromptPayProxyType;
@@ -29,6 +31,8 @@ use PHPUnit\Framework\TestCase;
 #[UsesClass(PromptPayQr::class)]
 #[UsesClass(PromptPayProxyType::class)]
 #[UsesClass(DuitNowQr::class)]
+#[UsesClass(KhqrCode::class)]
+#[UsesClass(JpqrCode::class)]
 #[UsesClass(ProfilePayload::class)]
 #[UsesClass(ProfileRule::class)]
 #[UsesClass(EmvcoMask::class)]
@@ -67,6 +71,99 @@ final class PaymentQrFactoryTest extends TestCase
     public function testADuitNowPayloadGivesDuitNowQr(): void
     {
         self::assertInstanceOf(DuitNowQr::class, PaymentQrFactory::fromString(self::DUITNOW));
+    }
+
+    public function testAKhqrPayloadGivesKhqrCode(): void
+    {
+        // NBC Bakong, KHQR Content Guideline 1.3, page 04: tag 29 solo merchant, static.
+        $payload = '00020101021129200016test_bakong@devb5204599953031165802KH5917Lucky Supermarket6010Phnom Penh9917001316339210247786304102F';
+
+        self::assertInstanceOf(KhqrCode::class, PaymentQrFactory::fromString($payload));
+    }
+
+    public function testAJpqrPayloadGivesJpqrCode(): void
+    {
+        // Synthetic, from Payments Japan MPM guideline 2.0 table 2.1-1.
+        $payload = self::sealed(
+            self::tlv('00', '01'),
+            self::tlv('01', '11'),
+            self::tlv('26', self::tlv('00', 'jp.or.paymentsjapan') . self::tlv('01', '1234567890123') . self::tlv('02', '0001') . self::tlv('03', '000002') . self::tlv('04', '000003')),
+            self::tlv('52', '5812'),
+            self::tlv('53', '392'),
+            self::tlv('58', 'JP'),
+            self::tlv('59', 'CASHLESS CAFE'),
+            self::tlv('60', 'MINATO-KU'),
+            self::tlv('61', '1050001'),
+            self::tlv('64', self::tlv('00', 'JA') . self::tlv('01', 'キャッシュレス')),
+        );
+
+        self::assertInstanceOf(JpqrCode::class, PaymentQrFactory::fromString($payload));
+    }
+
+    public function testAThaiQrWithEveryRootObjectIsNotTakenForKhqr(): void
+    {
+        // Synthetic: KHQR and Thai QR both use tags 29 and 30; the country tells them apart.
+        $payload = self::sealed(
+            self::tlv('00', '01'),
+            self::tlv('01', '11'),
+            self::tlv('29', self::tlv('00', 'A000000677010111') . self::tlv('01', '0066812345678')),
+            self::tlv('52', '5999'),
+            self::tlv('53', '764'),
+            self::tlv('58', 'TH'),
+            self::tlv('59', 'Shop'),
+            self::tlv('60', 'Bangkok'),
+        );
+
+        self::assertInstanceOf(PromptPayQr::class, PaymentQrFactory::fromString($payload));
+    }
+
+    public function testACambodianCodeCarryingPromptPayIsAmbiguous(): void
+    {
+        // Synthetic: a Bakong template (30) next to a PromptPay credit transfer (29), country KH.
+        $payload = self::sealed(
+            self::tlv('00', '01'),
+            self::tlv('01', '11'),
+            self::tlv('29', self::tlv('00', 'A000000677010111') . self::tlv('01', '0066812345678')),
+            self::tlv('30', self::tlv('00', 'shop@bank') . self::tlv('01', '42')),
+            self::tlv('52', '5999'),
+            self::tlv('53', '116'),
+            self::tlv('58', 'KH'),
+            self::tlv('59', 'Shop'),
+            self::tlv('60', 'Phnom Penh'),
+        );
+
+        try {
+            PaymentQrFactory::fromString($payload);
+            self::fail('Expected an ambiguity.');
+        } catch (AmbiguousValueException $e) {
+            self::assertSame([PromptPayQr::class, KhqrCode::class], $e->candidates());
+        }
+    }
+
+    public function testABrCodeCarryingJpqrIsAmbiguous(): void
+    {
+        // Synthetic: a Pix template next to a JPQR template, with the objects both require.
+        $payload = self::sealed(
+            self::tlv('00', '01'),
+            self::tlv('01', '11'),
+            self::tlv('26', self::tlv('00', 'br.gov.bcb.pix') . self::tlv('01', 'fulano@example.com')),
+            self::tlv('27', self::tlv('00', 'jp.or.paymentsjapan') . self::tlv('01', '1234567890123') . self::tlv('02', '0001') . self::tlv('03', '000002') . self::tlv('04', '000003')),
+            self::tlv('52', '0000'),
+            self::tlv('53', '986'),
+            self::tlv('58', 'BR'),
+            self::tlv('59', 'Shop'),
+            self::tlv('60', 'BRASILIA'),
+            self::tlv('61', '70074900'),
+            self::tlv('62', self::tlv('05', '***')),
+            self::tlv('64', self::tlv('00', 'JA') . self::tlv('01', 'Shop')),
+        );
+
+        try {
+            PaymentQrFactory::fromString($payload);
+            self::fail('Expected an ambiguity.');
+        } catch (AmbiguousValueException $e) {
+            self::assertSame([PixBrCode::class, JpqrCode::class], $e->candidates());
+        }
     }
 
     public function testAGenericEmvcoPayloadGivesMerchantPresentedQr(): void

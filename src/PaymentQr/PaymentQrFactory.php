@@ -8,7 +8,9 @@ use MSSTC4PHP\ValueObject\Contract\ValueObject;
 use MSSTC4PHP\ValueObject\Exception\AmbiguousValueException;
 use MSSTC4PHP\ValueObject\Financial\Exception\InvalidPaymentQrException;
 use MSSTC4PHP\ValueObject\Financial\PaymentQr\Brazil\PixBrCode;
+use MSSTC4PHP\ValueObject\Financial\PaymentQr\Cambodia\KhqrCode;
 use MSSTC4PHP\ValueObject\Financial\PaymentQr\Emvco\MerchantPresentedQr;
+use MSSTC4PHP\ValueObject\Financial\PaymentQr\Japan\JpqrCode;
 use MSSTC4PHP\ValueObject\Financial\PaymentQr\Malaysia\DuitNowQr;
 use MSSTC4PHP\ValueObject\Financial\PaymentQr\Thailand\PromptPayQr;
 
@@ -20,18 +22,20 @@ use MSSTC4PHP\ValueObject\Financial\PaymentQr\Thailand\PromptPayQr;
  */
 final class PaymentQrFactory
 {
-    /** @var non-empty-list<class-string<PixBrCode|PromptPayQr|DuitNowQr>> */
+    /** @var non-empty-list<class-string<PixBrCode|PromptPayQr|DuitNowQr|KhqrCode|JpqrCode>> */
     private const array PROFILES = [
         PixBrCode::class,
         PromptPayQr::class,
         DuitNowQr::class,
+        KhqrCode::class,
+        JpqrCode::class,
     ];
 
     /**
      * @throws AmbiguousValueException when several profiles accept the payload
      * @throws InvalidPaymentQrException when the generic format does not accept it either
      */
-    public static function fromString(string $payload): PixBrCode|PromptPayQr|DuitNowQr|MerchantPresentedQr
+    public static function fromString(string $payload): PixBrCode|PromptPayQr|DuitNowQr|KhqrCode|JpqrCode|MerchantPresentedQr
     {
         $matches = [];
         foreach (self::PROFILES as $class) {

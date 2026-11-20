@@ -12,7 +12,8 @@ validation (with or without the 7089-character bound) and the field derivations 
 `amount`, `currency`, `countryCode`, `additionalData`); `MerchantPresentedQr` and `Internal\ProfilePayload` delegate
 to it.
 National profiles: `PaymentQr\Brazil\PixBrCode`, `PaymentQr\Thailand\PromptPayQr` (+ `PromptPayProxyType`),
-`PaymentQr\Malaysia\DuitNowQr`, and `PaymentQr\PaymentQrFactory` (profiles, else the generic `MerchantPresentedQr`;
+`PaymentQr\Malaysia\DuitNowQr`, `PaymentQr\Cambodia\KhqrCode`, `PaymentQr\Japan\JpqrCode`, `PaymentQr\Brazil\PixKeyType`
+(decode-only enum behind `PixBrCode::pixKeyType()`), and `PaymentQr\PaymentQrFactory` (profiles, else the generic `MerchantPresentedQr`;
 several profiles throw `AmbiguousValueException`). Each profile is an `AbstractStringValueObject` that parses through
 `Internal\ProfilePayload`, which checks the length bound on the original and runs
 `EmvcoMerchantPresented::validate()` unbounded on a modified copy (format indicator forced to 01, missing category/city

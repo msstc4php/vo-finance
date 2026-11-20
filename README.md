@@ -15,14 +15,18 @@ the CRC with asterisks.
 | Class | Payload |
 |---|---|
 | `PaymentQr\Emvco\MerchantPresentedQr` | EMVCo merchant-presented QR (generic) |
-| `PaymentQr\Brazil\PixBrCode` | Pix BR Code (BCB): `pixKey()`, `paymentUrl()`, `recurrenceUrl()`, `txid()`; lists `pixKeys()`, `paymentUrls()`, `recurrenceUrls()` |
+| `PaymentQr\Brazil\PixBrCode` | Pix BR Code (BCB): `pixKey()`, `pixKeyType()` (`PixKeyType`: CPF, CNPJ, phone, e-mail, EVP; null for a key of no DICT format), `paymentUrl()`, `recurrenceUrl()`, `txid()`; lists `pixKeys()`, `paymentUrls()`, `recurrenceUrls()` |
 | `PaymentQr\Thailand\PromptPayQr` | Thai QR / PromptPay (BOT): `proxyType()`, `proxy()`, `billerId()`, `reference1()`; lists `proxyTypes()`, `proxyOf()` |
 | `PaymentQr\Malaysia\DuitNowQr` | DuitNow QR (PayNet): `acquirerId()`, `qrId()`, `isJomPay()` |
+| `PaymentQr\Cambodia\KhqrCode` | KHQR (National Bank of Cambodia, Bakong tags 29/30): `bakongAccountId()`, `accountInformation()`, `merchantId()`, `acquiringBank()`; lists `bakongAccountIds()` |
+| `PaymentQr\Japan\JpqrCode` | JPQR (Payments Japan): `storeId()` (29-digit unified store ID), `postalCode()`, `alternateMerchantName()`; lists `storeIds()` |
 | `PaymentQr\PaymentQrFactory` | the profile that accepts an EMVCo payload; several profiles throw `AmbiguousValueException`; none gives `MerchantPresentedQr` |
 
-The single-value accessors (`pixKey()`, `paymentUrl()`, `recurrenceUrl()`, `proxyType()`, `proxy()`) throw
+The single-value accessors (`pixKey()`, `pixKeyType()`, `paymentUrl()`, `recurrenceUrl()`, `proxyType()`, `proxy()`,
+`bakongAccountId()`, `acquiringBank()`, `storeId()`) throw
 `Exception\AmbiguousPaymentQrFieldException` when the payload carries several distinct values; their list accessors
-(`pixKeys()`, `paymentUrls()`, `recurrenceUrls()`, `proxyTypes()`, `proxyOf()`) return all of them and never throw. On
+(`pixKeys()`, `paymentUrls()`, `recurrenceUrls()`, `proxyTypes()`, `proxyOf()`, `bakongAccountIds()`, `storeIds()`)
+return all of them and never throw. On
 `PixBrCode`, `additionalInfo()` and `withdrawalProvider()` throw the same exception when several Pix templates do not
 all carry the same value; they have no list accessor.
 
@@ -49,17 +53,28 @@ Checked for length and character set, never for a check digit or a range no offi
   lengths of the other objects, the content of IDs 02-25 and of the templates 64 and 80-99, the position of the payload
   format indicator and repeated IDs inside templates are not. The EMVCo document is read through a third-party copy and
   two official publications (HKMA, Banco Central do Brasil). `additionalData()` keys such as "10" become integers in PHP.
-- `PixBrCode`, `PromptPayQr`, `DuitNowQr`: only the rules quoted from the publisher's own specification (see
-  [`docs/sources/FINANCE.md`](docs/sources/FINANCE.md)). Not enforced: the form of a Pix key (the DICT manual is not read), the letters-and-digits rule for
-  a Pix txid (the BCB's own BR Code example breaks it), PromptPay currency 764 and country TH, the DuitNow ID 82 hash and
-  acquirer ID table.
+- `PixBrCode`, `PromptPayQr`, `DuitNowQr`, `KhqrCode`, `JpqrCode`: only the rules quoted from the publisher's own
+  specification (see [`docs/sources/FINANCE.md`](docs/sources/FINANCE.md)). Not enforced: the form of a Pix key (the
+  DICT formats only decode `pixKeyType()`), the letters-and-digits rule for a Pix txid (the BCB's own BR Code example
+  breaks it), PromptPay currency 764 and country TH, the DuitNow ID 82 hash and acquirer ID table, the KHQR currency and
+  the content of the Bakong templates beyond their sub-tags, JPQR currency 392, country JP and language `JA`.
 
 ## Profiles not built
 
 No official specification was reached for these, so their payloads parse as the generic `MerchantPresentedQr`:
-SGQR (MAS/IMDA publishes no specification document on its pages), QRIS (Bank Indonesia's material has no data-object
-table), VietQR (NAPAS: none found), KHQR (the National Bank of Cambodia's SDK guide is not the specification), HK FPS (the
-HKMA document defines only the common template), JPQR (host not reachable), QR Ph (BSP: none found), Bharat QR (NPCI: 403).
+
+- SGQR (MAS/IMDA): the specification is not published; MAS's pages, the 2018 IMDA fact sheet and the 2022 MAS/IMDA
+  consultation paper and guidelines say only that SGQR is based on EMVCo, with no data-object rule.
+- QRIS (Bank Indonesia/ASPI): PADG 21/18/PADG/2019 article 5 makes the QRIS document available only on written request
+  to the standards body; the regulation has no data-object annex.
+- VietQR (NAPAS): the State Bank of Vietnam's base standard TCCS 03:2018 (Decision 1928/QĐ-NHNN) was not reached
+  (Decision 2525/QĐ-NHNN is the customer-presented standard); the NAPAS specification circulates only as third-party
+  copies.
+- HK FPS (HKICL): the HKMA publishes only the common template and an implementation guideline; the FPS template is not
+  in HKICL's public scheme documents.
+- Bharat QR (NPCI): NPCI's circular says the Merchant QR Code Specification 4.0 was released to member banks; it is not
+  published.
+- QR Ph (BSP): none found.
 
 ## License
 

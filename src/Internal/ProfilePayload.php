@@ -31,11 +31,11 @@ final readonly class ProfilePayload
 
     /**
      * @param list<DataObject> $objects the root data objects as written
-     * @param list<DataObject> $twinObjects the objects of the validated modified copy
+     * @param list<DataObject> $copyObjects the objects of the validated modified copy
      */
     private function __construct(
         private array $objects,
-        private array $twinObjects,
+        private array $copyObjects,
     ) {
     }
 
@@ -56,7 +56,7 @@ final readonly class ProfilePayload
         ProfileRule::ensure($last !== null && $last->id === '63' && EmvcoTlv::length($last->value) === 4 && Crc16CcittFalse::isValid($payload), $profile, 'the CRC as the last data object, correct');
 
         $present = \array_map(static fn (DataObject $object): string => $object->id, $objects);
-        $twinObjects = [];
+        $copyObjects = [];
         foreach ($objects as $object) {
             if ($object->id === '63') {
                 continue;
@@ -67,20 +67,20 @@ final readonly class ProfilePayload
                 $object = new DataObject('00', '01');
             }
 
-            $twinObjects[] = $object;
+            $copyObjects[] = $object;
         }
 
         if ($categoryOptional && !\in_array('52', $present, true)) {
-            $twinObjects[] = new DataObject('52', '0000');
+            $copyObjects[] = new DataObject('52', '0000');
         }
 
         if ($cityOptional && !\in_array('60', $present, true)) {
-            $twinObjects[] = new DataObject('60', self::PLACEHOLDER_CITY);
+            $copyObjects[] = new DataObject('60', self::PLACEHOLDER_CITY);
         }
 
-        $body = \implode('', \array_map(EmvcoTlv::encode(...), $twinObjects)) . '6304';
+        $body = \implode('', \array_map(EmvcoTlv::encode(...), $copyObjects)) . '6304';
 
-        return new self($objects, self::validatedTwin($body . Crc16CcittFalse::compute($body), $profile));
+        return new self($objects, self::validatedCopy($body . Crc16CcittFalse::compute($body), $profile));
     }
 
     /**
@@ -96,7 +96,7 @@ final readonly class ProfilePayload
      */
     public function accounts(): array
     {
-        return EmvcoMerchantPresented::accounts($this->twinObjects);
+        return EmvcoMerchantPresented::accounts($this->copyObjects);
     }
 
     /**
@@ -106,7 +106,7 @@ final readonly class ProfilePayload
      */
     public function additional(string $subId): ?string
     {
-        return EmvcoMerchantPresented::additionalData($this->twinObjects)[$subId] ?? null;
+        return EmvcoMerchantPresented::additionalData($this->copyObjects)[$subId] ?? null;
     }
 
     public function pointOfInitiation(): ?PointOfInitiation
@@ -116,17 +116,17 @@ final readonly class ProfilePayload
 
     public function amount(): ?Decimal
     {
-        return EmvcoMerchantPresented::amount($this->twinObjects);
+        return EmvcoMerchantPresented::amount($this->copyObjects);
     }
 
     public function currency(): ?CurrencyCode
     {
-        return EmvcoMerchantPresented::currency($this->twinObjects);
+        return EmvcoMerchantPresented::currency($this->copyObjects);
     }
 
     public function countryCode(): ?CountryCode
     {
-        return EmvcoMerchantPresented::countryCode($this->twinObjects);
+        return EmvcoMerchantPresented::countryCode($this->copyObjects);
     }
 
     /**
@@ -160,7 +160,7 @@ final readonly class ProfilePayload
      *
      * @throws InvalidPaymentQrException naming the profile instead of the generic class
      */
-    private static function validatedTwin(string $payload, string $profile): array
+    private static function validatedCopy(string $payload, string $profile): array
     {
         try {
             return EmvcoMerchantPresented::validate($payload, false);

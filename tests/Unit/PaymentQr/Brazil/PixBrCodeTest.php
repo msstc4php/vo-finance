@@ -13,6 +13,7 @@ use MSSTC4PHP\ValueObject\Financial\Internal\EmvcoTlv;
 use MSSTC4PHP\ValueObject\Financial\Internal\ProfilePayload;
 use MSSTC4PHP\ValueObject\Financial\Internal\ProfileRule;
 use MSSTC4PHP\ValueObject\Financial\PaymentQr\Brazil\PixBrCode;
+use MSSTC4PHP\ValueObject\Financial\PaymentQr\Brazil\PixKeyType;
 use MSSTC4PHP\ValueObject\Financial\PaymentQr\Emvco\DataObject;
 use MSSTC4PHP\ValueObject\Financial\PaymentQr\Emvco\MerchantAccount;
 use MSSTC4PHP\ValueObject\Financial\PaymentQr\Emvco\MerchantPresentedQr;
@@ -37,6 +38,7 @@ use PHPUnit\Framework\TestCase;
 #[UsesClass(DataObject::class)]
 #[UsesClass(InvalidPaymentQrException::class)]
 #[UsesClass(AmbiguousPaymentQrFieldException::class)]
+#[UsesClass(PixKeyType::class)]
 final class PixBrCodeTest extends TestCase
 {
     use BuildsPayloads;
@@ -70,6 +72,37 @@ final class PixBrCodeTest extends TestCase
         self::assertSame('0000', $pix->merchantCategoryCode());
         self::assertSame('986', $pix->currency()?->numeric());
         self::assertSame('BR', $pix->countryCode()?->value);
+    }
+
+    public function testTheKeyTypeIsDecodedFromTheDictFormats(): void
+    {
+        self::assertSame(PixKeyType::Evp, new PixBrCode(self::BCB_STATIC)->pixKeyType());
+        self::assertSame(PixKeyType::Email, new PixBrCode(self::sealed(...$this->baseline('pix@bcb.gov.br')))->pixKeyType());
+        self::assertSame(PixKeyType::Phone, new PixBrCode(self::sealed(...$this->baseline('+5510998765432')))->pixKeyType());
+        self::assertSame(PixKeyType::Cpf, new PixBrCode(self::sealed(...$this->baseline('12345678901')))->pixKeyType());
+        self::assertSame(PixKeyType::Cnpj, new PixBrCode(self::sealed(...$this->baseline('12345678901234')))->pixKeyType());
+    }
+
+    public function testAKeyOfNoDictFormatIsAcceptedWithoutAType(): void
+    {
+        $pix = new PixBrCode(self::sealed(...$this->baseline('Fulano@Example.com')));
+
+        self::assertSame('Fulano@Example.com', $pix->pixKey());
+        self::assertNull($pix->pixKeyType());
+        self::assertNull(new PixBrCode(self::BCB_DYNAMIC)->pixKeyType());
+    }
+
+    public function testTheKeyTypeIsNeverPickedSilently(): void
+    {
+        $pix = new PixBrCode(self::sealed(
+            self::tlv('00', '01'),
+            self::tlv('26', self::tlv('00', 'br.gov.bcb.pix') . self::tlv('01', 'one@example.com')),
+            self::tlv('27', self::tlv('00', 'br.gov.bcb.pix') . self::tlv('01', '12345678901')),
+            ...$this->tail(),
+        ));
+
+        $this->expectException(AmbiguousPaymentQrFieldException::class);
+        $pix->pixKeyType();
     }
 
     public function testTheOfficialDynamicQrCodeParses(): void

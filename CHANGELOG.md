@@ -42,3 +42,7 @@
 - National profiles fix round 3: the generic validation moved to the stateless internal `EmvcoMerchantPresented`
   (`MerchantPresentedQr::withoutLengthBound()` and its static flag are gone; profiles validate a modified copy without a
   twin instance); `AmbiguousPaymentQrFieldException` takes a reason from the call site.
+- More national EMVCo QR profiles: `KhqrCode` (National Bank of Cambodia, KHQR specification 3.0) and `JpqrCode`
+  (Payments Japan MPM guideline 2.0), both in `PaymentQrFactory`; `PixBrCode::pixKeyType()` with `PixKeyType` decoded
+  from the BCB DICT formats (null for any other key, never refused). SGQR, QRIS, VietQR, HK FPS, Bharat QR and QR Ph
+  stay unbuilt (reasons in the README). `ProfilePayload` names its modified copy accordingly (no behaviour change).

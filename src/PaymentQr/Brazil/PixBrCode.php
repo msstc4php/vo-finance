@@ -25,7 +25,7 @@ use Override;
  * all. Templates 80 to 99 that are not data objects are skipped. The additional information (02, 1 to 72), the withdrawal provider ISPB (03, 8 characters);
  * currency 986, country BR, merchant name up to 25 and city up to 15 characters; the reference label (62-05, 1 to 25
  * characters). The maxima of the key, URL and additional information (77, 77, 72) follow from the 99-character template
- * and need no check of their own. Not enforced: the form of the key (the DICT manual is not reached) and the letters and
+ * and need no check of their own. The key type is decoded ({@see pixKeyType()}), never enforced. Not enforced: the letters and
  * digits rule for a static code's txid, which the BCB's own BR Code example (`RP12345678-2019`) breaks.
  *
  * @see https://www.bcb.gov.br/content/estabilidadefinanceira/pix/Regulamento_Pix/II_ManualdePadroesparaIniciacaodoPix.pdf BCB, Manual de Padroes para Iniciacao do Pix 2.10.0, section 2.5 to 2.8
@@ -56,6 +56,18 @@ final class PixBrCode extends AbstractStringValueObject implements Maskable
     public function pixKey(): ?string
     {
         return $this->single($this->pixKeys(), 'the Pix key');
+    }
+
+    /**
+     * The type of the Pix key, decoded from the DICT formats; null without a key or for a key of no DICT format.
+     *
+     * @throws AmbiguousPaymentQrFieldException when several Pix templates carry different keys
+     */
+    public function pixKeyType(): ?PixKeyType
+    {
+        $key = $this->pixKey();
+
+        return $key === null ? null : PixKeyType::ofKey($key);
     }
 
     /**

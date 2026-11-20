@@ -569,6 +569,8 @@ only the rules quoted below. A profile is built only when its publisher's own sp
 |---|---|---|
 | Pix BR Code | Banco Central do Brasil, Manual de Padroes para Iniciacao do Pix, <https://www.bcb.gov.br/content/estabilidadefinanceira/pix/Regulamento_Pix/II_ManualdePadroesparaIniciacaodoPix.pdf> (SHA-256 `fd4422bac3bb3237d26decedc8725c08449aeb7729c243165fbe5832cb236b3d`); Manual do BR Code, <https://www.bcb.gov.br/content/estabilidadefinanceira/spb_docs/ManualBRCode.pdf> | Pix manual 2.10.0 (the page also announces 2.11.0-rc1); BR Code manual 2.0.1 |
 | PromptPay (Thai QR) | Bank of Thailand, Policy Guideline "Standardized Thai QR Code for Payment Transactions", 17 April 2019, <https://www.bot.or.th/content/dam/bot/fipcs/documents/FPG/2562/EngPDF/25620084.pdf> (SHA-256 `1b924d0befa061766c5b0d3ff403b8bcc83630bdac641fea910b544492977b5f`) | 2019 (B.E. 2562), section 2.3 holds the data structure |
+| KHQR | National Bank of Cambodia, Prakas on KHQR for Payment in Cambodia, appendix "KHQR Code Specification in Cambodia, Merchant-Presented Mode", read as the Internet Archive raw copy <https://web.archive.org/web/20230330080021id_/https://www.nbc.gov.kh/download_files/legislation/prakas_kh/Prakas_F14-020-351-PR_KHQR_for_Payment_in_Cambodia_appendix.pdf> (SHA-256 `20b92419060a59ce5609a80e8900bf280714957b8204ea5a4012df313ab3b8c4`, a stamped scan, read page by page); NBC "KHQR Content Guideline" 1.3, <https://web.archive.org/web/20230201043137id_/https://bakong.nbc.gov.kh/download/KHQR/integration/KHQR%20Content%20Guideline%20v.1.3.pdf> (SHA-256 `549d98091718ab128629b8f414093885ac50015352536980af32469b6d22e2ec`); NBC "KHQR SDK Documentation" 2.7, <https://web.archive.org/web/20240702234224id_/https://bakong.nbc.gov.kh/download/KHQR/integration/KHQR%20SDK%20Document.pdf> (SHA-256 `5f77168caae91702033710215aee4f0c8c707ca5578133400a0deee37d36cfcd`) | specification 3.0, April 2020 |
+| JPQR | Payments Japan (キャッシュレス推進協議会), コード決済に関する統一技術仕様ガイドライン【店舗提示型】MPM, read as the Internet Archive raw copy <https://web.archive.org/web/20200918130533id_/https://www.paymentsjapan.or.jp/wordpress/wp-content/uploads/2020/04/MPM_Guideline_2.0.pdf> (SHA-256 `de0596c5b3e208ec44062cdc74d14851d024249f718bed555f18c0bdf7ba4f37`) | 2.0, 27 April 2020 |
 | DuitNow QR | PayNet developer documentation, DuitNow QR, merchant-presented mode V1.5, "QR Data Object" and "Examples": <https://docs.developer.paynet.my/docs/duitNow-QR/integration/QR-generation-specification/merchant-presented-mode/qr-data-object> and `.../example` | V1.5; the pages carry the notice that the site is no longer updated and point to a newer PayNet documentation site, which was not read |
 
 Pix rules (all Pix manual 2.10.0 unless marked BR Code manual):
@@ -585,7 +587,7 @@ Pix rules (all Pix manual 2.10.0 unless marked BR Code manual):
 | Merchant name 1..25, city 1..15 | BR Code table 1: `59` "01..25", `60` "01..15" | BR Code 2.1 |
 | Reference label 62-05 present, 1..25 characters; `***` when no identifier is used | "Additional Data Field - Reference Label, sempre presente em um BR Code" (footnote 21); BR Code table 1 `62` "M", `05` "01..25"; "se o gerador do QR optar por nao utilizar um transactionID, o valor '***' devera ser usado" (footnote 25) | 2.6 |
 | Not enforced: letters and digits for the txid | "Os caracteres permitidos no contexto do Pix para o campo txid (EMV 62-05) sao: letras minusculas, maiusculas, digitos" (2.6.2); the BR Code manual's own example payload carries `RP12345678-2019` | 2.6.2, BR Code 2.2 |
-| Not enforced: the form of the key | "A regra ... segue estritamente as regras definidas no Manual Operacional do DICT" (the DICT manual was not read) | 2.5.1 |
+| The form of the key: decoded only (`pixKeyType()`, see "Pix key types" below), never enforced | "A regra ... segue estritamente as regras definidas no Manual Operacional do DICT" | 2.5.1 |
 
 Pix official vectors: static, section 2.6.3, `...6304 1D3D`; dynamic, section 2.7, `...630464E4`; BR Code manual section 2.2, `...6304AD38` (a Pix template next to a card account and another arrangement). Their CRCs verify.
 
@@ -621,20 +623,102 @@ DuitNow rules (PayNet V1.5):
 
 DuitNow official vectors: examples 1 to 4 of the "Examples" page (POS, P2P, with a data integrity check, JomPAY); CRCs `343F`, `3A23`, `B623`, `5DFB` verify.
 
+KHQR rules (specification 3.0 unless marked guideline):
+
+| Rule | Quote | Section |
+|---|---|---|
+| Identified by a Bakong template, tag 29 or 30 | table 4.2A: "29"-"30" "Reserved for National Payment (Bakong/KHQR) for use in Cambodia", "29 Reserved For Remittance", "30 Reserved For Payment"; guideline FAQ 3 to 5: "How to identify remittance KHQR? ... Use tag 29", "How to identify corporate merchant KHQR? ... Use tag 30" | 4.2; guideline p. 11 |
+| Sub-tags of 29/30 (accessors only): 00 the Bakong account ID, 01 account information (29) or merchant ID (30), 02 acquiring bank | "Gobally Unique Indentifer in tag 00 is bank main wallet or desktop wallet", "Has customer account information in sub tag 01 (account number or phone number)", "Has merchant information in sub tag 01 (merchant id or merchant account number)"; table "30 00 Unique ID of payment, 01 Merchant ID, 02 Acquiring Bank" | guideline pp. 07-11 |
+| Country KH | "Put "KH" in the Country Code field if the merchant transacts in Cambodia"; table 4.3A `58` "For Cambodia is "KH""; the Prakas is "KHQR for Payment in Cambodia". Derived, not a verbatim "shall": the class needs it to tell KHQR from other codes using tags 29/30 (Thai QR, EMVCo Annex B.7) | 4.3 |
+| MCC mandatory (dummy `0000` allowed), currency mandatory | table 4.3A `52` "M ... Put a dummy code of "0000""; table 4.4 `53` "M" | 4.3, 4.4 |
+| Merchant name up to 25, city up to 15, postal code up to 10 | table 4.3A `59` "var. up to "25" M", `60` "var. up to "15" M", `61` "var. up to "10" O" | 4.3 |
+| Language template 64: 00 and 01 present, 00 two letters, 01 up to 25, 02 up to 15 | "If the Merchant Information - Language Template (ID "64") is present, the template shall contain the Language Preference field (ID "00") and Merchant Name - Alternate Language field (ID "01")"; "shall contain 2 alphabetical characters coded to a value defined by [ISO 639]"; table 4.3B `01` "Var. up to "25", `02` "var. up to "15"" | 4.3 |
+| Amount up to 13 characters, not zero | table 4.4 `54` "Var. up to "13""; "The Transaction Amount (ID "54"), if present, shall be different from zero" | 4.4 |
+| Tip indicator N 2, fixed fee up to 13, percentage up to 5 | table 4.4 `55` "N "02"", `56` "Var. up to "13"", `57` "Var. up to "05"" | 4.4 |
+| Additional data 62 sub-IDs 01 to 09 up to 25 | table 4.5: each of "01" to "09" "var. up to "25"" | 4.5 |
+| Not enforced: currency 116 | "e.g. put "116" for KHR" (an example; the guideline's own tag-30 example uses 840) | 4.4 |
+| Not enforced: the GUI form | 4.2 requires an AID, UUID or reverse domain name, but every NBC example puts a Bakong account ID (`test_bakong@devb`) in sub-tag 00; the generic 32-character bound applies | 4.2; guideline |
+| Not enforced: template 99 (timestamp in the NBC examples), the content of other operators' templates | "the meaning of the other data objects in the template are context specific and outside of the scope of this specification" | 4.2 |
+
+KHQR official vectors (all CRCs verify): guideline 1.3 pages 04 (`...6304102F`, tag 29 static), 06 (`...6304D1EB`, dynamic, amount 1000), 07 (`...63042ACD`, remittance, account information `0000001112`), 08 (`...630402F7`, tag 30, USD 10.0, template 62); SDK 2.7 "Generate KHQR for Individual" (`...63042B5B`) and "for Merchant" (`...63049740`), both with a UnionPay ID 15 and a Khmer language template. The guideline prints line-wrapped payloads; the joined strings are the ones whose CRC verifies.
+
+JPQR rules (MPM guideline 2.0, parts 1 static and 2 dynamic, tables 2.1-1, 2.1-2, 3.2):
+
+| Rule | Quote |
+|---|---|
+| A template 26-51 with GUI `jp.or.paymentsjapan` carrying the unified store ID in sub-IDs 01 (13 digits), 02 (4), 03 (6), 04 (6) | table 2.1-1 契約店情報 "26"-"51" 必須: "“xx680019jp.or.paymentsjapan0113aaaaaaaaaaaaa0204bbbb0306cccccc0406dddddd” (... 13 桁の a には統一店舗識別コードの管理レベル 1 が、4 桁の b には ... 管理レベル 2 が、6 桁の c には ... 管理レベル 3 が、6 桁の d には ... 管理レベル 4 がそれぞれ入る。)"; 3.2 "統一店舗識別コードは 29 桁の数字で構成される"; table 3.2 levels 13/4/6/6 桁 |
+| GUI compared case-insensitively | not stated by Payments Japan; EMVCo GUIs are reverse domain names, and the class accepts `JP.OR.PAYMENTSJAPAN` rather than refuse a possibly valid code (inference, documented) |
+| Point of initiation mandatory (11 static, 12 dynamic) | table 2.1-1 静的/動的フラグ "01" 必須 "“11”（静的 QR コードの場合）"; part 2 "“12”（動的 QR コードの場合）" |
+| Amount mandatory in a dynamic code | part 2 table 2.1-1 取引金額 "54" 必須 (part 1: 任意) |
+| Postal code mandatory | 契約店郵便番号 "61" 必須 |
+| Language template mandatory with 00 and 01 | 契約店情報（日本語） "64" 必須; table 2.1-2 使用言語 "00" 必須, 契約店名（日本語） "01" 必須 |
+| Several JPQR templates: accepted (no text forbids them); `storeIds()` lists, `storeId()` throws | -- |
+| Not enforced: currency 392, country JP | "通貨コード（円 “392”）", "国コード（日本 “JP”）": the yen and Japan entries in the content column, not stated as fixed values |
+| Not enforced: language `JA` | "Value： JA ... 契約店ごとに協議会事務局が決定" (decided per merchant by the secretariat) |
+
+The guideline prints the template layout but no complete payload; every JPQR test payload is synthetic and labelled.
+
+Pix key types (decoded only, `PixBrCode::pixKeyType()` and `PixKeyType::ofKey()`; a key of no listed format gives null and is never refused):
+
+| Type (DICT `KeyType`) | Rule | Source |
+|---|---|---|
+| CPF | `^[0-9]{11}$`; "O CPF será utilizado com 11 números, incluindo os dígitos verificadores. Deverá ser informado sem pontos ou traços." | API do DICT 2.13.0 "Chave" table; Manual Operacional do DICT 8.5, section 1 |
+| CNPJ | `^[A-Z0-9]{12}[0-9]{2}$`; "O CNPJ será utilizado em formato alfanumérico, com 14 caracteres, incluindo os dígitos verificadores" | same |
+| PHONE | `^\+[1-9]\d{1,14}$`; "O telefone celular usará o padrão E.164" | same |
+| EMAIL | the schema's `Email` pattern, printed below (the rendered table drops `%&`); "E-mail deve possuir no máximo 77 caracteres e deve ser em minúsculo" | same |
+| EVP | `^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$`; "UUID gerado pelo DICT, conforme formato especificado na RFC4122" | same |
+
+```text
+^[a-z0-9.!#$%&'*+\/=?^_`{|}~-]+@[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?(?:\.[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?)*$
+```
+
+Not enforced: the CPF and CNPJ check digits (the DICT texts mention them but give no algorithm); `KeyType` is open ("Tipo de chave. _Novos tipos podem surgir_."). Sources: <https://www.bcb.gov.br/content/estabilidadefinanceira/pix/Regulamento_Pix/X_ManualOperacionaldoDICT.pdf> (Versão 8.5, SHA-256 `b97a2ae8ec2086ccf74c6b23d7caac84c46913c3e153df2509629955983eb713`); <https://www.bcb.gov.br/content/estabilidadefinanceira/pix/API-DICT.html> (DICT API 2.13.0, SHA-256 `b0fec5cdecf81f112c9e4bd6a3650d54365115dd926b7026904c4cf1d9bc3867`). The BCB's GitHub `bacen/pix-dict-api` says it is obsolete and points to that page. Test vectors: the examples of the API table (`12345678901`, `12345678901234`, `+5510998765432`, `pix@bcb.gov.br`, `123e4567-e89b-12d3-a456-426655440000`).
+
 **Not built** (no official specification reached; the generic `MerchantPresentedQr` parses their payloads)
 
-| Profile | What was reached | Reason |
-|---|---|---|
-| SGQR (MAS/IMDA) | MAS SGQR pages (<https://www.mas.gov.sg/sgqr>), search results | No specification document is published on the pages; the Payments Council endorsement is announced, the document itself was not found |
-| QRIS (Bank Indonesia) | BI "Bahan Sosialisasi QRIS" (SHA-256 `600c834989236d89425bc6cfa378845d1a49b3227f5d96ffebbff546a9ff2604`), PADG 21/18/PADG/2019 | Both describe the standard but carry no data-object table; the specification document was not found (bi.go.id drops curl, files were read through WebFetch; an ASPI bulletin returned HTML) |
-| VietQR (NAPAS) | napas.com.vn answers | No NAPAS specification found; only third-party libraries describe it |
-| KHQR (NBC) | "KHQR SDK Documentation" 2.9, May 2025, <https://bakong.nbc.gov.kh/download/KHQR/integration/KHQR%20SDK%20Document.pdf> (SHA-256 `9ce224ccf7ade79f92bf52604b52c17e383c4d3e0b4aa7b50ec4535d135fd974`) | The SDK usage guide: generator parameters and sample payloads; the Prakas specification of the data objects and any GUI rule are not in it |
-| HK FPS (HKMA/HKICL) | HKMA Common QR Code Specification 1.0 | It defines the common template only (GUI, tables 4.1 to 4.5); the FPS-specific template is HKICL's and was not reached |
-| JPQR (Payments Japan) | none | paymentsjapan.or.jp is outside this environment's allowed hosts; only secondary articles found |
-| QR Ph (BSP) | bsp.gov.ph answers | No BSP or PPMI specification found; only third-party descriptions |
-| Bharat QR (NPCI) | none | npci.org.in answers 403; only secondary statements found |
+| Profile | Reason |
+|---|---|
+| SGQR (MAS/IMDA) | The specification is not published. MAS's pages, the IMDA 2018 fact sheet ("The SGQR specifications are based on the "QR Code Specification for Payment System – Merchant-Presented Mode" issued by EMVCo ... customised it for the Singapore market") and the 2022 MAS/IMDA consultation paper ("SGQR is based on internationally recognised EMVCo merchant-presented QR code specifications") give no data-object rule |
+| QRIS (Bank Indonesia) | PADG 21/18/PADG/2019 article 5(1): "Penyelenggara Jasa Sistem Pembayaran dan pihak lain yang bermaksud memperoleh salinan dokumen QRIS ... harus mengajukan permohonan tertulis kepada Lembaga Standar" (the QRIS document is given on written request only); the PADG has no technical annex |
+| VietQR (NAPAS) | SBV Decision 1928/QĐ-NHNN (5 Oct 2018, TCCS 03:2018/NHNNVN, the merchant-presented base standard) was not reached; Decision 2525/QĐ-NHNN is TCCS 04:2024, the customer-presented standard; NAPAS's VietQR specification is found only on third-party sites |
+| HK FPS (HKMA/HKICL) | HKMA publishes the common template and an implementation guideline only; HKICL's FPS pages and public scheme documents (rules, merchant scheme leaflet) carry no FPS template |
+| Bharat QR (NPCI) | NPCI circular NPCI/2017-18/PD/004: "NPCI had released technical specifications (Merchant QR Code Specification V 4.0) ... to all RuPay acquiring member banks"; not published |
+| QR Ph (BSP) | none found (Task 6) |
 
-The searches for the unbuilt profiles were limited to a few queries each; a follow-up with a different network or a vendor-supplied copy may reach more.
+#### Task 6b search log
+
+All dates 2026-11-20 UTC. Downloads went to fresh directories and were only read (pdftotext or page images).
+
+| Time (UTC) | Target | URL | Result |
+|---|---|---|---|
+| 11:18 | Pix DICT | <https://www.bcb.gov.br/content/estabilidadefinanceira/pix/Regulamento_Pix/X_ManualOperacionaldoDICT.pdf> | 200, PDF, Versão 8.5 (146 pages); section 1 key formats |
+| 11:19 | Pix DICT | <https://api.github.com/repos/bacen/pix-dict-api> | BCB's verified GitHub org; README "OBSOLETO", points to the BCB page |
+| 11:20 | Pix DICT | <https://www.bcb.gov.br/content/estabilidadefinanceira/pix/API-DICT.html> | 200, DICT API 2.13.0; key type regex table |
+| 11:21 | SGQR | Internet Archive CDX prefix `mas.gov.sg/-/media/` filtered "sgqr" | "Temporarily Offline" for the filtered query |
+| 11:21 | SGQR | <https://web.archive.org/web/20190826085949id_/https://www.mas.gov.sg/development/e-payments/sgqr>, `.../20261118084218id_/...` | pages; no specification link |
+| 11:22 | SGQR | MAS 2022 consultation page, PDFs direct from mas.gov.sg | page lists the paper, annexes, response and guidelines; direct PDF fetch returns an HTML page |
+| 11:23 | SGQR | <https://web.archive.org/web/20240718173417id_/https://www.mas.gov.sg/-/media/mas-media-library/publications/consultations/ftig/2022/guidelines-on-participation-in-sgqr.pdf> | PDF (SHA-256 `b77811b2...`), participation guidelines, no data objects |
+| 11:23-11:25 | SGQR | consultation paper P005-2022, captures 20240912090437 (truncated at 1 MiB, twice) and <https://web.archive.org/web/20221026033408id_/https://www.mas.gov.sg/-/media/MAS-Media-Library/publications/consultations/FTIG/P005-2022__Consultation-Paper-on-Strengthening-Participation-in-SGQR.pdf> | PDF (SHA-256 `cc0f10b1...`), section 2.3: based on EMVCo, no rule |
+| 11:24-11:27 | SGQR | CDX prefixes `www.mas.gov.sg/-/media/MAS/SGQR/`, `.../Development/Payments/`, press releases, `sgqr.sg/`, `www.imda.gov.sg/-/media/Imda/Files/` | only IMDA 2018 media-release annexes A and B |
+| 11:27 | SGQR | IMDA Annex A (capture 20260316060244) and Annex B (20250322004200) | fact sheet and scheme list, no data objects |
+| 11:27 | SGQR | <https://www.mas.gov.sg/news/media-releases/2017/payments-council-endorses-singapore-quick-response-code-specifications-for-electronic-payments> | no document attached |
+| 11:28 | QRIS | <https://www.bi.go.id/id/publikasi/peraturan/Pages/padg_211819.aspx> (curl: SSL reset; WebFetch: OK) | two attachments (PADG, FAQ); Lampiran 3-10 empty |
+| 11:28 | QRIS | <https://www.bi.go.id/id/publikasi/peraturan/Documents/padg_211819.pdf> | PDF (SHA-256 `a02fd6e3...`); article 5: copies on written request |
+| 11:28 | VietQR | sbv.gov.vn document links (curl: "Request Rejected"; WebFetch: OK) | 587714 = Decision 2525/QĐ-NHNN; 587715 = TCCS 04:2024 (customer-presented); 331375 = an IT-security circular |
+| 11:29 | VietQR | searches "1928/QĐ-NHNN", "TCCS 03:2018/NHNN"; thuvienphapluat search page (403) | no copy of the decision or the standard |
+| 11:30 | VietQR | MOET Decision 4597/QĐ-BGDĐT (storage-edu.vnpt.vn) | quotes sections 4.2.3.2, 4.2.4, 4.2.14 of 1928 for the education sector only; no NAPAS template |
+| 11:30 | VietQR | search NAPAS VietQR specification | only third-party copies (v1.5.2) and libraries |
+| 11:31 | HK FPS | <https://fps.hkicl.com.hk/eng/fps/merchants/qr_code.php> | points to the HKMA specification; no FPS template |
+| 11:32 | HK FPS | HKICL scheme documentation: FPS Merchant Payment Scheme, HKD FPS Rules (redacted) | no QR content |
+| 11:32 | HK FPS | <https://www.hkma.gov.hk/media/eng/doc/key-functions/financial-infrastructure/infrastructure/retail-payment-initiatives/Implementation_Guideline_on_Common_QR_Code.pdf> | guideline (SHA-256 `da12e3bc...`), no data objects |
+| 11:32 | KHQR | <https://bakong.nbc.gov.kh/download/KHQR/> and sub-directories | 403 |
+| 11:33 | KHQR | CDX prefixes `bakong.nbc.gov.kh/download/`, `nbc.gov.kh/download_files/` | Prakas appendix, Content Guideline 1.3, SDK documents |
+| 11:33-11:37 | KHQR | Prakas appendix and Content Guideline (see the Built table) | specification 3.0 read page by page; guideline tags 29/30 and examples |
+| 11:42 | KHQR | SDK 2.7 (capture 20240702234224), Bakong Open API document (capture 20260807120547) | examples; no Bakong account ID format |
+| 11:39 | Bharat QR | CDX prefix `www.npci.org.in/PDF/npci/` | only circular NPCI/2017-18/PD/004 and brand kits |
+| 11:40 | Bharat QR | <https://web.archive.org/web/20220117094506id_/https://www.npci.org.in/PDF/npci/bharat-qr/Circular-Integration-%20Bharat-QR-%20UPI.pdf> | scanned circular (SHA-256 `043c88e4...`): specification 4.0 released to member banks |
+| 11:39-11:41 | JPQR | CDX prefix `www.paymentsjapan.or.jp/wordpress/wp-content/uploads/` | MPM guidelines 1.0, 1.1, 2.0; CPM 1.1, 1.2 |
+| 11:41 | JPQR | MPM guideline 2.0 (see the Built table) | read; built |
 
 ### EPC069-12
 
