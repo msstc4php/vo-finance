@@ -49,3 +49,10 @@
 - National profiles 6b fix round 1: `JpqrCode` refuses payloads over 512 bytes (Payments Japan); the internal
   `ProfilePayload::templateFields()` replaces three copies of the template-64 reader (KHQR, JPQR, DuitNow); search log,
   SGQR and HK FPS verdicts and the KHQR/JPQR source notes corrected in `docs/sources/FINANCE.md`.
+- Non-EMVCo payment payloads: `Epc\EpcQr` (EPC069-12 v3.0, versions 001 and 002, `fromBytes()` for character sets 2 to
+  8), `Swiss\QrBill` with `QrBillAddress` and `QrBillReferenceType` (SIX IG 2.3; QR-IBAN only with `QRR`, IBAN only
+  with `SCOR` or `NON`), `Ru\Gost56042Payload` (GOST R 56042-2014 with the Bank of Russia account control key,
+  `fromBytes()` for WIN1251 and KOI8-R), `Ru\SbpPaymentLink` (format only) and `India\UpiPaymentUri` (NPCI OC 18
+  parameters); `Reference\QrReference`, `Reference\CreditorReference` and `InvalidPaymentReferenceException`.
+  `PaymentQrFactory::fromString()` routes them by leading marker before the EMVCo profiles. Line separators and a
+  trailing separator are kept byte for byte. ext-mbstring is suggested for `fromBytes()`.

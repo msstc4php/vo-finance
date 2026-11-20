@@ -54,6 +54,12 @@ statement).
 | CRC | BCB Manual do BR Code 2.0.1 (complete payload with CRC AD38); HKMA Common QR Code Specification 1.0 | reached | polynomial 1021, initial value FFFF, and the printed result that fixes no reflection and no final XOR |
 | QR reference | SIX Swiss Implementation Guidelines for the QR-bill 2.3, Annex B | reached | the recursive modulo 10 matrix |
 | Creditor reference | ISO 11649:2009 preview (full normative clauses); SIX IG 2.3 Annex A; EPC069-12 v3.0 section 2.3 | preview, reached | `RF`, check pair, MOD 97-10; RF18 5390 0754 7034 |
+| EPC QR | EPC069-12 v3.0 (13 September 2022) | reached | line layout, character sets, limits, examples V1 and V2 |
+| Swiss QR-bill | SIX IG QR-bill 2.3 (21 November 2025) | reached | data elements, separators, character set, reference rules, Annex A examples (example 4's RF72 fails ISO 11649) |
+| GOST R 56042-2014 | text as quoted by files.stroyinf.ru | as quoted | service block, pairs, mandatory requisites, Annex D example |
+| Russian account key | Bank of Russia Order 515 (1997) as quoted by pravo.ppt.ru | as quoted | 7-1-3 weights, RKC or credit institution number, annex examples |
+| SBP link | NSPK Rules P.235 v4.0 (archive) | archive; layout **unreachable** | format only |
+| UPI URI | NPCI OC 18 (2017) and OC 37 (archive); linking specification not reached | archive | `pa`, `pn` mandatory, `tr` up to 35; scheme not confirmed |
 
 ## ISIN, ISO 6166
 
@@ -498,11 +504,11 @@ For `PaymentQrFactory` (Task 7).
 | EMVCo merchant-presented QR | `000201` (ID 00, length 02, value 01) | HKMA Common QR Code Specification 1.0, table 4.1; BCB Manual do BR Code 2.0.1 example payload | reached (via HKMA and BCB) |
 | EPC QR | line 1 `BCD`, version `001` or `002`, identification `SCT` | EPC069-12 v3.0, <https://europeanpaymentscouncil.eu/sites/default/files/kb/file/2022-09/EPC069-12%20v3.0%20Quick%20Response%20Code%20-%20Guidelines%20to%20Enable%20the%20Data%20Capture%20for%20the%20Initiation%20of%20an%20SCT_0.pdf> "Service Tag: ‘BCD’", "V1: ‘001’ V2: ‘002’" | reached |
 | Swiss QR-bill | `SPC` ("Swiss Payments Code") | SIX IG QR-bill 2.3, section 4.2 data structure, "QRType" `"SPC" (Swiss Payments Code)`; Annex A examples | reached |
-| GOST R 56042-2014 | `ST0001` followed by the charset digit | text of the standard as mirrored at <https://files.stroyinf.ru/Data2/1/4293771/4293771168.htm> ("Версия стандарта ... "0001" ST0001") | reached via a mirror; Task 7 confirms against the standard |
-| SBP link | `https://qr.nspk.ru/` | NSPK documentation | **unreachable** (secondary articles only) |
-| UPI | `upi://pay?` | NPCI UPI Linking Specification; a third-party copy of version 1.6 and an NPCI circular were found | **not confirmed** (the NPCI document itself was not read) |
+| GOST R 56042-2014 | `ST0001` followed by the charset digit | text of the standard as mirrored at <https://files.stroyinf.ru/Data2/1/4293771/4293771168.htm> (Table 3: "ST0001") | as quoted (Task 7: Rosstandart's own text unreachable) |
+| SBP link | `https://qr.nspk.ru/` | NSPK documentation | **unreachable**: NSPK Rules P.235 v4.0 put the QR standards on the closed portal (Task 7); format only |
+| UPI | `upi://pay?` | NPCI UPI Linking Specification; a third-party copy of version 1.6 and NPCI circulars OC 18 and OC 37 were found | **not confirmed** (the NPCI document itself was not read; OC 18 gives the parameters, not the scheme) |
 
-## Placeholders for Tasks 5 to 7
+## Payment payload sections (Tasks 5 to 7)
 
 ### EMVCo QRCPS merchant-presented mode
 
@@ -729,20 +735,168 @@ All dates 2026-11-20 UTC. Downloads went to fresh directories and were only read
 
 ### EPC069-12
 
-Task 6: the line layout, field limits, version differences. Marker found above.
+EPC069-12 "Quick Response Code - Guidelines to Enable the Data Capture for the Initiation of a SEPA Credit Transfer",
+version 3.0, issued and effective 13 September 2022 (the current version: no later one found, see the log),
+<https://www.europeanpaymentscouncil.eu/sites/default/files/kb/file/2022-09/EPC069-12%20v3.0%20Quick%20Response%20Code%20-%20Guidelines%20to%20Enable%20the%20Data%20Capture%20for%20the%20Initiation%20of%20an%20SCT_0.pdf>
+(SHA-256 `6fd09d5e...`), status **reached**. Its revision table lists V1.0 (2012), V2.0, V2.1 and V3.0; versions `001`
+and `002` of the payload are both defined by it.
+
+| Rule | Quote (section) | Outcome |
+|---|---|---|
+| Character sets | 2.1: "1: UTF-8 ... 2: ISO 8859-1 ... 3: ISO 8859-2 ... 4: ISO 8859-4 ... 5: ISO 8859-5 ... 6: ISO 8859-7 ... 7: ISO 8859-10 ... 8: ISO 8859-15" | enforced; `fromBytes()` transcodes 2-8 |
+| Service tag, version, identification | 2.2: "Service Tag: ‘BCD’"; "V1: ‘001’ V2: ‘002’"; "Identification code: ‘SCT’" | enforced |
+| BIC | 2.2: "V1: M ... V2: O/M", "8/11an" | enforced (vo-base `Bic`, ISO 9362 shape); empty only in `002` |
+| Name | 2.2: "1..70an", "AT-21 The name of the Beneficiary", M | enforced (characters) |
+| IBAN | 2.2: "1..34an", "Only IBAN is allowed." | enforced (vo-base `Iban`) |
+| Amount | 2.2: "3..3an, 1..12n", max. 12, "Amount must be larger than or equal to 0.01, and cannot be larger than 999999999.99"; example `EUR12.3` | enforced: `EUR`, at most 12 digits and decimal point, the bounds |
+| Purpose | 2.2: "1..4an" | enforced (length) |
+| Reference / text | 2.2: "{Or 1..35an" structured, "Or} 1..140an" unstructured, "{Or}: Only one of the elements may be populated."; "Creditor Reference (ISO 11649 RF Creditor Reference may be used)" | enforced; `creditorReference()` decodes an RF reference, never refuses another |
+| Information | 2.2: "1..70an Beneficiary to Originator information" | enforced (length) |
+| Payload size | 2.2: "The total payload is limited to 331 bytes." | enforced on `fromBytes()` input; the stored UTF-8 form is bounded at 331 characters (a transcoded payload may grow in bytes and must still round-trip) |
+| Separators | 2.2: "The elements separator is either a line feed (LF) or a carriage return line feed (CRLF)." | enforced; mixing is not forbidden and is accepted |
+| Last element | 2.2: "The last populated element is not followed by any character or element separator." | **not enforced**: the plan's Review Focus 3 and the Task 7 ruling require a trailing newline to round-trip as given |
+
+Examples (2.3), the tests of `EpcQr`: V1 `BCD / 001 / 1 / SCT / BHBLDEHHXXX / Franz Mustermänn /
+DE71110220330123456789 / EUR12.3 / GDDS / RF18539007547034`, "95 characters including spaces (1) and line feeds (9), 96
+byte UTF-8 code payload" (the test checks 96 bytes); V2 `BCD / 002 / 2 / SCT / (empty BIC) / François D'Alsace S.A. /
+FR1420041010050500013M02606 / EUR12.3 / (empty purpose) / (empty reference) / Client:Marie Louise La Lune`, "103
+characters including spaces (5) and line feeds (10), 103 byte ISO 8859-1 code payload" (the test encodes it in ISO
+8859-1, checks 103 bytes and reads it through `fromBytes()`).
 
 ### SIX QR-bill layout
 
-Task 6: the data structure, address types, reference types, trailer. Reference check digit and markers above.
+Swiss Implementation Guidelines for the QR-bill, version 2.3 (valid from 21 November 2025),
+<https://www.six-group.com/dam/download/banking-services/standardization/qr-bill/ig-qr-bill-v2.3-en.pdf> (SHA-256
+`26bdc055...`), status **reached** (re-downloaded for Task 7). Version 2.3 removed "the option for combined address
+fields in chapter 4.2.2" (revision history), so only address type `S` remains.
+
+| Rule | Quote (section) | Outcome |
+|---|---|---|
+| Character set | 4.1.1: "Basic Latin (Unicode codepoints U+0020–U+007E) ... Latin1 Supplement (U+00A0–U+00FF) ... Latin Extended A (U+0100–U+017F)", Ș ș Ț ț (U+0218 to U+021B), "€ ... U+20AC"; "The message and the data in the Swiss QR Code must be UTF-8 encoded." | enforced on every element |
+| Separators | 4.1.4: "All data elements must be present. If the data element has no content, at least a new line must be present. The same type of carriage return must always be used within a document. ... CR + LF ... LF"; status "A" elements "are omitted if they are not used, and no further subsequent data element is used." | enforced: 31 to 34 elements, one separator kind |
+| Final separator | 4.1.4: "The carriage return after the final element is eliminated." | **not enforced**: Review Focus 3 and the Task 7 ruling keep a trailing newline; Annex A example 3 itself ends `EPD¶ ¶ ¶` with the empty AP2 last, which reads the same as a trailing separator |
+| Header | Table 8: QRType "Fixed value "SPC""; Version "only the version designation "0200" is permitted in master version 02"; Coding "Fixed value 1" | enforced |
+| IBAN | Table 8: "Fixed length: 21 alphanumeric characters, no spaces allowed, only IBANs with CH or LI country code permitted." | enforced |
+| Creditor | Table 8: AdrTp "S - structured address"; Name "Maximum 70"; StrtNmOrAdrLine1 "Maximum 70"; BldgNbOrAdrLine2 "max. 16"; PstCd "Maximum 16"; TwnNm "Maximum 35"; Ctry "Two-digit country code according to ISO 3166-1"; 4.3.1 ""Postal code", "Town" and "Country" must be filled in." | enforced (country: two capitals, decoded by vo-base `CountryCode`) |
+| Ultimate creditor | Table 8: "This entire data group must not be filled in" (status X) | enforced: seven empty elements |
+| Amount | Table 8: "without leading zeroes, including decimal separators and two decimal places. Decimal, maximum 12-digits permitted, including decimal separators. Only decimal points ... between CHF/EUR 0.01 and 999,999,999.99"; 4.4 Table 10 amount "0.00" for "DO NOT USE FOR PAYMENT" | enforced; 0.00 accepted (section 4.4) |
+| Currency | Table 8: "Only CHF and EUR are permitted." | enforced |
+| Ultimate debtor | Table 8: optional data group, AdrTp/Name/PstCd/TwnNm/Ctry "D"; 4.1.5 "all sub-elements marked as "Dependent" must be filled" | enforced |
+| Reference type | Table 8 Tp: "Must contain the code QRR where a QR-IBAN is used; where the IBAN is used, either the SCOR or NON code can be entered"; 4.3.2 "Use of the QR reference presupposes that a QR-IBAN has been used ... An IBAN cannot therefore be used." and "Use of the Creditor Reference (ISO 11649) presupposes that an IBAN has been used. A QR-IBAN cannot be used." | enforced |
+| QR-IID | 2.8: "QR-IIDs consist exclusively of numbers from 30000 to 31999." | enforced: IBAN positions 5 to 9 |
+| Reference | Table 8 Ref: QR reference "Always 27 characters - Numeric - Check-digit calculation as per modulo 10 recursive"; creditor reference "5 to 25 characters - Alphanumeric - ... modulo 97-10"; "The element must not be filled in for the reference type NON."; "The banks draw no distinction between lower and upper case when processing." | enforced (`QrReference`, `CreditorReference`; lowercase accepted) |
+| Message and billing | Table 8: Ustrd "Maximum 140", StrdBkgInf "Maximum 140", "may contain a common total of up to 140 characters"; Trailer "Fixed value "EPD"" | enforced |
+| Alternative procedures | Table 8 AltPmt: "A maximum of two occurrences ... Maximum of 100 characters per alternative procedure" | enforced |
+| Postal code "without a country"; billing-information syntax (4.3.3, Annex D) | | not checked (no testable rule) |
+
+Annex A examples are the tests: example 1 (QR-IBAN `CH6431961000004421557`, QRR `000008207791225857421286694`), 2 (QR-IBAN
+`CH4431999123000889012`, QRR `210000000003139471430009017`, billing information `//S1/10/1234/11/201021/30/102673386/32/7.7/40/0:30`
+joined from its two printed lines, AP1 `eBill/B/simon.muster@example.com`), 3 (`CH5204835012345671000`, `NON`), 5 and 6
+(`CH5800791123000889012`, SCOR `RF18539007547034`). **Example 4 prints `RF720191230100405JSH0438`, which fails the
+ISO 11649 check** (the check pair of `0191230100405JSH0438` is 24, computed with `Internal\Iso7064Mod97`); `QrBill`
+refuses it and a test records it, as for ISO 11649's own `RF68` example.
 
 ### GOST R 56042-2014 and the Bank of Russia account key
 
-Task 7.
+**GOST R 56042-2014** "Стандарты финансовых операций. Двумерные символы штрихового кода для осуществления платежей
+физических лиц", approved by Rosstandart order 552-ст of 11 June 2014, in force 1 September 2014, reprint February 2020.
+Rosstandart's own text was **unreachable** (protect.gost.ru search page served no document; the standard is sold, not
+published); read **as quoted** by the database mirror <https://files.stroyinf.ru/Data2/1/4293771/4293771168.htm>.
+
+| Rule | Quote (section) | Outcome |
+|---|---|---|
+| Service block | 5.2.1 Table 1: "Идентификатор формата 2 ... "ST""; "Версия 4 ... ‘0001’"; "Признак набора кодированных знаков 1 ... 1 - WIN1251; 2 - UTF8; 3 - KOI8-R"; "Разделитель 1 ... По умолчанию используется знак "|""; "Длина блока равна строго 8 байт." | enforced; the separator must be an ASCII graphic character (inference from the eight bytes, which UTF-8 allows only for ASCII) |
+| Pairs | 5.2.2: "Каждый реквизит состоит из псевдонима (наименования) и значения, которые между собой разделены знаком "="... "значением" признается все содержимое данной пары после первого "="... Псевдонимы могут состоять только из латинских букв, цифр и знака "_" ... регистр букв не важен" | enforced |
+| Mandatory block | 5.2.3: "Обязательные реквизиты располагаются в строго определенном порядке ... Не допускается отсутствие значений"; Table 2: Name "от 1 до 160 знаков", PersonalAcc "Строка цифр строго 20 знаков", BankName "от 1 до 45 знаков", BIC "Строка цифр строго 9 знаков", CorrespAcc "Строка цифр до 20 знаков. При отсутствии ... корр. счета поле заполнять значением "0"" | enforced |
+| Last separator | 5.2.4: "Знак-разделитель после последнего значения последнего элемента этого блока не используется." | enforced (an empty pair has no `=`) |
+| Repeated aliases | 5.2.4: "При включении двух и более реквизитов с одинаковыми псевдонимами при разборе учитываться будет только последнее вхождение"; Table 4 step 6 "без учета регистра" | `get()` gives the last; a repeated mandatory alias must also have its format |
+| Additional aliases | Annex V (Sum "Макс. 18", Purpose "Макс. 210", PayeeINN, PersAcc "Номер лицевого счета плательщика в организации", ...) | decoded only; `masked()` hides `PersonalAcc` and `PersAcc` |
+| Binary string | 5.4.2: "В двумерный символ штрихового кода кодируется строка двоичного типа ... программное обеспечение принимающей организации будет получать информацию об используемом наборе кодируемых знаков из элемента N 3" | `fromBytes()` transcodes 1 and 3 and rewrites the digit to 2 |
+
+Annex D example (declared `1`, WIN1251), the test vector in UTF-8, through `fromBytes()` from WIN1251 and KOI8-R:
+`ST00011|Name=ООО "Три кита"|PersonalAcc=40702810138250123017|BankName=ОАО "БАНК"|BIC=044525225|CorrespAcc=30101810400000000225|PayeeINN=6200098765|LastName=Иванов|FirstName=Иван|MiddleName=Иванович|Purpose=Оплата членского взноса|PayerAddress=г.Рязань ул.Ленина д.10 кв.15|Sum=100000`.
+The mirror prints the payee INN alias as `PayeelNN` (a lowercase L, an OCR or typesetting slip for Annex V's `PayeeINN`) and
+splits the line with stray hyphens; the test uses Annex V's alias. Table 3 step 6 of the mirror has Cyrillic letters in
+"РауегАddress", which the alias rule forbids; the Annex D text `PayerAddress` is used.
+
+**Control key.** Bank of Russia, "Порядок расчета контрольного ключа в номере лицевого счета", 8 September 1997 No. 515
+(in force from 1 January 1998). Not found on cbr.ru (see the log); read **as quoted** by <https://pravo.ppt.ru/poryadok/98817>
+Положение 579-П (the chart of accounts of credit institutions) was not read; the search found the key rule only in
+Order 515, which is what `Internal\RussianAccountKey` implements.
+
+> "2. Для расчета контрольного ключа используется совокупность двух реквизитов - условного номера РКЦ (если лицевой счет
+> открыт в РКЦ) или кредитной организации (если лицевой счет открыт в кредитной организации) и номера лицевого счета.
+> 3. Значение трехзначного условного номера РКЦ соответствует разрядам 5 и 6 банковского идентификационного кода (БИК),
+> дополненным слева нулем до трех разрядов. 4. Значение условного номера кредитной организации соответствует разрядам 7,
+> 8 и 9 БИК. 5. Контрольный ключ рассчитывается с использованием весовых коэффициентов" (7 1 3 repeated over the 23
+> digits); "7.2. Рассчитывается сумма младших разрядов полученных произведений. При получении суммы, кратной 10 ...
+> значение контрольного ключа считается верным."
+
+Annex examples, tests of `Internal\RussianAccountKey`: `30101810800000000746` at BIC `049805000` and `40102810100000010001`
+at BIC `040305000` (both with the RKC number 005). A payment payload does not say whether the account is opened at an RKC
+or a credit institution, so either number gives a valid key (the GOST example account `40702810138250123017` passes with
+the credit institution number 225, its correspondent account with the RKC number 045). Item 8 (a letter in the sixth
+digit for clearing currency) does not arise: GOST requires 20 digits. Accounts shorter than 20 digits (`CorrespAcc=0`)
+have no key.
 
 ### NSPK SBP
 
-Task 7.
+**Format only.** NSPK's Rules P.235 "Правила информационно-технологического взаимодействия Агента ТСП, Банка, АО «НСПК»
+при использовании QR-кодов в целях оплаты товаров (работ, услуг) в СБП", version 4.0 (in force 12.09.2024), Internet
+Archive copy
+<https://web.archive.org/web/20251221101611id_/https://sbp.nspk.ru/file/pravila-informacionno-tekhnologicheskogo-vzaimodejstviya_v.4.0.pdf>
+(SHA-256 `812dcc19...`), status **archive**: "Правила размещаются на Сайте. Стандарты ОПКЦ СБП размещаются на Портале."
+and "взаимодействие ... с использованием QR-кода, в соответствии со Стандартами ОПКЦ СБП"; the portal is
+<https://support.nspk.ru>, open to participants only. The text contains no `qr.nspk.ru` link, no identifier shape and
+no query field. The only link examples found are third-party (a Habr article with `?type=01&bank=...&crc=...`), so
+`SbpPaymentLink` checks the host `qr.nspk.ru` over HTTPS, one identifier segment of ASCII letters and digits and a query
+without spaces or fragment, as the plan allows ("otherwise format only (host, id shape)"). Its test link is synthetic.
 
 ### NPCI UPI linking specification
 
-Task 7.
+The NPCI "UPI Linking Specifications" (deep linking specs 1.5.1, the version NPCI's circulars name) were **not reached**:
+NPCI says they were "provided to member banks"; the copies found (labnol.org, version 1.6 draft) are third-party. Reached,
+from NPCI itself through the Internet Archive:
+
+- NPCI/UPI/OC No. 18/2016-17, 20 March 2017, "Bank Compliances to enable UPI Merchant ecosystem",
+  <https://web.archive.org/web/2024id_/https://www.npci.org.in/PDF/npci/upi/circular/2017/Circular18_BankCompliances_to_enbaleUPIMerchantecosystem_0.pdf>
+  (SHA-256 `6e543716...`), status **archive**. Annexure A Table 1 "QR (Key Deep Linking parameters)", column "As per
+  'Deep linking specs'": "Pa Payee virtual payment address M", "Pn Payee Name M", "Tr Transaction Ref No. (upto 35
+  digits) C", "Am Amount O", "Mam Minimum amount O"; "PN: ... other additional parameters which are optional and can be
+  referred to, from the Deep Linking Specs provided to member banks." D.7: "While generating an intent/QR string, ‘space’
+  has to be represented by ’%’ ... ‘’tn=test%transaction’’".
+- NPCI/UPI/OC No. 37/2017-18, 1 November 2017,
+  <https://web.archive.org/web/20241010082959id_/https://www.npci.org.in/PDF/npci/upi/circular/2017/Circular%20on%20Non-compliance%20of%20UPI%20apps%20to%20Deeplinking%20specs%20Circular%2037-%201.11.2017.pdf>
+  (SHA-256 `6b39d795...`): "UPI Deep linking Specs 1.5.1" is the binding version; no parameter text.
+
+Outcome: `pa` and `pn` present and filled; `tr` 1 to 35 characters (the length; "digits" is not enforced, merchant
+references are commonly alphanumeric and the specification itself was not read); no percent-decoding (the bare `%`
+space). The scheme `upi://pay` is **not confirmed** from an NPCI text (the plan's and the marker table's); the test URI is
+synthetic.
+
+### Task 7 search log
+
+All times 2026-11-20, UTC.
+
+| Time | Topic | Attempt | Result |
+|---|---|---|---|
+| 12:16 | EPC | curl the EPC069-12 v3.0 URL of the marker table | 200, 442142 bytes, redirected to www.europeanpaymentscouncil.eu |
+| 12:17 | EPC | WebSearch "EPC069-12 Quick Response Code guidelines latest version 3.1" | only v3.0 (EPC) and a v2.1 copy; no later version |
+| 12:16 | SIX | curl ig-qr-bill-v2.3-en.pdf | 200, 2610009 bytes |
+| 12:18 | GOST | WebSearch "ГОСТ Р 56042-2014 Стандарты финансовых операций двумерные символы штрихового кода ST00012 текст" | mirrors (stroyinf, meganorm), a Sberbank PDF; no Rosstandart text |
+| 12:19 | GOST | curl <https://files.stroyinf.ru/Data2/1/4293771/4293771168.htm> | 200, full text read |
+| 12:19 | GOST | curl <https://www.sberbank.ru/common/img/uploaded/files/shtrih-kod-standart.pdf> | TLS failure (certificate chain not trusted); not retried without verification |
+| 12:19 | GOST | curl <https://protect.gost.ru/v.aspx?control=8&baseC=6&page=0&month=-1&year=-1&search=56042> | 200, no document in the page |
+| 12:20 | Key | WebSearch "Порядок расчета контрольного ключа в номере лицевого счета 579-П приложение весовые коэффициенты 7 1 3 cbr.ru" | Order 515 of 08.09.1997 on legal databases; 579-П is the chart of accounts |
+| 12:20 | Key | WebSearch ""контрольного ключа" "лицевого счета" 515 1997 site:cbr.ru" | no cbr.ru copy; ConsultantPlus, pravo.ppt.ru, garant |
+| 12:20 | Key | curl <https://pravo.ppt.ru/poryadok/98817> and <https://www.consultant.ru/document/cons_doc_LAW_16870/> | 200; pravo.ppt.ru has the full text with the annex examples; `cons_doc_LAW_16870` is Instruction 26-U (budget account numbering), not Order 515, and is readable only on a schedule |
+| 12:21 | SBP | WebSearch "НСПК СБП платежная ссылка qr.nspk.ru формат type=02 bank sum cur crc документация sbp.nspk.ru" | third-party articles and bank documents only |
+| 12:21 | SBP | curl <https://sbp.nspk.ru/business/> | 403 |
+| 12:21 | SBP | curl <https://habr.com/ru/companies/nspk/news/849738/> | 200; no link layout |
+| 12:21 | SBP | Internet Archive CDX `url=sbp.nspk.ru&matchType=domain&filter=mimetype:application/pdf` | 84 PDFs: rules, brand guides, lists |
+| 12:22 | SBP | archive copy of Rules P.235 v4.0 (20251221101611); of P.235 v2.0 (20210506225242) | v4.0 read: standards on the portal; v2.0 copy truncated at 1 MiB twice, unreadable |
+| 12:23 | UPI | WebSearch "NPCI UPI Linking Specifications pdf upi://pay pa pn am cu tr npci.org.in" | labnol copies (third-party), NPCI OC 18 |
+| 12:23 | UPI | curl the NPCI OC 18 URL | 403; Internet Archive copy 200 |
+| 12:24 | UPI | Internet Archive CDX `url=npci.org.in/PDF/npci/upi/&matchType=prefix` | 312 rows; OC 37 on the deep linking specs; no specification PDF |
+| 12:24 | UPI | WebSearch ""upi://pay" site:npci.org.in" | the UPI Product Booklet and pages; none defines the URI |
+| 12:25 | UPI | archive copy of Product-Booklet.pdf (20241007101808) | read: "UPI Intent", QR scan; no `upi://pay` text |

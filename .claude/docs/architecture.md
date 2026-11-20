@@ -20,3 +20,11 @@ several profiles throw `AmbiguousValueException`). Each profile is an `AbstractS
 filled with placeholders when the profile allows, CRC recomputed) while keeping the original objects for `get()`,
 `pointOfInitiation()` and `masked()` (`Internal\EmvcoMask`). Shared accessors come from the `Internal\ExposesRootFields`
 trait; checks use `Internal\ProfileRule`.
+
+Non-EMVCo payloads (Task 7): `PaymentQr\Epc\EpcQr`, `PaymentQr\Swiss\QrBill` (+ `QrBillAddress` readonly DTO,
+`QrBillReferenceType` enum), `PaymentQr\Ru\Gost56042Payload`, `PaymentQr\Ru\SbpPaymentLink`, `PaymentQr\India\UpiPaymentUri`;
+references `Reference\QrReference`, `Reference\CreditorReference`. Helpers: `Internal\TextLines` (line split keeping every
+LF/CRLF separator, rebuild with one line replaced), `Internal\QueryString` (raw `name=value` pairs, no decoding),
+`Internal\Transcoder` (mbstring, single-byte charset to UTF-8), `Internal\Mask` (2 + asterisks + 4),
+`Internal\RussianAccountKey` (Order 515). `PaymentQrFactory` dispatches by marker (`BCD`, `SPC`, `ST0001`,
+`https://qr.nspk.ru/` and `upi://` case-insensitive) before the EMVCo profiles; a marked payload never falls back to EMVCo.

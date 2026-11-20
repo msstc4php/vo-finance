@@ -10,19 +10,33 @@ use MSSTC4PHP\ValueObject\Financial\Internal\Crc16CcittFalse;
 use MSSTC4PHP\ValueObject\Financial\Internal\EmvcoMask;
 use MSSTC4PHP\ValueObject\Financial\Internal\EmvcoMerchantPresented;
 use MSSTC4PHP\ValueObject\Financial\Internal\EmvcoTlv;
+use MSSTC4PHP\ValueObject\Financial\Internal\Iso7064Mod97;
+use MSSTC4PHP\ValueObject\Financial\Internal\Mask;
+use MSSTC4PHP\ValueObject\Financial\Internal\Mod10Recursive;
 use MSSTC4PHP\ValueObject\Financial\Internal\ProfilePayload;
 use MSSTC4PHP\ValueObject\Financial\Internal\ProfileRule;
+use MSSTC4PHP\ValueObject\Financial\Internal\QueryString;
+use MSSTC4PHP\ValueObject\Financial\Internal\RussianAccountKey;
+use MSSTC4PHP\ValueObject\Financial\Internal\TextLines;
 use MSSTC4PHP\ValueObject\Financial\PaymentQr\Brazil\PixBrCode;
 use MSSTC4PHP\ValueObject\Financial\PaymentQr\Cambodia\KhqrCode;
 use MSSTC4PHP\ValueObject\Financial\PaymentQr\Emvco\DataObject;
 use MSSTC4PHP\ValueObject\Financial\PaymentQr\Emvco\MerchantAccount;
 use MSSTC4PHP\ValueObject\Financial\PaymentQr\Emvco\MerchantPresentedQr;
+use MSSTC4PHP\ValueObject\Financial\PaymentQr\Epc\EpcQr;
+use MSSTC4PHP\ValueObject\Financial\PaymentQr\India\UpiPaymentUri;
 use MSSTC4PHP\ValueObject\Financial\PaymentQr\Japan\JpqrCode;
 use MSSTC4PHP\ValueObject\Financial\PaymentQr\Malaysia\DuitNowQr;
 use MSSTC4PHP\ValueObject\Financial\PaymentQr\PaymentQrFactory;
+use MSSTC4PHP\ValueObject\Financial\PaymentQr\Ru\Gost56042Payload;
+use MSSTC4PHP\ValueObject\Financial\PaymentQr\Ru\SbpPaymentLink;
+use MSSTC4PHP\ValueObject\Financial\PaymentQr\Swiss\QrBill;
 use MSSTC4PHP\ValueObject\Financial\PaymentQr\Thailand\PromptPayProxyType;
 use MSSTC4PHP\ValueObject\Financial\PaymentQr\Thailand\PromptPayQr;
+use MSSTC4PHP\ValueObject\Financial\Reference\CreditorReference;
+use MSSTC4PHP\ValueObject\Financial\Reference\QrReference;
 use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\UsesClass;
 use PHPUnit\Framework\TestCase;
 
@@ -43,6 +57,19 @@ use PHPUnit\Framework\TestCase;
 #[UsesClass(MerchantAccount::class)]
 #[UsesClass(DataObject::class)]
 #[UsesClass(InvalidPaymentQrException::class)]
+#[UsesClass(EpcQr::class)]
+#[UsesClass(QrBill::class)]
+#[UsesClass(Gost56042Payload::class)]
+#[UsesClass(SbpPaymentLink::class)]
+#[UsesClass(UpiPaymentUri::class)]
+#[UsesClass(TextLines::class)]
+#[UsesClass(QueryString::class)]
+#[UsesClass(RussianAccountKey::class)]
+#[UsesClass(Mask::class)]
+#[UsesClass(QrReference::class)]
+#[UsesClass(CreditorReference::class)]
+#[UsesClass(Mod10Recursive::class)]
+#[UsesClass(Iso7064Mod97::class)]
 final class PaymentQrFactoryTest extends TestCase
 {
     use BuildsPayloads;
@@ -222,6 +249,88 @@ final class PaymentQrFactoryTest extends TestCase
     {
         $this->expectException(InvalidPaymentQrException::class);
         PaymentQrFactory::fromString(\substr(self::PIX, 0, -4) . '0000');
+    }
+
+    public function testAnEpcPayloadGivesEpcQr(): void
+    {
+        // EPC069-12 v3.0, section 2.3, example V1.
+        $payload = "BCD\n001\n1\nSCT\nBHBLDEHHXXX\nFranz Mustermänn\nDE71110220330123456789\nEUR12.3\nGDDS\nRF18539007547034";
+
+        self::assertInstanceOf(EpcQr::class, PaymentQrFactory::fromString($payload));
+    }
+
+    public function testASwissPayloadGivesQrBill(): void
+    {
+        // SIX IG QR-bill 2.3, Annex A, example 3.
+        $payload = \implode("\r\n", [
+            'SPC', '0200', '1', 'CH5204835012345671000', 'S', 'Muster Stiftung (sample foundation)', 'P.O. Box', '', '3001',
+            'Bern', 'CH', '', '', '', '', '', '', '', '', 'CHF', '', '', '', '', '', '', '', 'NON', '', '', 'EPD',
+        ]);
+
+        self::assertInstanceOf(QrBill::class, PaymentQrFactory::fromString($payload));
+    }
+
+    public function testAGostPayloadGivesGost56042Payload(): void
+    {
+        // GOST R 56042-2014, Annex D, mandatory block, in UTF-8.
+        $payload = 'ST00012|Name=ООО "Три кита"|PersonalAcc=40702810138250123017|BankName=ОАО "БАНК"|BIC=044525225|CorrespAcc=30101810400000000225';
+
+        self::assertInstanceOf(Gost56042Payload::class, PaymentQrFactory::fromString($payload));
+    }
+
+    public function testAnSbpLinkGivesSbpPaymentLink(): void
+    {
+        // Synthetic (see FINANCE.md "NSPK SBP").
+        self::assertInstanceOf(SbpPaymentLink::class, PaymentQrFactory::fromString('https://qr.nspk.ru/AS1000670LSS7DN18SJQDNP4B05KLJL2?type=01'));
+        self::assertInstanceOf(SbpPaymentLink::class, PaymentQrFactory::fromString('HTTPS://QR.NSPK.RU/AS1000670LSS7DN18SJQDNP4B05KLJL2'));
+    }
+
+    public function testAUpiUriGivesUpiPaymentUri(): void
+    {
+        // Synthetic, with the parameters of NPCI UPI OC 18 (2017), Table 1.
+        self::assertInstanceOf(UpiPaymentUri::class, PaymentQrFactory::fromString('upi://pay?pa=merchant@bank&pn=Merchant'));
+        self::assertInstanceOf(UpiPaymentUri::class, PaymentQrFactory::fromString('UPI://pay?pa=merchant@bank&pn=Merchant'));
+    }
+
+    /**
+     * @return iterable<string, array{string}>
+     */
+    public static function markedButInvalid(): iterable
+    {
+        yield 'EPC' => ["BCD\n003"];
+        yield 'Swiss' => ["SPC\n0200"];
+        yield 'GOST' => ['ST00012|Name=A'];
+        yield 'SBP' => ['https://qr.nspk.ru/'];
+        yield 'UPI' => ['upi://pay?pn=A'];
+    }
+
+    #[DataProvider('markedButInvalid')]
+    public function testAMarkedPayloadThatItsClassRefusesIsNotTriedAsEmvco(string $payload): void
+    {
+        try {
+            PaymentQrFactory::fromString($payload);
+            self::fail('Expected an exception.');
+        } catch (InvalidPaymentQrException $exception) {
+            self::assertStringNotContainsString('MerchantPresentedQr', $exception->getMessage());
+        }
+    }
+
+    /**
+     * @return iterable<string, array{string}>
+     */
+    public static function nearMarkers(): iterable
+    {
+        yield 'SBP host with another suffix' => ['https://qr.nspk.rux/AS1000670LSS7DN18SJQDNP4B05KLJL2'];
+        yield 'UPI with one slash' => ['upi:/pay?pa=a@b&pn=A'];
+    }
+
+    #[DataProvider('nearMarkers')]
+    public function testANearMarkerIsTriedAsEmvco(string $payload): void
+    {
+        $this->expectException(InvalidPaymentQrException::class);
+        $this->expectExceptionMessage('MerchantPresentedQr');
+
+        PaymentQrFactory::fromString($payload);
     }
 
     private function promptPay(): string

@@ -9,8 +9,9 @@ format only and listed here under "Format only" once the classes exist.
 
 ## Payment QR classes
 
-All implement `Maskable`; `masked()` replaces the values of the merchant accounts (IDs 02 to 51), the templates 80 to 99 and
-the CRC with asterisks.
+All implement `Maskable`. On the EMVCo classes `masked()` replaces the values of the merchant accounts (IDs 02 to 51),
+the templates 80 to 99 and the CRC with asterisks; on the others it hides the IBAN, account, identifier or VPA, keeping
+its first two and last four characters. A masked string is not a valid payload.
 
 | Class | Payload |
 |---|---|
@@ -20,10 +21,24 @@ the CRC with asterisks.
 | `PaymentQr\Malaysia\DuitNowQr` | DuitNow QR (PayNet): `acquirerId()`, `qrId()`, `isJomPay()` |
 | `PaymentQr\Cambodia\KhqrCode` | KHQR (National Bank of Cambodia, Bakong tags 29/30): `bakongAccountId()`, `accountInformation()`, `merchantId()`, `acquiringBank()`; lists `bakongAccountIds()` |
 | `PaymentQr\Japan\JpqrCode` | JPQR (Payments Japan): `storeId()` (29-digit unified store ID), `postalCode()`, `alternateMerchantName()`; lists `storeIds()` |
-| `PaymentQr\PaymentQrFactory` | the profile that accepts an EMVCo payload; several profiles throw `AmbiguousValueException`; none gives `MerchantPresentedQr` |
+| `PaymentQr\Epc\EpcQr` | EPC QR for a SEPA credit transfer (EPC069-12 v3.0, versions 001 and 002): `bic()`, `beneficiaryName()`, `iban()`, `amount()`, `purpose()`, `reference()`, `creditorReference()`, `remittanceText()`, `information()`; `fromBytes()` for character sets 2 to 8 |
+| `PaymentQr\Swiss\QrBill` | Swiss QR-bill (SIX IG 2.3): `iban()`, `isQrIban()`, `creditor()` and `ultimateDebtor()` (`QrBillAddress`), `amount()`, `currency()`, `referenceType()` (`QrBillReferenceType`), `reference()` (`QrReference` or `CreditorReference`), `unstructuredMessage()`, `billingInformation()`, `alternativeProcedures()` |
+| `PaymentQr\Ru\Gost56042Payload` | GOST R 56042-2014: `name()`, `personalAccount()`, `bankName()`, `bic()`, `correspondentAccount()`, `get()` by alias; `fromBytes()` for WIN1251 and KOI8-R |
+| `PaymentQr\Ru\SbpPaymentLink` | SBP link `https://qr.nspk.ru/<id>` (format only): `id()`, `get()`, `parameterNames()` |
+| `PaymentQr\India\UpiPaymentUri` | UPI `upi://pay?` URI: `payeeAddress()`, `payeeName()`, `transactionReference()`, `amount()`, `get()`, `parameterNames()` |
+| `PaymentQr\PaymentQrFactory` | by leading marker `BCD`, `SPC`, `ST0001`, `https://qr.nspk.ru/`, `upi://` the class above; otherwise the profile that accepts an EMVCo payload; several profiles throw `AmbiguousValueException`; none gives `MerchantPresentedQr` |
+
+Payment references, typed parts of the QR-bill: `Reference\QrReference` (27 digits, recursive modulo 10) and
+`Reference\CreditorReference` (ISO 11649 `RF`, MOD 97-10; lowercase is folded to capitals). Both throw
+`Exception\InvalidPaymentReferenceException`.
+
+Line-based payloads (EPC, QR-bill) keep their separators (LF or CRLF) and a trailing separator byte for byte; the LF and
+CRLF forms of one payload are not equal. The constructors take UTF-8 text. A payload declared in another character set
+goes through `fromBytes()`, which transcodes it and rewrites the character set element to UTF-8 (EPC `1`, GOST `2`), so
+the stored bytes differ from the scanned ones in that element; `fromBytes()` needs ext-mbstring (composer `suggest`).
 
 The single-value accessors (`pixKey()`, `pixKeyType()`, `paymentUrl()`, `recurrenceUrl()`, `proxyType()`, `proxy()`,
-`bakongAccountId()`, `acquiringBank()`, `storeId()`) throw
+`bakongAccountId()`, `acquiringBank()`, `storeId()`, and the query accessors of `SbpPaymentLink` and `UpiPaymentUri`) throw
 `Exception\AmbiguousPaymentQrFieldException` when the payload carries several distinct values; their list accessors
 (`pixKeys()`, `paymentUrls()`, `recurrenceUrls()`, `proxyTypes()`, `proxyOf()`, `bakongAccountIds()`, `storeIds()`)
 return all of them and never throw. On
@@ -59,6 +74,23 @@ Checked for length and character set, never for a check digit or a range no offi
   breaks it), PromptPay currency 764 and country TH, the DuitNow ID 82 hash and acquirer ID table, the KHQR currency and
   the content of the Bakong templates beyond their sub-tags, JPQR currency 392, country JP, language `JA` and the
   maxima of 59, 60 and 62 (none stated). `JpqrCode` refuses a payload over 512 bytes (Payments Japan's own bound).
+- `EpcQr`: the EPC's 331-byte limit is checked on `fromBytes()` input only; the stored UTF-8 form is bounded at 331
+  characters, because a transcoded payload may take more bytes than it had. The content of the purpose code and of a
+  non-RF reference is not checked.
+- `QrBill`: the postal code "without a country", the billing-information syntax (`//` and an agreed code) and the
+  alternative-procedure syntax are not checked; amount 0.00 is accepted (the "DO NOT USE FOR PAYMENT" notification).
+  SIX IG 2.3's own Annex A example 4 (`RF72 0191 ...`) fails the ISO 11649 check and is refused.
+- `Gost56042Payload`: only the mandatory requisites have a format; the additional ones (Annex V maxima such as `Sum`
+  18 characters, `Purpose` 210) are kept as written. The control key follows Bank of Russia Order 515 (read through a
+  legal database); since the payload does not say whether an account is opened at an RKC or a credit institution, either
+  conditional number gives a valid key. The separator must be an ASCII graphic character (inferred from the eight-byte
+  service block).
+- `SbpPaymentLink`: format only. NSPK keeps the link layout in its SBP OPKTs standards on a closed portal, so neither
+  the identifier length nor any query field (`type`, `bank`, `sum`, `cur`, `crc`) is checked.
+- `UpiPaymentUri`: the NPCI linking specification was not reached; NPCI's circular OC 18 gives `pa` and `pn` as
+  mandatory and `tr` "upto 35 digits" (the length is enforced, not the digits, which merchant references do not follow).
+  The scheme `upi://pay` is the plan's, not confirmed from an NPCI text; nothing is percent-decoded (NPCI writes a space
+  as a bare `%`).
 
 ## Profiles not built
 

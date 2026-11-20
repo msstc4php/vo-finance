@@ -55,6 +55,9 @@
         "roave/backward-compatibility-check": "^8.20",
         "roave/security-advisories": "dev-latest"
     },
+    "suggest": {
+        "ext-mbstring": "Required by EpcQr::fromBytes() and Gost56042Payload::fromBytes() to transcode payloads declared in a single-byte character set."
+    },
     "autoload": {
         "psr-4": {
             "MSSTC4PHP\\ValueObject\\Financial\\": "src/"
