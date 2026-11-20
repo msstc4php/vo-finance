@@ -45,8 +45,6 @@ final class MerchantPresentedQr extends AbstractStringValueObject implements Mas
 {
     private const string TYPE = 'MerchantPresentedQr';
 
-    private const int MAX_LENGTH = 7089;
-
     private const int MAX_GUI_LENGTH = 32;
 
     /** @var list<DataObject> */
@@ -197,8 +195,8 @@ final class MerchantPresentedQr extends AbstractStringValueObject implements Mas
     #[Override]
     protected function parse(string $value): string
     {
-        if (\strlen($value) > self::MAX_LENGTH * 4 || EmvcoTlv::length($value) > self::MAX_LENGTH) {
-            throw new InvalidPaymentQrException(\sprintf('%s must not exceed %d characters.', self::TYPE, self::MAX_LENGTH));
+        if (\strlen($value) > EmvcoTlv::MAX_PAYLOAD_LENGTH * 4 || EmvcoTlv::length($value) > EmvcoTlv::MAX_PAYLOAD_LENGTH) {
+            throw new InvalidPaymentQrException(\sprintf('%s must not exceed %d characters.', self::TYPE, EmvcoTlv::MAX_PAYLOAD_LENGTH));
         }
 
         $objects = EmvcoTlv::parse($value);

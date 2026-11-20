@@ -86,6 +86,44 @@ final class PromptPayQrTest extends TestCase
         yield 'bank account at the 43 digit limit' => ['04', \str_repeat('7', 43), PromptPayProxyType::BankAccount];
     }
 
+    public function testTheAidIsComparedCaseInsensitively(): void
+    {
+        $credit = new PromptPayQr(self::sealed(...$this->frame(self::tlv('29', self::tlv('00', 'a000000677010111') . self::tlv('01', '0066812345678')))));
+        $bill = new PromptPayQr(self::sealed(...$this->frame(self::tlv('30', self::tlv('00', 'a000000677012006') . self::tlv('01', '010753600031507') . self::tlv('02', 'R')))));
+
+        self::assertSame('0066812345678', $credit->proxy());
+        self::assertSame('R', $bill->reference1());
+    }
+
+    public function testSeveralProxiesAreKeptAndNeverPickedSilently(): void
+    {
+        $qr = new PromptPayQr(self::sealed(...$this->frame(self::tlv('29', self::tlv('00', self::CREDIT_AID) . self::tlv('01', '0066812345678') . self::tlv('02', '1234567890123')))));
+
+        self::assertSame([PromptPayProxyType::MobileNumber, PromptPayProxyType::NationalOrTaxId], $qr->proxyTypes());
+        self::assertSame('1234567890123', $qr->proxyOf(PromptPayProxyType::NationalOrTaxId));
+        self::assertNull($qr->proxyOf(PromptPayProxyType::EWalletId));
+        $this->expectException(InvalidPaymentQrException::class);
+        $qr->proxy();
+    }
+
+    public function testNoProxyTypesWithoutACreditTransfer(): void
+    {
+        $qr = new PromptPayQr(self::sealed(...$this->frame(self::tlv('30', self::tlv('00', 'A000000677010112') . self::tlv('01', '010753600031507') . self::tlv('02', 'R')))));
+
+        self::assertSame([], $qr->proxyTypes());
+        self::assertNull($qr->proxyOf(PromptPayProxyType::MobileNumber));
+        self::assertNull($qr->proxyType());
+    }
+
+    public function testTheLongestReferencesAreAccepted(): void
+    {
+        $bill = self::tlv('30', self::tlv('00', 'A000000677010112') . self::tlv('01', '010753600031507') . self::tlv('02', \str_repeat('a', 20)) . self::tlv('03', \str_repeat('b', 20)));
+        $qr = new PromptPayQr(self::sealed(...$this->frame($bill)));
+
+        self::assertSame(\str_repeat('a', 20), $qr->reference1());
+        self::assertSame(\str_repeat('b', 20), $qr->reference2());
+    }
+
     public function testABillPaymentWithBillerIdAndReferences(): void
     {
         $bill = self::tlv('30', self::tlv('00', 'A000000677010112') . self::tlv('01', '010753600031507') . self::tlv('02', 'INV0000001') . self::tlv('03', 'CUSTOMER-77'));
@@ -168,9 +206,7 @@ final class PromptPayQrTest extends TestCase
         yield 'no PromptPay template' => [$frame(self::tlv('26', self::tlv('00', 'com.example') . self::tlv('01', 'x')))];
         yield 'tag 29 with another AID' => [$frame(self::tlv('29', self::tlv('00', 'A000000677010114') . self::tlv('01', '0066812345678')))];
         yield 'tag 30 with another AID' => [$frame(self::tlv('30', self::tlv('00', 'A000000677010111') . self::tlv('01', '010753600031507') . self::tlv('02', 'R')))];
-        yield 'AID in the wrong case' => [$frame(self::tlv('29', self::tlv('00', 'a000000677010111') . self::tlv('01', '0066812345678')))];
         yield 'credit transfer without a proxy' => [$frame($credit(self::tlv('05', '1234567890')))];
-        yield 'credit transfer with two proxies' => [$frame($credit(self::tlv('01', '0066812345678'), self::tlv('02', '1234567890123')))];
         yield 'mobile number of 12 digits' => [$frame($credit(self::tlv('01', '006681234567')))];
         yield 'mobile number with a letter' => [$frame($credit(self::tlv('01', '006681234567A')))];
         yield 'national ID of 12 digits' => [$frame($credit(self::tlv('02', '123456789012')))];
@@ -203,14 +239,14 @@ final class PromptPayQrTest extends TestCase
 
     public function testAMessageNeverContainsThePayload(): void
     {
-        $payload = self::sealed(...$this->frame(self::tlv('29', self::tlv('00', self::CREDIT_AID) . self::tlv('01', '0066812345678') . self::tlv('02', '1234567890123'))));
+        $payload = self::sealed(...$this->frame(self::tlv('29', self::tlv('00', self::CREDIT_AID) . self::tlv('01', '0066812345678') . self::tlv('02', '12345678901234'))));
 
         try {
             new PromptPayQr($payload);
             self::fail('Expected a refusal.');
         } catch (InvalidPaymentQrException $e) {
             self::assertStringNotContainsString('0066812345678', $e->getMessage());
-            self::assertStringNotContainsString('1234567890123', $e->getMessage());
+            self::assertStringNotContainsString('12345678901234', $e->getMessage());
         }
     }
 

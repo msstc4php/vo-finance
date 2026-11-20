@@ -576,7 +576,7 @@ Pix rules (all Pix manual 2.10.0 unless marked BR Code manual):
 | Rule | Quote | Section |
 |---|---|---|
 | GUI `br.gov.bcb.pix`, case-insensitive | "GUI - Globally Unique Identifier: br.gov.bcb.pix ... 14 caracteres"; "O GUI - DNS reverso - e case insensitive" (footnote 10) | 2.5 |
-| Template 26..51 with sub-IDs 00, 01 chave (1..77), 02 infoAdicional (1..72), 03 fss (08) | "01 chave 01..77 M Chave Pix", "02 infoAdicional 01..72 O", "03 fss 08 O ISPB do facilitador de servico de saque" | 2.6 |
+| Several Pix templates, or a key with a URL, are accepted: no BCB text forbids them (accessors throw or list, never pick). Template 26..51 with sub-IDs 00, 01 chave (1..77), 02 infoAdicional (1..72), 03 fss (08) | "01 chave 01..77 M Chave Pix", "02 infoAdicional 01..72 O", "03 fss 08 O ISPB do facilitador de servico de saque" | 2.6 |
 | Static code: the key is mandatory; dynamic: the URL (sub-ID 25, 1..77) | "Chave Pix ... Obrigatorio"; "25 URL 01..77 M Link para payload JSON"; "Link URL ... Obrigatorio" | 2.6, 2.7 |
 | The maxima 77 and 72 follow from the 99-character template | "os campos: chave, infoAdicional e fss disputam o espaco de 99 caracteres do ID raiz" | 2.6.1 |
 | URL without protocol prefix | "As URLs presentes nos QR Codes ... nao devem incluir prefixo de protocolo" | 2.5.2 |
@@ -591,10 +591,10 @@ Pix official vectors: static, section 2.6.3, `...6304 1D3D`; dynamic, section 2.
 
 PromptPay rules (BOT guideline section 2.3 tag table):
 
-| Rule | Quote | 
+| Rule | Quote |
 |---|---|
 | Tag 29, credit transfer, AID `A000000677010111` for merchant-presented QR | "29 ... Reserved for PromptPay - Credit Transfer with PromptPayID"; "AID 00 ans 16 M A000000677010111 for merchant-presented QR" |
-| One proxy: 01 mobile number N 13, 02 national or tax ID N 13, 03 e-wallet ID N 15, 04 bank account N up to 43 | "Mobile number 01 N 13 One of them is mandatory", "National ID or Tax ID 02 N 13", "E-Wallet ID 03 N 15", "Bank account 04 N var. up to 43" |
+| At least one proxy (no quote makes them exclusive; `proxyTypes()` lists all): 01 mobile number N 13, 02 national or tax ID N 13, 03 e-wallet ID N 15, 04 bank account N up to 43 | "Mobile number 01 N 13 One of them is mandatory", "National ID or Tax ID 02 N 13", "E-Wallet ID 03 N 15", "Bank account 04 N var. up to 43" |
 | Tag 30, bill payment, AID `A000000677010112` (domestic) or `A000000677012006` (cross-border); Biller ID N 15 M; reference 1 ans up to 20 M; reference 2 up to 20 O | "30 ... Reserved for PromptPay - Bill Payment ... Biller ID 01 N 15 M ... Reference 1 02 ans var. up to 20 M ... Reference 2 03 ans var. up to 20 O" |
 | Merchant category code and city optional | "Merchant Category Code 52 ... Only for payment/funds transfer through PromptPay - optional"; "Merchant City 60 ... Only for payment/funds transfer through PromptPay - optional" |
 | Tags 55, 56, 57 not allowed | "Payment/funds transfer service providers through PromptPay are not allowed to use this Tag ID" |

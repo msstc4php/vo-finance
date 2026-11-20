@@ -15,7 +15,7 @@ use Override;
 
 /**
  * Thai QR Code (PromptPay) merchant-presented payload as the Bank of Thailand guideline defines it: tag 29 (credit
- * transfer, AID `A000000677010111`) with exactly one proxy of sub-tags 01 to 04, or tag 30 (bill payment, AID
+ * transfer, AID `A000000677010111`, hex compared case-insensitively) with at least one proxy of sub-tags 01 to 04 (no source makes them exclusive; {@see proxyTypes()} lists all), or tag 30 (bill payment, AID
  * `A000000677010112` domestic or `A000000677012006` cross-border) with a biller ID of 15 digits and a reference 1 of up
  * to 20 characters (reference 2 up to 20, optional); at least one of the two. The merchant category code and the city
  * are optional here, as the guideline makes them; tags 55, 56 and 57 are refused. Not enforced: currency 764 and country
@@ -33,33 +33,59 @@ final class PromptPayQr extends AbstractStringValueObject implements Maskable
 
     private const string CREDIT_TRANSFER_AID = 'A000000677010111';
 
-    /** @var list<string> */
+    /** @var non-empty-list<non-empty-string> */
     private const array BILL_PAYMENT_AIDS = ['A000000677010112', 'A000000677012006'];
 
     private ?MerchantAccount $creditTransfer = null;
 
     private ?MerchantAccount $billPayment = null;
 
-    public function proxyType(): ?PromptPayProxyType
+    /**
+     * @return list<PromptPayProxyType> the proxy types the credit transfer carries, in sub-tag order; empty without one
+     */
+    public function proxyTypes(): array
     {
         if (!$this->creditTransfer instanceof MerchantAccount) {
-            return null;
+            return [];
         }
 
-        return array_find(PromptPayProxyType::cases(), fn (PromptPayProxyType $type): bool => $this->creditTransfer->subField($type->value) !== null);
+        return \array_values(\array_filter(PromptPayProxyType::cases(), fn (PromptPayProxyType $type): bool => $this->creditTransfer->subField($type->value) !== null));
     }
 
     /**
-     * The proxy of the credit transfer as written: mobile number, national or tax ID, e-wallet ID, or bank code plus
-     * account number.
+     * The proxy of the given type as written: mobile number, national or tax ID, e-wallet ID, or bank code plus account
+     * number.
      *
      * @return non-empty-string|null
+     */
+    public function proxyOf(PromptPayProxyType $type): ?string
+    {
+        return $this->creditTransfer?->subField($type->value);
+    }
+
+    /**
+     * The only proxy type of the credit transfer; null without a credit transfer.
+     *
+     * @throws InvalidPaymentQrException when the template carries several proxies; see {@see proxyTypes()}
+     */
+    public function proxyType(): ?PromptPayProxyType
+    {
+        $types = $this->proxyTypes();
+        ProfileRule::ensure(\count($types) <= 1, self::TYPE, 'a single proxy here, but the template carries several; use proxyTypes()');
+
+        return $types[0] ?? null;
+    }
+
+    /**
+     * @return non-empty-string|null
+     *
+     * @throws InvalidPaymentQrException when the template carries several proxies
      */
     public function proxy(): ?string
     {
         $type = $this->proxyType();
 
-        return $type instanceof PromptPayProxyType ? $this->creditTransfer?->subField($type->value) : null;
+        return $type instanceof PromptPayProxyType ? $this->proxyOf($type) : null;
     }
 
     /**
@@ -96,8 +122,11 @@ final class PromptPayQr extends AbstractStringValueObject implements Maskable
         ProfileRule::ensure($credit instanceof MerchantAccount || $bill instanceof MerchantAccount, self::TYPE, 'a PromptPay credit transfer (tag 29) or bill payment (tag 30) template');
 
         if ($credit instanceof MerchantAccount) {
-            $type = $this->singleProxyType($credit);
-            ProfileRule::ensure($type->accepts((string) $credit->subField($type->value)), self::TYPE, 'a proxy of the digits and length of its type');
+            $carried = \array_filter(PromptPayProxyType::cases(), static fn (PromptPayProxyType $type): bool => $credit->subField($type->value) !== null);
+            ProfileRule::ensure($carried !== [], self::TYPE, 'a proxy in the credit transfer template');
+            foreach ($carried as $type) {
+                ProfileRule::ensure($type->accepts((string) $credit->subField($type->value)), self::TYPE, 'a proxy of the digits and length of its type');
+            }
         }
 
         if ($bill instanceof MerchantAccount) {
@@ -119,29 +148,14 @@ final class PromptPayQr extends AbstractStringValueObject implements Maskable
         return $value;
     }
 
-    private function singleProxyType(MerchantAccount $credit): PromptPayProxyType
-    {
-        $found = null;
-        foreach (PromptPayProxyType::cases() as $type) {
-            if ($credit->subField($type->value) === null) {
-                continue;
-            }
-
-            ProfileRule::ensure($found === null, self::TYPE, 'exactly one proxy in the credit transfer template');
-            $found = $type;
-        }
-
-        return $found ?? throw new InvalidPaymentQrException(\sprintf('%s requires exactly one proxy in the credit transfer template.', self::TYPE));
-    }
-
     /**
-     * @param list<string> $aids
+     * @param non-empty-list<non-empty-string> $aids
      */
     private function template(ProfilePayload $payload, string $id, array $aids): ?MerchantAccount
     {
         return array_find(
             $payload->accounts(),
-            static fn (MerchantAccount $account): bool => $account->id === $id && \in_array($account->globallyUniqueIdentifier, $aids, true),
+            static fn (MerchantAccount $account): bool => $account->id === $id && \in_array(\strtoupper((string) $account->globallyUniqueIdentifier), $aids, true),
         );
     }
 }

@@ -125,6 +125,23 @@ final class ProfilePayloadTest extends TestCase
         self::assertSame(3, $refused);
     }
 
+    public function testAFailureInsideTheGenericFormatNamesTheProfile(): void
+    {
+        $objects = $this->objects();
+        $objects[1] = self::tlv('26', self::tlv('01', 'no-gui'));
+
+        try {
+            ProfilePayload::parse(self::sealed(...$objects), 'Profile');
+            self::fail('Expected a refusal.');
+        } catch (InvalidPaymentQrException $e) {
+            self::assertSame('Profile is not a valid EMVCo merchant-presented payload.', $e->getMessage());
+            self::assertInstanceOf(InvalidPaymentQrException::class, $e->getPrevious());
+        }
+
+        $this->expectExceptionMessage('Profile is not a valid EMVCo merchant-presented payload.');
+        ProfilePayload::parse('00', 'Profile');
+    }
+
     public function testRefusesAnOversizedPayloadWithoutParsingIt(): void
     {
         $this->expectException(InvalidPaymentQrException::class);

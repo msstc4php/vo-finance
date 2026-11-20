@@ -11,7 +11,6 @@ use MSSTC4PHP\ValueObject\Financial\PaymentQr\Brazil\PixBrCode;
 use MSSTC4PHP\ValueObject\Financial\PaymentQr\Emvco\MerchantPresentedQr;
 use MSSTC4PHP\ValueObject\Financial\PaymentQr\Malaysia\DuitNowQr;
 use MSSTC4PHP\ValueObject\Financial\PaymentQr\Thailand\PromptPayQr;
-use MSSTC4PHP\ValueObject\Support\AbstractStringValueObject;
 
 /**
  * Builds the national profile that accepts an EMVCo merchant-presented payload. A payload that no profile accepts but
@@ -21,7 +20,7 @@ use MSSTC4PHP\ValueObject\Support\AbstractStringValueObject;
  */
 final class PaymentQrFactory
 {
-    /** @var non-empty-list<class-string<AbstractStringValueObject>> */
+    /** @var non-empty-list<class-string<PixBrCode|PromptPayQr|DuitNowQr>> */
     private const array PROFILES = [
         PixBrCode::class,
         PromptPayQr::class,
@@ -32,7 +31,7 @@ final class PaymentQrFactory
      * @throws AmbiguousValueException when several profiles accept the payload
      * @throws InvalidPaymentQrException when the generic format does not accept it either
      */
-    public static function fromString(string $payload): ValueObject
+    public static function fromString(string $payload): PixBrCode|PromptPayQr|DuitNowQr|MerchantPresentedQr
     {
         $matches = [];
         foreach (self::PROFILES as $class) {

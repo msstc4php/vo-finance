@@ -17,6 +17,9 @@ use MSSTC4PHP\ValueObject\Financial\PaymentQr\Emvco\DataObject;
  */
 final class EmvcoTlv
 {
+    /** The largest QR content (numeric mode, version 40-L); a bound against abusive input, not an EMVCo rule. */
+    public const int MAX_PAYLOAD_LENGTH = 7089;
+
     /**
      * @return list<DataObject>
      *

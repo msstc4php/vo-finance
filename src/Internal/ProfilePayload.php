@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace MSSTC4PHP\ValueObject\Financial\Internal;
 
+use Closure;
 use MSSTC4PHP\ValueObject\Finance\Decimal;
 use MSSTC4PHP\ValueObject\Financial\Exception\InvalidPaymentQrException;
 use MSSTC4PHP\ValueObject\Financial\PaymentQr\Emvco\DataObject;
@@ -28,8 +29,6 @@ use MSSTC4PHP\ValueObject\I18n\CurrencyCode;
  */
 final readonly class ProfilePayload
 {
-    private const int MAX_LENGTH = 7089;
-
     private const string PLACEHOLDER_CITY = 'NA';
 
     /**
@@ -49,11 +48,11 @@ final readonly class ProfilePayload
      */
     public static function parse(string $payload, string $profile, string $formatIndicator = '01', bool $categoryOptional = false, bool $cityOptional = false): self
     {
-        if (\strlen($payload) > self::MAX_LENGTH * 4 || EmvcoTlv::length($payload) > self::MAX_LENGTH) {
-            throw new InvalidPaymentQrException(\sprintf('%s must not exceed %d characters.', $profile, self::MAX_LENGTH));
+        if (\strlen($payload) > EmvcoTlv::MAX_PAYLOAD_LENGTH * 4 || EmvcoTlv::length($payload) > EmvcoTlv::MAX_PAYLOAD_LENGTH) {
+            throw new InvalidPaymentQrException(\sprintf('%s must not exceed %d characters.', $profile, EmvcoTlv::MAX_PAYLOAD_LENGTH));
         }
 
-        $objects = EmvcoTlv::parse($payload);
+        $objects = self::wrapped($profile, static fn (): array => EmvcoTlv::parse($payload));
         $last = $objects[\count($objects) - 1] ?? null;
         ProfileRule::ensure($last !== null && $last->id === '63' && EmvcoTlv::length($last->value) === 4 && Crc16CcittFalse::isValid($payload), $profile, 'the CRC as the last data object, correct');
 
@@ -82,7 +81,7 @@ final readonly class ProfilePayload
 
         $body = \implode('', \array_map(EmvcoTlv::encode(...), $twinObjects)) . '6304';
 
-        return new self($objects, new MerchantPresentedQr($body . Crc16CcittFalse::compute($body)));
+        return new self($objects, self::wrapped($profile, static fn (): MerchantPresentedQr => new MerchantPresentedQr($body . Crc16CcittFalse::compute($body))));
     }
 
     /**
@@ -139,5 +138,24 @@ final readonly class ProfilePayload
     public function masked(): string
     {
         return EmvcoMask::apply($this->objects);
+    }
+
+    /**
+     * Runs a generic-format check and names the profile instead of the generic class when it fails.
+     *
+     * @template T
+     *
+     * @param non-empty-string $profile
+     * @param Closure(): T $read
+     *
+     * @return T
+     */
+    private static function wrapped(string $profile, Closure $read): mixed
+    {
+        try {
+            return $read();
+        } catch (InvalidPaymentQrException $e) {
+            throw new InvalidPaymentQrException(\sprintf('%s is not a valid EMVCo merchant-presented payload.', $profile), 0, $e);
+        }
     }
 }

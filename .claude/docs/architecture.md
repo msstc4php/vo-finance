@@ -7,7 +7,7 @@ SEDOL, FIGI, CRC-16/CCITT-FALSE, Swiss recursive modulo 10). The value objects a
 
 `src/PaymentQr/Emvco/` holds the EMVCo merchant-presented QR: `MerchantPresentedQr` (parse, accessors, `masked()`),
 `MerchantPresentedQrBuilder` (immutable), `MerchantAccount`, `DataObject` and `PointOfInitiation`. The reader and writer
-of the ID/length/value encoding are `Internal\EmvcoTlv`. 
+of the ID/length/value encoding are `Internal\EmvcoTlv`.
 National profiles: `PaymentQr\Brazil\PixBrCode`, `PaymentQr\Thailand\PromptPayQr` (+ `PromptPayProxyType`),
 `PaymentQr\Malaysia\DuitNowQr`, and `PaymentQr\PaymentQrFactory` (profiles, else the generic `MerchantPresentedQr`;
 several profiles throw `AmbiguousValueException`). Each profile is an `AbstractStringValueObject` that parses through

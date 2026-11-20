@@ -108,7 +108,6 @@ final class DuitNowQr extends AbstractStringValueObject implements Maskable
         ProfileRule::ensure(ProfileRule::atMost($account->subField('03'), 20), self::TYPE, 'a merchant descriptor of at most 20 characters');
         ProfileRule::ensure(ProfileRule::atMost($account->subField('04'), 15), self::TYPE, 'a mobile number of at most 15 characters');
 
-        ProfileRule::ensure($payload->get('52') !== null, self::TYPE, 'a merchant category code');
         ProfileRule::ensure($payload->get('53') === '458', self::TYPE, 'currency 458');
         ProfileRule::ensure($payload->get('58') === 'MY', self::TYPE, 'country MY');
         ProfileRule::ensure(ProfileRule::atMost($payload->get('59'), 25), self::TYPE, 'a merchant name of at most 25 characters');

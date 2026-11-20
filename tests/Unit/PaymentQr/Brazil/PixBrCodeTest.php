@@ -117,6 +117,86 @@ final class PixBrCodeTest extends TestCase
         self::assertNull(new PixBrCode($payload)->txid());
     }
 
+    public function testAKeyAndAUrlTogetherAreBothKept(): void
+    {
+        $payload = self::sealed(self::tlv('00', '01'), self::tlv('26', self::tlv('00', 'br.gov.bcb.pix') . self::tlv('01', 'a@b.co') . self::tlv('25', 'pix.example.com/abc')), ...$this->tail());
+
+        $pix = new PixBrCode($payload);
+
+        self::assertSame('a@b.co', $pix->pixKey());
+        self::assertSame('pix.example.com/abc', $pix->paymentUrl());
+    }
+
+    public function testSeveralPixTemplatesAreAcceptedAndNeverPickedSilently(): void
+    {
+        $payload = self::sealed(
+            self::tlv('00', '01'),
+            self::tlv('26', self::tlv('00', 'br.gov.bcb.pix') . self::tlv('01', 'one@example.com')),
+            self::tlv('27', self::tlv('00', 'BR.GOV.BCB.PIX') . self::tlv('01', 'two@example.com') . self::tlv('02', 'info')),
+            ...$this->tail(),
+        );
+
+        $pix = new PixBrCode($payload);
+
+        self::assertSame(['one@example.com', 'two@example.com'], $pix->pixKeys());
+        self::assertSame('info', $pix->additionalInfo());
+        self::assertSame([], $pix->paymentUrls());
+        $this->expectException(InvalidPaymentQrException::class);
+        $pix->pixKey();
+    }
+
+    public function testTheSameKeyInTwoTemplatesIsOneValue(): void
+    {
+        $template = self::tlv('00', 'br.gov.bcb.pix') . self::tlv('01', 'same@example.com');
+        $pix = new PixBrCode(self::sealed(self::tlv('00', '01'), self::tlv('26', $template), self::tlv('27', $template), ...$this->tail()));
+
+        self::assertSame('same@example.com', $pix->pixKey());
+    }
+
+    public function testSeveralRecurrenceUrlsAreListed(): void
+    {
+        $gui = self::tlv('00', 'br.gov.bcb.pix');
+        $pix = new PixBrCode(self::sealed(
+            self::tlv('00', '01'),
+            self::tlv('26', $gui),
+            ...$this->tail(),
+            ...[self::tlv('80', $gui . self::tlv('25', 'a.example.com/rec/1')), self::tlv('81', $gui . self::tlv('25', 'a.example.com/rec/2'))],
+        ));
+
+        self::assertSame(['a.example.com/rec/1', 'a.example.com/rec/2'], $pix->recurrenceUrls());
+        $this->expectException(InvalidPaymentQrException::class);
+        $pix->recurrenceUrl();
+    }
+
+    public function testAnUnreservedTemplateThatIsNotDataObjectsIsSkipped(): void
+    {
+        $payload = self::sealed(self::tlv('00', '01'), self::tlv('26', self::tlv('00', 'br.gov.bcb.pix') . self::tlv('01', 'k@b.co')), ...$this->tail(), ...[self::tlv('80', 'free text, not TLV')]);
+
+        self::assertSame('k@b.co', new PixBrCode($payload)->pixKey());
+        self::assertSame([], new PixBrCode($payload)->recurrenceUrls());
+    }
+
+    public function testTheLongestNameCityTxidAndWithdrawalProviderAreAccepted(): void
+    {
+        $payload = self::sealed(
+            self::tlv('00', '01'),
+            self::tlv('26', self::tlv('00', 'br.gov.bcb.pix') . self::tlv('01', 'k@b.co') . self::tlv('03', '12345678')),
+            self::tlv('52', '0000'),
+            self::tlv('53', '986'),
+            self::tlv('58', 'BR'),
+            self::tlv('59', \str_repeat('n', 25)),
+            self::tlv('60', \str_repeat('c', 15)),
+            self::tlv('62', self::tlv('05', \str_repeat('t', 25))),
+        );
+
+        $pix = new PixBrCode($payload);
+
+        self::assertSame(25, \strlen((string) $pix->merchantName()));
+        self::assertSame(15, \strlen((string) $pix->merchantCity()));
+        self::assertSame(25, \strlen((string) $pix->txid()));
+        self::assertSame('12345678', $pix->withdrawalProvider());
+    }
+
     public function testTheOptionalTemplateFields(): void
     {
         $payload = self::sealed(
@@ -199,8 +279,6 @@ final class PixBrCodeTest extends TestCase
         yield 'GUI of another arrangement in range 80' => [[$marker, self::tlv('26', self::tlv('00', 'br.com.outro') . $key), $category, $currency, $country, $name, $city, $txid, self::tlv('80', $gui . $key)]];
         yield 'neither key nor URL' => [[$marker, self::tlv('26', $gui), $category, $currency, $country, $name, $city, $txid]];
         yield 'recurrence URL without a Pix template in 26 to 51' => [[$marker, self::tlv('26', self::tlv('00', 'br.com.outro') . self::tlv('01', 'abc')), $category, $currency, $country, $name, $city, $txid, self::tlv('80', $gui . self::tlv('25', 'pix.example.com/rec/abc'))]];
-        yield 'key and URL together' => [[$marker, self::tlv('26', $gui . $key . self::tlv('25', 'pix.example.com/abc')), $category, $currency, $country, $name, $city, $txid]];
-        yield 'two Pix templates' => [[$marker, $pix, self::tlv('27', $gui . $key), $category, $currency, $country, $name, $city, $txid]];
         yield 'withdrawal provider of 7 digits' => [[$marker, self::tlv('26', $gui . $key . self::tlv('03', '1234567')), $category, $currency, $country, $name, $city, $txid]];
         yield 'URL with a protocol prefix' => [[$marker, self::tlv('26', $gui . self::tlv('25', 'https://pix.example.com/abc')), $category, $currency, $country, $name, $city, $txid]];
         yield 'currency other than 986' => [[$marker, $pix, $category, self::tlv('53', '840'), $country, $name, $city, $txid]];

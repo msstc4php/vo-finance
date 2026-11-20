@@ -103,6 +103,19 @@ final class DuitNowQrTest extends TestCase
         self::assertSame('60123456789', $qr->mobileNumber());
     }
 
+    public function testTheLongestAccountFieldsNameAndCityAreAccepted(): void
+    {
+        $long = new DuitNowQr(self::sealed(...$this->longFrame(self::tlv('26', self::tlv('00', 'A0000006150001') . self::tlv('01', '123456') . self::tlv('02', \str_repeat('q', 28))))));
+        $optional = new DuitNowQr(self::sealed(...$this->longFrame(self::tlv('26', self::tlv('00', 'A0000006150001') . self::tlv('01', '1') . self::tlv('02', '1') . self::tlv('03', \str_repeat('d', 20)) . self::tlv('04', \str_repeat('9', 15))))));
+
+        self::assertSame('123456', $long->acquirerId());
+        self::assertSame(28, \strlen($long->qrId()));
+        self::assertSame(20, \strlen((string) $optional->merchantDescriptor()));
+        self::assertSame(15, \strlen((string) $optional->mobileNumber()));
+        self::assertSame(25, \strlen((string) $long->merchantName()));
+        self::assertSame(15, \strlen((string) $long->merchantCity()));
+    }
+
     public function testMaskingHidesTheAccountAndTheCrcAndKeepsTheFormatIndicator(): void
     {
         $masked = new DuitNowQr(self::EXAMPLE_POS)->masked();
@@ -257,6 +270,17 @@ final class DuitNowQrTest extends TestCase
         return [
             self::tlv('00', '02'), self::tlv('01', '11'), $accountObject, self::tlv('52', '9999'), self::tlv('53', '458'),
             self::tlv('58', 'MY'), self::tlv('59', 'Shop'), self::tlv('60', 'Bangi'), ...\array_values($extra),
+        ];
+    }
+
+    /**
+     * @return list<string>
+     */
+    private function longFrame(string $account): array
+    {
+        return [
+            self::tlv('00', '02'), self::tlv('01', '11'), $account, self::tlv('52', '9999'), self::tlv('53', '458'),
+            self::tlv('58', 'MY'), self::tlv('59', \str_repeat('n', 25)), self::tlv('60', \str_repeat('c', 15)),
         ];
     }
 

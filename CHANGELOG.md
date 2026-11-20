@@ -30,3 +30,8 @@
   specification was reached (README, `docs/sources/FINANCE.md`). `MerchantPresentedQr::masked()` now shares
   `Internal\EmvcoMask` with the profiles (no behaviour change); `MerchantAccount::subField()` is typed
   `non-empty-string|null`.
+- National profiles fix round 1: `PixBrCode` accepts several Pix templates and a key with a URL (list accessors
+  `pixKeys()`, `paymentUrls()`, `recurrenceUrls()`; the single-value accessors throw when values differ) and skips
+  non-TLV templates 80-99; `PromptPayQr` accepts several proxies (`proxyTypes()`, `proxyOf()`) and compares AIDs
+  case-insensitively; failures in the generic format name the profile; `PaymentQrFactory::fromString()` returns the
+  union of the four classes.
