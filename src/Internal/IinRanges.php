@@ -8,8 +8,9 @@ use MSSTC4PHP\ValueObject\Financial\Card\CardScheme;
 
 /**
  * IIN ranges, each typed from a scheme's own publication; a range no reached publication assigns to a scheme is absent,
- * so its numbers decode to an empty list. Discover's summary leaves the unmarked rows (3000-3059, 3095, 3600-3699,
- * 3800-3999, 6011, 6440-6589) without a scheme name, so they are not listed.
+ * so its numbers decode to an empty list. The summary's unmarked rows (3000-3059, 3095, 3600-3699, 3800-3999, 6011,
+ * 6440-6589) are shared by Discover, Diners Club International and PULSE and name no single scheme, so they are not
+ * listed. The table is a constructor argument so that tests can use a synthetic one.
  *
  * @internal
  *
@@ -17,28 +18,29 @@ use MSSTC4PHP\ValueObject\Financial\Card\CardScheme;
  * @see https://www.americanexpress.com/uk/merchant/get-started.html American Express: "Card account numbers begin with "34" or "37""
  * @see docs/sources/FINANCE.md "Card IIN publications"
  */
-final class IinRanges
+final readonly class IinRanges
 {
     /**
-     * @param string $iin eight digits
-     *
-     * @return list<CardScheme>
+     * @param list<IinRange> $ranges
      */
-    public static function schemes(string $iin): array
+    public function __construct(private array $ranges)
     {
-        return self::match($iin, self::table());
+    }
+
+    public static function default(): self
+    {
+        return new self(self::table());
     }
 
     /**
      * @param string $iin eight digits
-     * @param list<IinRange> $ranges
      *
      * @return list<CardScheme>
      */
-    public static function match(string $iin, array $ranges): array
+    public function schemes(string $iin): array
     {
         $schemes = [];
-        foreach ($ranges as $range) {
+        foreach ($this->ranges as $range) {
             if ($range->contains($iin) && !\in_array($range->scheme, $schemes, true)) {
                 $schemes[] = $range->scheme;
             }

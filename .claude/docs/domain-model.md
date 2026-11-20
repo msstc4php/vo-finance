@@ -5,4 +5,5 @@ finance wave plan; `docs/sources/FINANCE.md` states per rule whether it is enfor
 
 ## Payment cards
 
-`Card\PaymentCardNumber` (Maskable): 10..19 digits, Luhn, spaces/hyphens stripped; `iin()` 8 digits, `schemes()` from `Internal\IinRanges` (Amex, JCB, UnionPay only), `matchesSchemeLength()` false when no scheme.
+`Card\PaymentCardNumber` (Maskable): 10..19 digits, Luhn, spaces/hyphens stripped; `iin()` 8 digits, `schemes()` from
+`Internal\IinRanges::default()` (Amex, JCB, UnionPay only), `matchesSchemeLength()` false when no scheme.

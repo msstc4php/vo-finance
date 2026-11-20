@@ -48,7 +48,7 @@ final class PaymentCardNumber extends AbstractStringValueObject implements Maska
      */
     public function schemes(): array
     {
-        return IinRanges::schemes($this->iin());
+        return IinRanges::default()->schemes($this->iin());
     }
 
     /**
@@ -77,7 +77,7 @@ final class PaymentCardNumber extends AbstractStringValueObject implements Maska
         $digits = \str_replace([' ', '-'], '', $value);
 
         if (\preg_match('/^\d{10,19}$/D', $digits) !== 1) {
-            throw new InvalidPaymentCardNumberException(\sprintf('%s must have 10 to 19 digits, got %d characters.', self::TYPE, \strlen($value)));
+            throw new InvalidPaymentCardNumberException(\sprintf('%s must have ten to nineteen digits.', self::TYPE));
         }
 
         if (!Luhn::isValid($digits)) {

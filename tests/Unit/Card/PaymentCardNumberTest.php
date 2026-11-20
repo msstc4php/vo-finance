@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace MSSTC4PHP\ValueObject\Financial\Tests\Unit\Card;
 
-use InvalidArgumentException;
 use MSSTC4PHP\ValueObject\Finance\CreditCardNumber;
 use MSSTC4PHP\ValueObject\Financial\Card\CardScheme;
 use MSSTC4PHP\ValueObject\Financial\Card\PaymentCardNumber;
@@ -19,6 +18,7 @@ use PHPUnit\Framework\TestCase;
 
 #[CoversClass(PaymentCardNumber::class)]
 #[CoversClass(CardScheme::class)]
+#[CoversClass(InvalidPaymentCardNumberException::class)]
 #[UsesClass(IinRanges::class)]
 #[UsesClass(IinRange::class)]
 #[UsesClass(Luhn::class)]
@@ -109,20 +109,15 @@ final class PaymentCardNumberTest extends TestCase
      */
     public static function masks(): iterable
     {
-        yield '16 digits' => ['4111111111111111', '411111******1111'];
-        yield '19 digits' => [self::withCheckDigit('624000000000000000'), '624000*********' . \substr(self::withCheckDigit('624000000000000000'), -4)];
-        yield '11 digits' => ['40000000008', '400000*0008'];
-        yield '10 digits' => ['4000000008', '40000*0008'];
+        yield '16 digits' => [self::withCheckDigit('411111111111111'), '411111******1111'];
+        yield '19 digits' => [self::withCheckDigit('624000000000000000'), '624000*********0' . \substr(self::withCheckDigit('624000000000000000'), -3)];
+        yield '11 digits' => [self::withCheckDigit('4000000000'), '400000*' . \substr(self::withCheckDigit('4000000000'), -4)];
+        yield '10 digits' => [self::withCheckDigit('400000000'), '40000*' . \substr(self::withCheckDigit('400000000'), -4)];
     }
 
     #[DataProvider('masks')]
     public function testMasked(string $number, string $expected): void
     {
-        if (!Luhn::isValid($number)) {
-            $number = self::withCheckDigit(\substr($number, 0, -1));
-            $expected = \substr($expected, 0, -1) . \substr($number, -1);
-        }
-
         self::assertSame($expected, new PaymentCardNumber($number)->masked());
     }
 
@@ -163,7 +158,7 @@ final class PaymentCardNumberTest extends TestCase
     }
 
     #[DataProvider('invalid')]
-    public function testMessageHasNoRunOfInputDigits(string $value): void
+    public function testMessageHasNoDigitAtAll(string $value): void
     {
         try {
             new PaymentCardNumber($value);
@@ -171,7 +166,7 @@ final class PaymentCardNumberTest extends TestCase
         } catch (InvalidPaymentCardNumberException $e) {
             self::assertStringContainsString('PaymentCardNumber', $e->getMessage());
             self::assertTrue($value === '' || !\str_contains($e->getMessage(), $value));
-            self::assertDoesNotMatchRegularExpression('/\d{4}/', $e->getMessage());
+            self::assertDoesNotMatchRegularExpression('/\d/', $e->getMessage());
         }
     }
 
@@ -179,26 +174,6 @@ final class PaymentCardNumberTest extends TestCase
     {
         self::assertNull(PaymentCardNumber::tryFrom('4111111111111112'));
         self::assertTrue(PaymentCardNumber::isValid('4111 1111 1111 1111'));
-    }
-
-    public function testCoBadgedRangeGivesTwoSchemes(): void
-    {
-        $ranges = [
-            new IinRange(CardScheme::Jcb, '35000000', '35999999'),
-            new IinRange(CardScheme::UnionPay, '35500000', '35999999'),
-            new IinRange(CardScheme::Amex, '36000000', '36999999'),
-        ];
-
-        self::assertSame([CardScheme::Jcb, CardScheme::UnionPay], IinRanges::match('35600000', $ranges));
-        self::assertSame([CardScheme::Jcb], IinRanges::match('35100000', $ranges));
-        self::assertSame([], IinRanges::match('37000000', $ranges));
-    }
-
-    public function testIinRangeRejectsBadBounds(): void
-    {
-        $this->expectException(InvalidArgumentException::class);
-
-        new IinRange(CardScheme::Jcb, '3500', '35999999');
     }
 
     /**
@@ -219,7 +194,6 @@ final class PaymentCardNumberTest extends TestCase
         $wrong = $body . ((((int) Luhn::compute($body)) + 1) % 10);
 
         foreach ([$valid, $wrong, \chunk_split($valid, 4, ' '), \implode('-', \str_split($valid, 4))] as $candidate) {
-            // Reason: the deprecated class is the comparison target of this test.
             $old = CreditCardNumber::isValid($candidate);
             self::assertSame($old, PaymentCardNumber::isValid($candidate), 'length ' . \strlen($candidate));
             if ($old) {

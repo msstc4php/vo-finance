@@ -15,4 +15,5 @@
   `SecurityIdentifierFactory` lists every accepting type.
 - Payment cards: `PaymentCardNumber` (ISO/IEC 7812-1, 10 to 19 digits, Luhn, `masked()`), `CardScheme` (Amex, JCB,
   UnionPay) and `InvalidPaymentCardNumberException`. IIN ranges come only from Discover's IIN Range Summary (JCB and
-  UnionPay rows) and American Express's page; Mastercard, Visa, Mir, RuPay, Discover and Diners have no listed range.
+  UnionPay rows) and American Express's page; Mastercard, Visa, Mir and RuPay have no listed range, and the summary's unmarked rows are
+  shared by Discover, Diners Club International and PULSE and name no single scheme.

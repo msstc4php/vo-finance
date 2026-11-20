@@ -388,12 +388,14 @@ Discover's summary (start, end, PAN length min-max), with its footnotes `a` = JC
 3337 0000 - 3349 9999  16-19 (a)
 ```
 
-The document says an IIN is "the first six (6) or eight (8) digits" and that "To receive additional details ... please use
-the latest IIN range table publication", which is under NDA: the summary does not name the scheme of every range (only
-the `a`/`b` footnotes and, in the text, Diners Club International and Discover). Footnote positions were read from the PDF's text coordinates (Task 4): the `a`/`b` marker sits on the row it labels, so
-3337 0000 - 3349 9999 is JCB (the block above omitted that marker). Unmarked rows: 3000-3059, 3095, 3600-3699,
-3800-3999, 6011, 6440-6589 (scheme not named). Task 4 assigns a range to a scheme only
-where this summary or another publication names it, and decodes the rest as an empty list.
+The document says an IIN is "the first six (6) or eight (8) digits" and that "To receive additional details ... please
+use the latest IIN range table publication", which is under NDA: the summary does not name the scheme of every range
+(only the `a`/`b` footnotes). The text names Discover Network, Diners Club International and PULSE together, so the
+unmarked rows are shared and name no single scheme. Footnote positions were read
+from the PDF's text coordinates (Task 4): the `a`/`b` marker sits on the row it labels, so 3337 0000 - 3349 9999 is
+JCB (the block above omitted that marker). Unmarked rows: 3000-3059, 3095, 3600-3699, 3800-3999, 6011, 6440-6589
+(scheme not named). Task 4 assigns a range to a scheme only where this summary or another publication names it, and
+decodes the rest as an empty list.
 
 **No-Luhn ranges: none found.** No publication reached (Discover's summary, the Amex page, Visa's public rules and FAQ,
 NPCI's circular) states that a scheme's numbers carry no Luhn digit. Baymard (an aggregator) says some China UnionPay
