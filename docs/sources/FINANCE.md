@@ -314,13 +314,15 @@ only: one to nine ASCII letters or digits, case-folded; the bound is the inferen
 
 **FISN enforced.** From the ANNA Guidelines section 3.2 quoted above: at most 35 characters including `/` (counted as
 characters, the text being UTF-8), a description of at most 19, uppercase only, single blanks ("Use only maximum of a
-single blank"), exactly one `/`. "alphanumeric characters (as defined in ISO/IEC 8859-1)": the class takes ASCII capitals,
-digits, punctuation and the ISO 8859-1 capitals U+00C0 to U+00DE without U+00D7; lowercase ASCII and ISO 8859-1 input is folded to
-uppercase (U+00E0 to U+00FE without U+00F7 to U+00C0 to U+00DE). A leading, trailing or `/`-adjacent blank is not refused: the guidelines quoted here do not forbid it. The
+single blank"), exactly one `/`. "alphanumeric characters (as defined in ISO/IEC 8859-1)": the class takes ASCII
+capitals, digits, punctuation and the ISO 8859-1 capitals U+00C0 to U+00DE without U+00D7. Lowercase ASCII input and
+ISO 8859-1 lowercase input (U+00E0 to U+00FE without U+00F7) are folded to uppercase (to U+00C0 to U+00DE for the
+latter). A leading, trailing or `/`-adjacent blank is not refused: the guidelines quoted here do not forbid it. The
 issuer length of 15 is not enforced (CIVs and OTC derivatives may extend it up to the total). The guidelines' list of
 permitted special characters was not reached, so printable ASCII punctuation is accepted.
 
-**Case.** Every identifier folds input to uppercase (ASCII `strtoupper`; `Fisn` also folds ISO 8859-1 letters) before checking, as `Isin` does.
+**Case.** Every identifier folds input to uppercase (ASCII `strtoupper`; `Fisn` also folds ISO 8859-1 letters)
+before checking, as `Isin` does. Each class has a lowercase-input test.
 
 **Test vectors without a source** are marked synthetic in the tests: `QZ4TM8GJN9XW`, the `*`, `@`, `#` CUSIPs, `XNAS`
 and `1234` (MIC), `519000` and `A0D9PT` (WKN), the valor numbers.

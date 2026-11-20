@@ -12,9 +12,11 @@ use Override;
  * Financial Instrument Short Name (ISO 18774): issuer name, `/`, instrument description, as UTF-8. Enforced from the
  * ANNA FISN Guidelines: at most 35 characters including the delimiter, a description of at most 19, uppercase only
  * (ASCII capitals, digits, punctuation and the ISO 8859-1 capitals `À` to `Þ` without `×`), no double blank, exactly
- * one `/`. Lowercase input, ASCII or ISO 8859-1, is stored uppercase. The issuer name is "at most 15" except for collective investment
- * vehicles and OTC derivatives, where it may run to the total limit, so only the total is enforced for it. The
- * guidelines' list of permitted special characters was not reached, so any printable ASCII punctuation is accepted.
+ * one `/`. Lowercase input, ASCII or ISO 8859-1, is stored uppercase.
+ *
+ * The issuer name is "at most 15" except for collective investment vehicles and OTC derivatives, where it may run to
+ * the total limit, so only the total is enforced for it. The guidelines' list of permitted special characters was not
+ * reached, so any printable ASCII punctuation is accepted.
  *
  * @see https://anna-web.org/wp-content/uploads/2026/06/FISN-Guidelines-Version-1-Jun-2026.pdf ANNA, FISN Guidelines, June 2026, section 3.2
  * @see docs/sources/FINANCE.md "FISN, ISO 18774"

@@ -11,8 +11,9 @@ use MSSTC4PHP\ValueObject\Support\AbstractStringValueObject;
 
 /**
  * Builds the one identifier type that accepts the value, or throws {@see AmbiguousValueException} listing every type
- * that does (a 12-character value can be an ISIN and a FIGI, six digits a WKN and a Valor, nine digits a CUSIP and a
- * Valor). Every type takes part; the factory never picks silently and never narrows to a subset.
+ * that does. Overlaps are common: a 12-character value can be an ISIN and a FIGI, and {@see Valor} accepts any one to
+ * nine letters or digits, so it joins a WKN, a CFI, a MIC, a CUSIP or a SEDOL whenever the value fits both. Every type
+ * takes part; the factory never picks silently and never narrows to a subset.
  */
 final class SecurityIdentifierFactory
 {
