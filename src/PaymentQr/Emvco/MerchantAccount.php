@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace MSSTC4PHP\ValueObject\Financial\PaymentQr\Emvco;
 
 use MSSTC4PHP\ValueObject\Financial\Exception\InvalidPaymentQrException;
+use MSSTC4PHP\ValueObject\Financial\Internal\EmvcoTlv;
 
 /**
  * A Merchant Account Information data object (ID 02 to 51). IDs 26 to 51 are templates with a Globally Unique
@@ -37,10 +38,33 @@ final readonly class MerchantAccount
         if ($isTemplate !== ($globallyUniqueIdentifier !== null) || (!$isTemplate && $subFields !== [])) {
             throw new InvalidPaymentQrException('MerchantAccount has a GUI only for templates 26 to 51, and sub-fields only with it.');
         }
+
+        if ($globallyUniqueIdentifier === null) {
+            return;
+        }
+
+        $length = EmvcoTlv::length($globallyUniqueIdentifier);
+        if ($length < 1 || $length > 32) {
+            throw new InvalidPaymentQrException('MerchantAccount GUI must be 1 to 32 characters.');
+        }
+
+        if ($this->describe(EmvcoTlv::parse($value)) !== $this->describe([new DataObject('00', $globallyUniqueIdentifier), ...$subFields])) {
+            throw new InvalidPaymentQrException('MerchantAccount value does not match its GUI and sub-fields.');
+        }
     }
 
     public function subField(string $id): ?string
     {
         return array_find($this->subFields, static fn (DataObject $object): bool => $object->id === $id)?->value;
+    }
+
+    /**
+     * @param list<DataObject> $objects
+     *
+     * @return list<array{string, string}>
+     */
+    private function describe(array $objects): array
+    {
+        return \array_map(static fn (DataObject $object): array => [$object->id, $object->value], $objects);
     }
 }

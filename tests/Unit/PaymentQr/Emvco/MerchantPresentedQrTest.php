@@ -250,6 +250,18 @@ final class MerchantPresentedQrTest extends TestCase
         self::assertSame(self::BCB_PAYLOAD, $qr->value);
     }
 
+    public function testBcbMaskedHidesTheUnreservedTemplateAndTheCrc(): void
+    {
+        $masked = new MerchantPresentedQr(self::BCB_PAYLOAD)->masked();
+
+        self::assertStringEndsWith('6304****', $masked);
+        self::assertStringNotContainsString('AD38', $masked);
+        self::assertStringNotContainsString('0123.ABCD.3456.WXYZ', $masked);
+        self::assertStringNotContainsString('BR.COM.OUTRO', $masked);
+        self::assertStringContainsString('8039' . str_repeat('*', 39), $masked);
+        self::assertStringContainsString('2730' . str_repeat('*', 30), $masked);
+    }
+
     public function testMaskedCountsCharacters(): void
     {
         $masked = new MerchantPresentedQr(self::sealed(self::MINIMAL_BODY . '8006Café12'))->masked();
@@ -305,7 +317,6 @@ final class MerchantPresentedQrTest extends TestCase
         yield 'changed body with the old CRC' => [str_replace('BRASILIA', 'BRASILIB', self::BCB_PAYLOAD)];
         yield 'no CRC' => [$body];
         yield 'CRC of the wrong length' => [$body . '630300A'];
-        yield 'repeated nothing but a repeated root id' => [self::sealed($body . '6004Rome')];
         yield 'CRC not last' => [self::sealed($body) . '6104ZIP1'];
         yield 'no marker' => [self::sealed(str_replace('000201', '', $body))];
         yield 'marker value 02' => [self::sealed(str_replace('000201', '000202', $body))];
@@ -325,7 +336,6 @@ final class MerchantPresentedQrTest extends TestCase
         yield 'duplicate id under the root' => [self::sealed($body . '5904Shop')];
         yield 'template without a GUI' => [self::sealed($body . '26080104ABCD')];
         yield 'GUI longer than 32 characters' => [self::sealed($body . '26390033' . str_repeat('G', 33))];
-        yield 'duplicate id inside a template' => [self::sealed($body . '26220006A.B.C.0103xyz0103abc')];
         yield 'multi-byte merchant name' => [self::sealed(str_replace('5904Shop', '5904Café', $body))];
         yield 'control character in the merchant city' => [self::sealed(str_replace('6004Rome', "6004Ro\x01e", $body))];
         yield 'multi-byte card account' => [self::sealed(str_replace('0412CARDACCOUNT1', '0404Café', $body))];
@@ -339,6 +349,16 @@ final class MerchantPresentedQrTest extends TestCase
     public function testMalformedPayloadsAreRefused(string $payload): void
     {
         $this->assertRefused($payload);
+    }
+
+    public function testARepeatedSubIdInsideATemplateIsAccepted(): void
+    {
+        $qr = new MerchantPresentedQr(self::sealed(self::MINIMAL_BODY . '26240006A.B.C.0103xyz0103abc'));
+        $account = $qr->merchantAccounts()[1];
+
+        self::assertSame('A.B.C.', $account->globallyUniqueIdentifier);
+        self::assertCount(2, $account->subFields);
+        self::assertSame('xyz', $account->subField('01'));
     }
 
     public function testTemplateSubIdsMayRepeat(): void
