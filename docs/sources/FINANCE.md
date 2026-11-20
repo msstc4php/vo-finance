@@ -523,31 +523,40 @@ Rules the class enforces, with their text:
 | Rule | Quote | Source |
 |---|---|---|
 | ID: two digits `00`-`99`; length: two digits `01`-`99`; value 1-99 characters | "The ID is coded as a two-digit numeric value, with a value ranging from "00" to "99"", "The length is coded as a two-digit numeric value, with a value ranging from "01" to "99"", "minimum length of one character and maximum length of 99 characters" | EMV QRCPS 3.2, 4.3.1.1, 4.4.1.2; HKMA section 2 |
-| Length counts characters of the value | "Length shall be equal to the number of characters in the value field." | EMV QRCPS 4.4.1.1 |
+| Length counts characters of the value | "A data object ... length field ... explicitly indicates the number of characters included in the third field, i.e. the value field" (HKMA section 2); "Length shall be equal to the number of characters in the value field." | HKMA section 2 (official); EMV QRCPS 4.4.1.1 |
 | A template's contents fit in 99 | "the total size of data within a template must not exceed the maximum allowed length of "99"" | EMV QRCPS 4.4 |
-| One occurrence of an ID per level | "there shall be only one occurrence of a data object with a specific ID under the root and there shall be only one occurrence of a specific ID within a template" | EMV QRCPS 4.3.1.2 |
-| Payload format indicator first, value `01` | "The Payload Format Indicator (ID "00") shall be the first data object in the QR Code." "shall contain a value of "01"" | EMV QRCPS 4.6.1.1, 4.7.1.1; HKMA table 4.1; BCB table 1 |
-| CRC (ID 63, length 04) last | "The CRC (ID "63") shall be the last data object in the QR Code." | EMV QRCPS 4.6.1.2; HKMA table 4.1 |
+| One occurrence of an ID under the root | "não há, segundo a referência #1, IDs duplicados no root do documento" (no duplicate IDs in the root). Inside templates repeated IDs are **not refused**: only the third-party copy (4.3.1.2) says so | BCB section 2.1 |
+| Payload format indicator `00`, value `01`, mandatory | "The Payload Format Indicator (ID "00") shall contain a value of "01"" (HKMA table 4.1: `00`, length `02`, M, "A fixed value of "01""); BCB table 1 "fixo em "01"". Its position is **not enforced**: "first" is stated only by the third-party copy (4.6.1.1) | HKMA table 4.1; BCB table 1 |
+| CRC (ID 63, length 04) last | "The data over which the checksum is calculated shall cover all data objects ... as well as the ID and Length of the CRC itself (but excluding its Value)", so the value ends the payload; BCB table 1 lists `63` last | HKMA section 4.1; BCB table 1 (and EMV QRCPS 4.6.1.2 in the third-party copy) |
 | CRC upper-case hex | "Hex values 'A' to 'F' must be converted to uppercase characters" | EMV QRCPS 4.7.3.2 |
 | Point of initiation `11` or `12` | "shall contain a value of "11" or "12". All other values are RFU." | EMV QRCPS 4.7.2.1; HKMA table 4.1 |
 | At least one merchant account in `02`-`51` | "At least one Merchant Account Information data object in the range "02" to "51" shall be present." | EMV QRCPS 4.7.9.1, table 3.6; BCB section 2.1; HKMA table 4.2A |
 | IDs 26-51 are templates with a GUI (sub-ID `00`, up to 32 characters); IDs 02-25 are primitives allocated to card systems | "shall contain a primitive Globally Unique Identifier data object with a data object ID "00"", table 4.2 "Var. up to "32"", table 4.1 | EMV QRCPS 4.7.9-4.7.11; HKMA tables 4.2A, 4.2B; BCB section 2.1. The GUI may sit at any position inside the template (EMV QRCPS 4.6.1: data objects within a template "may be placed in any position") |
 | Mandatory under the root: `52` (N, length 04), `53` (N, 03), `58` (ans, 02), `59`, `60` | "Data objects that are labelled [M] in Table 3.6 shall be present under the root of the QR Code." | EMV QRCPS 4.2.1.1, table 3.6; HKMA tables 4.3A, 4.4 |
 | Template `62` (Additional Data Field) is nested | sub-IDs `01`-`09` (bill number .. additional consumer data request), `10` merchant tax ID, `11` merchant channel, `12`-`49` RFU, `50`-`99` payment-system templates | EMV QRCPS table 3.7 and 4.3; HKMA table 4.5 (`01`-`09` only); BCB table 1 (sub-ID `05`) |
-| Maximum payload 512 characters | "The length of the payload **should** not exceed 512 alphanumeric characters, and the number of characters should be reduced proportionally when multi-byte [Unicode] characters are used." | EMV QRCPS 4.1 (third-party copy only; HKMA and BCB are silent) |
+| Maximum payload 512 characters | "The length of the payload **should** not exceed 512 alphanumeric characters, and the number of characters should be reduced proportionally when multi-byte [Unicode] characters are used." **Not enforced**: a "should", present only in the third-party copy (4.1); HKMA and BCB are silent. The class refuses only payloads over 7089 characters, the largest QR content (numeric mode, QR version 40-L), as a bound against abusive input, not as an EMVCo rule | EMV QRCPS 4.1 |
+| Character sets | numeric: digits; alphanumeric special: "can only contain the Common Character Set", String objects "may contain a different character set". Enforced as printable ASCII 0x20-0x7E (the minimum of the Common Character Set; EMV Book 4 Annex B unreached) for the N and ans objects: root `00` `01` `52` `53` `55` (digits), `02`-`25` `54` `56`-`61` `63`, the GUI (sub-ID 00) of 26-51 and 62 sub-IDs `01`-`11`. UTF-8, counted in characters, only in the String objects: sub-IDs `01`-`99` of 26-51, 62 sub-IDs `12`-`99`, templates `64`-`99` | HKMA section 4.3 and tables 4.2B, 4.3A, 4.3B, 4.4, 4.5; EMV QRCPS 3.2 (Numeric / Alphanumeric Special definitions), 4.5, tables 3.6 to 3.8 |
 | Amount `54` format (for `amount()`) | "shall only include (numeric) digits "0" to "9" and may contain a single "." character"; "98." is a valid example | EMV QRCPS 4.7.4.1; HKMA section 4.4 |
 | CRC parameters | see "CRC of the EMVCo merchant-presented QR" above | BCB, HKMA, EMV QRCPS 4.7.3.1 |
 
-Test vector: BCB section 2.2 (270 characters, ending `6304AD38`): IDs 00, 04 (primitive card account, length 14), 26 (GUI
+Test vector 1: BCB section 2.2 (270 characters, ending `6304AD38`): IDs 00, 04 (primitive card account, length 14), 26 (GUI
 `BR.GOV.BCB.PIX` plus sub-ID 01), 27, 52, 53 (`986`), 54 (`123.45`), 58, 59, 60, 61, 62 (sub-ID 05), 80 (unreserved
-template), 63. Every other payload in the tests is marked synthetic.
+template), 63. Test vector 2: **EMV QRCPS-MPM 1.1 Annex B.7 "Representation"** (read via the third-party copy; it is the
+specification's own example, not synthetic): 248 characters ending `6304A13A`, IDs 00, 01 (`12`), 29 and 31 (templates),
+52 (`4111`), 58 (`CN`), 59 (`BEST TRANSPORT`), 60, 64 (template with `最佳运输` and `北京`, String format), 54
+(`23.72`), 53 (`156`), 55 (`01`), 62 (sub-IDs 03, 06 `***`, 07, 09), 91 (unreserved template), 63. The printed text wraps
+lines inside values; the characters used in the tests are decoded from the hexadecimal representation printed under it,
+and their CRC-16/CCITT-FALSE over the UTF-8 bytes is `A13A`, which also confirms the CRC covers bytes. Every other
+payload in the tests is marked synthetic.
+
+Masking: the BCB manual and Annex B.6 treat the templates `80`-`99` as payment-system data like the accounts, so
+`masked()` hides the values of IDs 02-51 and 80-99 and the CRC (`6304****`, not recomputed).
 
 **Format only (not enforced):** the "var. up to" maxima of IDs 54-57, 59, 60, 61 and the sub-IDs of 62 (the BCB manual
 sets the postal code to 99 where EMVCo and HKMA say 10, so national profiles differ); the content of IDs 02-25; the
 templates 64 and 80-99 (parsed only as text); IDs 65-79 (RFU); the value of the amount beyond its character set (zero is
-not refused); the Common Character Set of `ans` values; the MCC and ISO 3166 / 4217 membership (the accessors give null
-for an unknown code). The 512-character limit is a "should" in the specification; the class refuses a longer payload
-because the task requires it, and counts characters, not bytes.
+not refused); the MCC and ISO 3166 / 4217 membership (the accessors give null
+for an unknown code). The 512-character recommendation is not enforced (see the table).
 
 ### National EMVCo profiles
 

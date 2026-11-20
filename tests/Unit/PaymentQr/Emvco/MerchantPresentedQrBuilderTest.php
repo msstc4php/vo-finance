@@ -30,31 +30,82 @@ final class MerchantPresentedQrBuilderTest extends TestCase
     public function testReproducesTheBcbPayloadByteExact(): void
     {
         $qr = new MerchantPresentedQrBuilder()
-            ->with('80', '0012BR.COM.OUTRO01190123.ABCD.3456.WXYZ')
+            ->with('04', '12345678901234')
+            ->withMerchantAccount('26', 'BR.GOV.BCB.PIX', [new DataObject('01', '123e4567-e12b-12d1-a456-426655440000')])
+            ->withMerchantAccount('27', 'BR.COM.OUTRO', [new DataObject('01', '0123456789')])
+            ->with('52', '0000')
+            ->with('53', '986')
+            ->with('54', '123.45')
+            ->with('58', 'BR')
+            ->with('59', 'NOME DO RECEBEDOR')
+            ->with('60', 'BRASILIA')
             ->with('61', '70074900')
             ->withAdditionalData([new DataObject('05', 'RP12345678-2019')])
-            ->with('60', 'BRASILIA')
-            ->with('59', 'NOME DO RECEBEDOR')
-            ->with('58', 'BR')
-            ->with('54', '123.45')
-            ->with('53', '986')
-            ->with('52', '0000')
-            ->withMerchantAccount('27', 'BR.COM.OUTRO', [new DataObject('01', '0123456789')])
-            ->withMerchantAccount('26', 'BR.GOV.BCB.PIX', [new DataObject('01', '123e4567-e12b-12d1-a456-426655440000')])
-            ->with('04', '12345678901234')
+            ->with('80', '0012BR.COM.OUTRO01190123.ABCD.3456.WXYZ')
             ->build()
         ;
 
         self::assertSame(MerchantPresentedQrTest::BCB_PAYLOAD, $qr->value);
     }
 
+    public function testReproducesTheEmvcoAnnexB7PayloadByteExact(): void
+    {
+        $qr = new MerchantPresentedQrBuilder()
+            ->withPointOfInitiation(PointOfInitiation::Dynamic)
+            ->withMerchantAccount('29', 'D15600000000', [new DataObject('05', 'A93FO3230Q')])
+            ->withMerchantAccount('31', 'D15600000001', [new DataObject('03', '12345678')])
+            ->with('52', '4111')
+            ->with('58', 'CN')
+            ->with('59', 'BEST TRANSPORT')
+            ->with('60', 'BEIJING')
+            ->with('64', '0002ZH0104最佳运输0202北京')
+            ->with('54', '23.72')
+            ->with('53', '156')
+            ->with('55', '01')
+            ->withAdditionalData([
+                new DataObject('03', '1234'),
+                new DataObject('06', '***'),
+                new DataObject('07', 'A6008667'),
+                new DataObject('09', 'ME'),
+            ])
+            ->with('91', '0016A011223344998877070812345678')
+            ->build()
+        ;
+
+        self::assertSame(MerchantPresentedQrTest::EMVCO_ANNEX_B7, $qr->value);
+    }
+
+    public function testKeepsTheInsertionOrderWithTheMarkerFirstAndTheCrcLast(): void
+    {
+        $value = new MerchantPresentedQrBuilder()
+            ->with('60', 'Rome')
+            ->with('59', 'Shop')
+            ->with('58', 'BR')
+            ->with('53', '986')
+            ->with('52', '5411')
+            ->with('04', 'CARDACCOUNT1')
+            ->build()
+            ->value
+        ;
+
+        self::assertStringStartsWith('0002016004Rome5904Shop5802BR5303986520454110412CARDACCOUNT16304', $value);
+    }
+
     public function testPointOfInitiationAndTheMarkerDefault(): void
     {
         $qr = $this->minimal()->withPointOfInitiation(PointOfInitiation::Dynamic)->build();
 
-        self::assertStringStartsWith('00020101021204', $qr->value);
+        self::assertStringEndsWith('0102126304' . substr($qr->value, -4), $qr->value);
+        self::assertStringStartsWith('000201', $qr->value);
         self::assertSame(PointOfInitiation::Dynamic, $qr->pointOfInitiation());
         self::assertSame('01', $qr->get('00'));
+    }
+
+    public function testAMarkerSetExplicitlyStaysFirst(): void
+    {
+        $qr = $this->minimal()->with('00', '01')->build();
+
+        self::assertStringStartsWith('0002010412CARDACCOUNT1', $qr->value);
     }
 
     public function testAnExistingIdIsReplaced(): void
@@ -62,6 +113,13 @@ final class MerchantPresentedQrBuilderTest extends TestCase
         $qr = $this->minimal()->with('59', 'First')->with('59', 'Second')->build();
 
         self::assertSame('Second', $qr->merchantName());
+    }
+
+    public function testReplacingKeepsThePosition(): void
+    {
+        $value = $this->minimal()->with('52', '0000')->build()->value;
+
+        self::assertStringContainsString('0412CARDACCOUNT1520400005303986', $value);
     }
 
     public function testIsImmutable(): void

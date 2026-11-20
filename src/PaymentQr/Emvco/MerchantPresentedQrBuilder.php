@@ -10,7 +10,8 @@ use MSSTC4PHP\ValueObject\Financial\Internal\EmvcoTlv;
 
 /**
  * Immutable builder of {@see MerchantPresentedQr}: `build()` writes the payload format indicator first (value 01 unless
- * set), the other IDs in ascending order and the CRC last. Setting an ID twice replaces its value; ID 63 is computed.
+ * set), the other objects in the order they were added and the computed CRC last. Setting an ID twice replaces its value in
+ * place; ID 63 cannot be set.
  *
  * @see https://mvallim.github.io/emv-qrcode/docs/EMVCo-Merchant-Presented-QR-Specification-v1.1.pdf EMV QRCPS Merchant-Presented Mode 1.1 (third-party copy), sections 4.6 and 4.7.3
  * @see docs/sources/FINANCE.md "EMVCo QRCPS merchant-presented mode"
@@ -91,12 +92,8 @@ final readonly class MerchantPresentedQrBuilder
      */
     public function build(): MerchantPresentedQr
     {
-        $objects = $this->objects;
-        if (!array_find($objects, static fn (DataObject $object): bool => $object->id === '00') instanceof DataObject) {
-            $objects[] = new DataObject('00', '01');
-        }
-
-        \usort($objects, static fn (DataObject $left, DataObject $right): int => \strcmp($left->id, $right->id));
+        $marker = array_find($this->objects, static fn (DataObject $object): bool => $object->id === '00') ?? new DataObject('00', '01');
+        $objects = [$marker, ...\array_filter($this->objects, static fn (DataObject $object): bool => $object->id !== '00')];
 
         $body = \implode('', \array_map(EmvcoTlv::encode(...), $objects)) . '6304';
 
@@ -105,8 +102,20 @@ final readonly class MerchantPresentedQrBuilder
 
     private function replace(DataObject $object): self
     {
-        $objects = \array_values(\array_filter($this->objects, static fn (DataObject $existing): bool => $existing->id !== $object->id));
-        $objects[] = $object;
+        $replaced = false;
+        $objects = [];
+        foreach ($this->objects as $existing) {
+            if ($existing->id === $object->id) {
+                $objects[] = $object;
+                $replaced = true;
+            } else {
+                $objects[] = $existing;
+            }
+        }
+
+        if (!$replaced) {
+            $objects[] = $object;
+        }
 
         return new self($objects);
     }

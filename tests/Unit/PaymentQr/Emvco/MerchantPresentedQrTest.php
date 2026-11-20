@@ -33,6 +33,12 @@ final class MerchantPresentedQrTest extends TestCase
         . '27300012BR.COM.OUTRO011001234567895204000053039865406123.455802BR5917NOME DO RECEBEDOR6008BRASILIA'
         . '61087007490062190515RP12345678-201980390012BR.COM.OUTRO01190123.ABCD.3456.WXYZ6304AD38';
 
+    // EMVCo QRCPS-MPM 1.1, Annex B.7 "Representation" (read via a third-party copy): not synthetic; the printed text wraps
+    // lines inside values, the characters here are decoded from the hexadecimal representation printed under it.
+    public const string EMVCO_ANNEX_B7 = '00020101021229300012D156000000000510A93FO3230Q31280012D15600000001030812345678520441115802CN'
+        . '5914BEST TRANSPORT6007BEIJING64200002ZH0104最佳运输0202北京540523.7253031565502016233030412340603***0708A60086670902ME'
+        . '91320016A0112233449988770708123456786304A13A';
+
     // Synthetic body, not from a publication: the mandatory data objects without the CRC.
     private const string MINIMAL_BODY = '0002010412CARDACCOUNT15204541153039865802BR5904Shop6004Rome';
 
@@ -100,18 +106,56 @@ final class MerchantPresentedQrTest extends TestCase
         self::assertNull($qr->pointOfInitiation());
     }
 
-    public function testLengthsAreCountedInCharactersNotBytes(): void
+    public function testAnnexB7ParsesFieldByField(): void
     {
-        $qr = new MerchantPresentedQr(self::sealed(str_replace('5904Shop', '5904Café', self::MINIMAL_BODY)));
+        $qr = new MerchantPresentedQr(self::EMVCO_ANNEX_B7);
 
-        self::assertSame('Café', $qr->merchantName());
+        self::assertSame(PointOfInitiation::Dynamic, $qr->pointOfInitiation());
+        self::assertSame('4111', $qr->merchantCategoryCode());
+        self::assertSame(CurrencyCode::CNY, $qr->currency());
+        self::assertSame('23.72', $qr->amount()?->value);
+        self::assertSame('01', $qr->get('55'));
+        self::assertSame(CountryCode::CN, $qr->countryCode());
+        self::assertSame('BEST TRANSPORT', $qr->merchantName());
+        self::assertSame('BEIJING', $qr->merchantCity());
+        self::assertNull($qr->postalCode());
+        self::assertSame('0002ZH0104最佳运输0202北京', $qr->get('64'));
+        self::assertSame(['03' => '1234', '06' => '***', '07' => 'A6008667', '09' => 'ME'], $qr->additionalData());
+        self::assertSame('0016A011223344998877070812345678', $qr->get('91'));
+        self::assertSame('A13A', $qr->get('63'));
+
+        $accounts = $qr->merchantAccounts();
+        self::assertCount(2, $accounts);
+        self::assertSame('29', $accounts[0]->id);
+        self::assertSame('D15600000000', $accounts[0]->globallyUniqueIdentifier);
+        self::assertSame('A93FO3230Q', $accounts[0]->subField('05'));
+        self::assertSame('31', $accounts[1]->id);
+        self::assertSame('D15600000001', $accounts[1]->globallyUniqueIdentifier);
+        self::assertSame('12345678', $accounts[1]->subField('03'));
     }
 
-    public function testTheGuiMayBeAnywhereInItsTemplate(): void
+    public function testAnnexB7MaskedHidesTheAccountsTheUnreservedTemplateAndTheCrc(): void
     {
-        $qr = new MerchantPresentedQr(self::sealed(self::MINIMAL_BODY . '26160104AAAA0004BBBB'));
+        $masked = new MerchantPresentedQr(self::EMVCO_ANNEX_B7)->masked();
 
-        self::assertSame('BBBB', $qr->merchantAccounts()[1]->globallyUniqueIdentifier);
+        self::assertStringContainsString('A93FO3230Q', self::EMVCO_ANNEX_B7);
+        foreach (['D15600000000', 'A93FO3230Q', '12345678', 'A011223344998877', 'A13A'] as $secret) {
+            self::assertStringNotContainsString($secret, $masked);
+        }
+
+        self::assertStringContainsString('BEST TRANSPORT', $masked);
+        self::assertStringContainsString('最佳运输', $masked);
+        self::assertStringContainsString('9132' . str_repeat('*', 32), $masked);
+        self::assertStringEndsWith('6304****', $masked);
+    }
+
+    public function testStringFormatObjectsMayHoldUtf8AndAreCountedInCharacters(): void
+    {
+        $qr = new MerchantPresentedQr(self::sealed(self::MINIMAL_BODY . '64140002ZH0104Café26190001A0110Ünïcödé-ok62171213ÄÖÜäöüßéèàùç!'));
+
+        self::assertSame('0002ZH0104Café', $qr->get('64'));
+        self::assertSame('Ünïcödé-ok', $qr->merchantAccounts()[1]->subField('01'));
+        self::assertSame(['12' => 'ÄÖÜäöüßéèàùç!'], $qr->additionalData());
     }
 
     public function testMerchantAccountIdsRunFrom02To51(): void
@@ -131,7 +175,7 @@ final class MerchantPresentedQrTest extends TestCase
         $this->assertRefused(self::sealed('0002010102115204541153039865802BR5904Shop6004Rome'));
     }
 
-    public function testATemplateWithAGuiOfThirtyThreeCharactersIsRefusedButThirtyTwoIsAccepted(): void
+    public function testAGuiOfThirtyTwoCharactersIsAccepted(): void
     {
         $ok = new MerchantPresentedQr(self::sealed(self::MINIMAL_BODY . '26360032' . str_repeat('G', 32)));
 
@@ -149,13 +193,13 @@ final class MerchantPresentedQrTest extends TestCase
         self::assertSame('12', PointOfInitiation::Dynamic->value);
     }
 
-    public function testAmountKeepsItsValue(): void
+    public function testAmountIsNormalisedAndTheWrittenFormStaysInGet(): void
     {
         $qr = new MerchantPresentedQr(self::sealed(self::MINIMAL_BODY . '540510.50'));
 
         self::assertSame('10.50', $qr->get('54'));
         self::assertInstanceOf(Decimal::class, $qr->amount());
-        self::assertTrue($qr->amount()->equals(new Decimal('10.50')));
+        self::assertSame('10.5', $qr->amount()->value);
     }
 
     public function testAmountWithATrailingDecimalMark(): void
@@ -208,10 +252,9 @@ final class MerchantPresentedQrTest extends TestCase
 
     public function testMaskedCountsCharacters(): void
     {
-        $body = str_replace('0412CARDACCOUNT1', '0406Café12', self::MINIMAL_BODY);
-        $masked = new MerchantPresentedQr(self::sealed($body))->masked();
+        $masked = new MerchantPresentedQr(self::sealed(self::MINIMAL_BODY . '8006Café12'))->masked();
 
-        self::assertStringContainsString('0406******', $masked);
+        self::assertStringContainsString('8006******', $masked);
     }
 
     public function testJsonSerializesTheFullPayload(): void
@@ -219,14 +262,20 @@ final class MerchantPresentedQrTest extends TestCase
         self::assertSame(json_encode(self::BCB_PAYLOAD), json_encode(new MerchantPresentedQr(self::BCB_PAYLOAD)));
     }
 
-    public function testAPayloadOfTheMaximumLengthIsAccepted(): void
+    public function testAPayloadOverFiveHundredTwelveCharactersIsAccepted(): void
     {
-        self::assertSame(512, \strlen(new MerchantPresentedQr($this->padded(512))->value));
+        self::assertSame(513, \strlen(new MerchantPresentedQr($this->padded(513))->value));
+    }
+
+    public function testAPayloadOfTheAbuseBoundIsAccepted(): void
+    {
+        self::assertSame(7089, \strlen(new MerchantPresentedQr($this->padded(7089))->value));
     }
 
     public function testALongerPayloadIsRefused(): void
     {
-        $this->assertRefused($this->padded(513));
+        $this->assertRefused($this->padded(7089) . str_repeat('0', 1));
+        $this->assertRefused(str_repeat('0', 40000));
     }
 
     /**
@@ -256,8 +305,9 @@ final class MerchantPresentedQrTest extends TestCase
         yield 'changed body with the old CRC' => [str_replace('BRASILIA', 'BRASILIB', self::BCB_PAYLOAD)];
         yield 'no CRC' => [$body];
         yield 'CRC of the wrong length' => [$body . '630300A'];
+        yield 'repeated nothing but a repeated root id' => [self::sealed($body . '6004Rome')];
         yield 'CRC not last' => [self::sealed($body) . '6104ZIP1'];
-        yield 'marker not first' => [self::sealed('0412CARDACCOUNT10002015204541153039865802BR5904Shop6004Rome')];
+        yield 'no marker' => [self::sealed(str_replace('000201', '', $body))];
         yield 'marker value 02' => [self::sealed(str_replace('000201', '000202', $body))];
         yield 'marker of the wrong length' => [self::sealed(str_replace('000201', '00030011', $body))];
         yield 'point of initiation 13' => [self::sealed(str_replace('000201', '000201010213', $body))];
@@ -276,13 +326,33 @@ final class MerchantPresentedQrTest extends TestCase
         yield 'template without a GUI' => [self::sealed($body . '26080104ABCD')];
         yield 'GUI longer than 32 characters' => [self::sealed($body . '26390033' . str_repeat('G', 33))];
         yield 'duplicate id inside a template' => [self::sealed($body . '26220006A.B.C.0103xyz0103abc')];
-        yield 'duplicate id inside additional data' => [self::sealed($body . '62140503abc0503def')];
+        yield 'multi-byte merchant name' => [self::sealed(str_replace('5904Shop', '5904Café', $body))];
+        yield 'control character in the merchant city' => [self::sealed(str_replace('6004Rome', "6004Ro\x01e", $body))];
+        yield 'multi-byte card account' => [self::sealed(str_replace('0412CARDACCOUNT1', '0404Café', $body))];
+        yield 'multi-byte GUI' => [self::sealed($body . '26060002é1')];
+        yield 'multi-byte store label' => [self::sealed($body . '62060302é1')];
+        yield 'letters in the tip indicator' => [self::sealed($body . '5502AB')];
+        yield 'multi-byte amount' => [self::sealed($body . '5403٣٣٣')];
     }
 
     #[DataProvider('malformedPayloads')]
     public function testMalformedPayloadsAreRefused(string $payload): void
     {
         $this->assertRefused($payload);
+    }
+
+    public function testTemplateSubIdsMayRepeat(): void
+    {
+        $qr = new MerchantPresentedQr(self::sealed(self::MINIMAL_BODY . '62140503abc0503def'));
+
+        self::assertSame(['05' => 'def'], $qr->additionalData());
+    }
+
+    public function testAmountAcceptsALeadingDecimalMark(): void
+    {
+        $qr = new MerchantPresentedQr(self::sealed(self::MINIMAL_BODY . '5403.50'));
+
+        self::assertSame('0.5', $qr->amount()?->value);
     }
 
     public function testMessagesNeverContainThePayload(): void
@@ -302,26 +372,35 @@ final class MerchantPresentedQrTest extends TestCase
         self::assertTrue(MerchantPresentedQr::isValid(self::BCB_PAYLOAD));
     }
 
-    private static function sealed(string $body): string
-    {
-        return $body . '6304' . Crc16CcittFalse::compute($body . '6304');
-    }
-
     /**
-     * A valid payload of exactly $length characters: the minimal body plus filler objects 80, 81 and so on.
+     * A valid payload of exactly $length characters: the minimal body plus filler objects.
      */
     private function padded(int $length): string
     {
+        $ids = [...range(26, 51), ...range(80, 99), ...range(64, 79), ...array_diff(range(2, 25), [4])];
         $body = self::MINIMAL_BODY;
         $remaining = $length - \strlen($body) - 8;
 
-        for ($id = 80; $remaining > 0; $id++) {
+        foreach ($ids as $id) {
+            if ($remaining <= 0) {
+                break;
+            }
+
+            $id = \sprintf('%02d', $id);
             $size = $remaining > 103 ? \min(99, $remaining - 9) : $remaining - 4;
-            $body .= $id . \sprintf('%02d', $size) . str_repeat('A', $size);
+            $value = $id >= '26' && $id <= '51' ? '0001G01' . \sprintf('%02d', $size - 9) . str_repeat('x', $size - 9) : str_repeat('A', $size);
+            $body .= $id . \sprintf('%02d', $size) . $value;
             $remaining -= $size + 4;
         }
 
+        self::assertSame(0, $remaining);
+
         return self::sealed($body);
+    }
+
+    private static function sealed(string $body): string
+    {
+        return $body . '6304' . Crc16CcittFalse::compute($body . '6304');
     }
 
     private function assertRefused(string $payload): void

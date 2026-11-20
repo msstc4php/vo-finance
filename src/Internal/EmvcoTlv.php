@@ -20,7 +20,7 @@ final class EmvcoTlv
     /**
      * @return list<DataObject>
      *
-     * @throws InvalidPaymentQrException when the data is cut, a length overruns it, or an ID repeats
+     * @throws InvalidPaymentQrException when the data is not UTF-8, is cut, or a length overruns it; repeated IDs are kept
      */
     public static function parse(string $data): array
     {
@@ -32,7 +32,6 @@ final class EmvcoTlv
         $total = \count($characters);
         $position = 0;
         $objects = [];
-        $seen = [];
 
         while ($position < $total) {
             if ($total - $position < 4) {
@@ -55,11 +54,6 @@ final class EmvcoTlv
                 throw new InvalidPaymentQrException('MerchantPresentedQr has a data object longer than the data that holds it.');
             }
 
-            if (isset($seen[$id])) {
-                throw new InvalidPaymentQrException('MerchantPresentedQr repeats a data object ID.');
-            }
-
-            $seen[$id] = true;
             $value = \implode('', \array_slice($characters, $position, $size));
             \assert($value !== '');
             $objects[] = new DataObject($id, $value);
@@ -76,11 +70,16 @@ final class EmvcoTlv
 
     /**
      * @return non-negative-int the number of characters
+     *
+     * @throws InvalidPaymentQrException when the value is not valid UTF-8
      */
     public static function length(string $value): int
     {
         $count = \preg_match_all('/./su', $value);
+        if ($count === false) {
+            throw new InvalidPaymentQrException('MerchantPresentedQr must be valid UTF-8.');
+        }
 
-        return $count === false ? \strlen($value) : $count;
+        return $count;
     }
 }

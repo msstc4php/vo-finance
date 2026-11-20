@@ -53,11 +53,22 @@ final class EmvcoTlvTest extends TestCase
         yield 'two trailing characters' => ['0101A01'];
         yield 'three trailing characters' => ['0101A010'];
         yield 'zero length after a valid object' => ['0101A0100'];
-        yield 'repeated id' => ['0101A0101B'];
         yield 'non-digit id' => ['A101A'];
         yield 'non-digit length' => ['01A1A'];
         yield 'invalid UTF-8' => ["0101\xFF"];
         yield 'length with a full-width digit' => ['01０1A'];
+    }
+
+    public function testRepeatedIdsAreKept(): void
+    {
+        self::assertCount(2, EmvcoTlv::parse('0101A0101B'));
+    }
+
+    public function testLengthOfInvalidUtf8Throws(): void
+    {
+        $this->expectException(InvalidPaymentQrException::class);
+
+        EmvcoTlv::length("\xFF");
     }
 
     #[DataProvider('malformed')]

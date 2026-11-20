@@ -16,8 +16,11 @@
 - `IinRanges` takes its table in the constructor (`IinRanges::default()` is the real one) so tests can use a synthetic
   table with a co-badged range; the real table has no overlaps.
 - EMVCo QRCPS 1.1 is reached only through a third-party copy (emvco.com 404, no archive copy); HKMA and BCB quote the same tables. The 512-character payload limit is a "should" there and appears in neither HKMA nor BCB.
-- EMVCo lengths count characters, not bytes: `Internal\EmvcoTlv` splits the payload with `preg_split('//u')` before slicing, so a multi-byte merchant name keeps the length counted in characters.
-- `MerchantPresentedQr::additionalData()` returns `array<array-key, string>`: PHP turns the key `"10"` into an integer; look values up with the string ID.
+- EMVCo lengths count characters, not bytes: `Internal\EmvcoTlv` splits the payload with `preg_split('//u')` before slicing.
+- `MerchantPresentedQr::additionalData()` returns `array<array-key, non-empty-string>`: PHP turns the key `"10"` into an integer; look values up with the string ID.
 - `Decimal` normalizes `10.50` to `10.5`; the written form stays in `get('54')`. A trailing mark (`98.`) is valid in EMVCo and is trimmed before parsing.
 - BCB sets the postal code (ID 61) up to 99 characters where EMVCo and HKMA say 10: root value maxima are not enforced.
+- String-format objects (sub-fields of 26-51, 62 sub-IDs 12-99, templates 64-99) accept UTF-8 and their lengths count characters; a decoder that counts bytes reads such a payload differently. That differential is spec-mandated (EMV QRCPS 4.4.1.1, 4.5.3); N/ans objects are limited to printable ASCII so they cannot show it.
+- `masked()` hides IDs 02-51, 80-99 and the CRC (`6304****`); the masked string is no valid payload.
+- Annex B.7 of the EMVCo document has line breaks inside values in its printed text; use the hexadecimal representation printed under it.
 - The GUI (sub-ID 00) is accepted anywhere in its template (EMV QRCPS 4.6.1); `MerchantPresentedQrBuilder` writes it first.
