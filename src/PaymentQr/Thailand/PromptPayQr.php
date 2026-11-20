@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace MSSTC4PHP\ValueObject\Financial\PaymentQr\Thailand;
 
 use MSSTC4PHP\ValueObject\Contract\Maskable;
-use MSSTC4PHP\ValueObject\Financial\Exception\InvalidPaymentQrException;
+use MSSTC4PHP\ValueObject\Financial\Exception\AmbiguousPaymentQrFieldException;
 use MSSTC4PHP\ValueObject\Financial\Internal\ExposesRootFields;
 use MSSTC4PHP\ValueObject\Financial\Internal\ProfilePayload;
 use MSSTC4PHP\ValueObject\Financial\Internal\ProfileRule;
@@ -66,12 +66,14 @@ final class PromptPayQr extends AbstractStringValueObject implements Maskable
     /**
      * The only proxy type of the credit transfer; null without a credit transfer.
      *
-     * @throws InvalidPaymentQrException when the template carries several proxies; see {@see proxyTypes()}
+     * @throws AmbiguousPaymentQrFieldException when the template carries several proxies; see {@see proxyTypes()}
      */
     public function proxyType(): ?PromptPayProxyType
     {
         $types = $this->proxyTypes();
-        ProfileRule::ensure(\count($types) <= 1, self::TYPE, 'a single proxy here, but the template carries several; use proxyTypes()');
+        if (\count($types) > 1) {
+            throw new AmbiguousPaymentQrFieldException(self::TYPE, 'the proxy');
+        }
 
         return $types[0] ?? null;
     }
@@ -79,7 +81,7 @@ final class PromptPayQr extends AbstractStringValueObject implements Maskable
     /**
      * @return non-empty-string|null
      *
-     * @throws InvalidPaymentQrException when the template carries several proxies
+     * @throws AmbiguousPaymentQrFieldException when the template carries several proxies
      */
     public function proxy(): ?string
     {

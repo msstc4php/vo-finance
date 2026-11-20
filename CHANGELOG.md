@@ -35,3 +35,6 @@
   non-TLV templates 80-99; `PromptPayQr` accepts several proxies (`proxyTypes()`, `proxyOf()`) and compares AIDs
   case-insensitively; failures in the generic format name the profile; `PaymentQrFactory::fromString()` returns the
   union of the four classes.
+- National profiles fix round 2: `AmbiguousPaymentQrFieldException` thrown by single-value accessors facing several
+  distinct values; the 7089-character bound runs on the original payload only (`MerchantPresentedQr::withoutLengthBound()`,
+  internal); a Pix template in 80-99 without sub-ID 25 is refused again; `DuitNowQr` compares the AID case-insensitively.

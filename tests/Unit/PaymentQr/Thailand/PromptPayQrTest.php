@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace MSSTC4PHP\ValueObject\Financial\Tests\Unit\PaymentQr\Thailand;
 
+use MSSTC4PHP\ValueObject\Financial\Exception\AmbiguousPaymentQrFieldException;
 use MSSTC4PHP\ValueObject\Financial\Exception\InvalidPaymentQrException;
 use MSSTC4PHP\ValueObject\Financial\Internal\Crc16CcittFalse;
 use MSSTC4PHP\ValueObject\Financial\Internal\EmvcoMask;
@@ -36,6 +37,7 @@ use PHPUnit\Framework\TestCase;
 #[UsesClass(MerchantAccount::class)]
 #[UsesClass(DataObject::class)]
 #[UsesClass(InvalidPaymentQrException::class)]
+#[UsesClass(AmbiguousPaymentQrFieldException::class)]
 final class PromptPayQrTest extends TestCase
 {
     use BuildsPayloads;
@@ -102,7 +104,15 @@ final class PromptPayQrTest extends TestCase
         self::assertSame([PromptPayProxyType::MobileNumber, PromptPayProxyType::NationalOrTaxId], $qr->proxyTypes());
         self::assertSame('1234567890123', $qr->proxyOf(PromptPayProxyType::NationalOrTaxId));
         self::assertNull($qr->proxyOf(PromptPayProxyType::EWalletId));
-        $this->expectException(InvalidPaymentQrException::class);
+
+        try {
+            $qr->proxyType();
+            self::fail('Expected an ambiguity.');
+        } catch (AmbiguousPaymentQrFieldException $e) {
+            self::assertSame('PromptPayQr carries several distinct values for the proxy; use the list accessor.', $e->getMessage());
+        }
+
+        $this->expectException(AmbiguousPaymentQrFieldException::class);
         $qr->proxy();
     }
 
@@ -113,6 +123,37 @@ final class PromptPayQrTest extends TestCase
         self::assertSame([], $qr->proxyTypes());
         self::assertNull($qr->proxyOf(PromptPayProxyType::MobileNumber));
         self::assertNull($qr->proxyType());
+    }
+
+    public function testAPayloadLackingCategoryAndCityIsAcceptedAtExactlyTheLengthBound(): void
+    {
+        $objects = [
+            self::tlv('00', '01'),
+            self::tlv('29', self::tlv('00', self::CREDIT_AID) . self::tlv('01', '0066812345678')),
+            self::tlv('53', '764'),
+            self::tlv('58', 'TH'),
+            self::tlv('59', 'Shop'),
+        ];
+        $length = \array_sum(\array_map(strlen(...), $objects)) + 8;
+        $fillers = [...\range(2, 25), ...\range(31, 38), ...\range(40, 51), ...\range(64, 79), ...\range(80, 99)];
+        foreach ($fillers as $id) {
+            $remaining = 7089 - $length;
+            if ($remaining === 0) {
+                break;
+            }
+
+            $size = $remaining <= 103 ? $remaining - 4 : ($remaining - 103 >= 5 ? 99 : $remaining - 9);
+            $text = \str_repeat('x', $size);
+            $value = $id >= 26 && $id <= 51 ? self::tlv('00', 'com.fill') . self::tlv('01', \str_repeat('x', $size - 16)) : $text;
+            $objects[] = self::tlv(\sprintf('%02d', $id), $value);
+            $length += $size + 4;
+        }
+
+        $payload = self::sealed(...$objects);
+
+        self::assertSame(7089, \strlen($payload));
+        self::assertNull(new PromptPayQr($payload)->merchantCategoryCode());
+        self::assertFalse(PromptPayQr::isValid($payload . 'x'));
     }
 
     public function testTheLongestReferencesAreAccepted(): void

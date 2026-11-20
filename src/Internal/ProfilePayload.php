@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace MSSTC4PHP\ValueObject\Financial\Internal;
 
-use Closure;
 use MSSTC4PHP\ValueObject\Finance\Decimal;
 use MSSTC4PHP\ValueObject\Financial\Exception\InvalidPaymentQrException;
 use MSSTC4PHP\ValueObject\Financial\PaymentQr\Emvco\DataObject;
@@ -52,7 +51,7 @@ final readonly class ProfilePayload
             throw new InvalidPaymentQrException(\sprintf('%s must not exceed %d characters.', $profile, EmvcoTlv::MAX_PAYLOAD_LENGTH));
         }
 
-        $objects = self::wrapped($profile, static fn (): array => EmvcoTlv::parse($payload));
+        $objects = self::objectsOf($payload, $profile);
         $last = $objects[\count($objects) - 1] ?? null;
         ProfileRule::ensure($last !== null && $last->id === '63' && EmvcoTlv::length($last->value) === 4 && Crc16CcittFalse::isValid($payload), $profile, 'the CRC as the last data object, correct');
 
@@ -81,7 +80,7 @@ final readonly class ProfilePayload
 
         $body = \implode('', \array_map(EmvcoTlv::encode(...), $twinObjects)) . '6304';
 
-        return new self($objects, self::wrapped($profile, static fn (): MerchantPresentedQr => new MerchantPresentedQr($body . Crc16CcittFalse::compute($body))));
+        return new self($objects, self::twinOf($body . Crc16CcittFalse::compute($body), $profile));
     }
 
     /**
@@ -141,21 +140,37 @@ final readonly class ProfilePayload
     }
 
     /**
-     * Runs a generic-format check and names the profile instead of the generic class when it fails.
-     *
-     * @template T
-     *
      * @param non-empty-string $profile
-     * @param Closure(): T $read
      *
-     * @return T
+     * @return list<DataObject>
+     *
+     * @throws InvalidPaymentQrException naming the profile instead of the generic class
      */
-    private static function wrapped(string $profile, Closure $read): mixed
+    private static function objectsOf(string $payload, string $profile): array
     {
         try {
-            return $read();
+            return EmvcoTlv::parse($payload);
         } catch (InvalidPaymentQrException $e) {
-            throw new InvalidPaymentQrException(\sprintf('%s is not a valid EMVCo merchant-presented payload.', $profile), 0, $e);
+            throw self::notValid($profile, $e);
         }
+    }
+
+    /**
+     * @param non-empty-string $profile
+     *
+     * @throws InvalidPaymentQrException naming the profile instead of the generic class
+     */
+    private static function twinOf(string $payload, string $profile): MerchantPresentedQr
+    {
+        try {
+            return MerchantPresentedQr::withoutLengthBound($payload);
+        } catch (InvalidPaymentQrException $e) {
+            throw self::notValid($profile, $e);
+        }
+    }
+
+    private static function notValid(string $profile, InvalidPaymentQrException $previous): InvalidPaymentQrException
+    {
+        return new InvalidPaymentQrException(\sprintf('%s is not a valid EMVCo merchant-presented payload.', $profile), 0, $previous);
     }
 }

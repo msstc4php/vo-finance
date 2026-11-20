@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace MSSTC4PHP\ValueObject\Financial\Tests\Unit\PaymentQr\Brazil;
 
+use MSSTC4PHP\ValueObject\Financial\Exception\AmbiguousPaymentQrFieldException;
 use MSSTC4PHP\ValueObject\Financial\Exception\InvalidPaymentQrException;
 use MSSTC4PHP\ValueObject\Financial\Internal\Crc16CcittFalse;
 use MSSTC4PHP\ValueObject\Financial\Internal\EmvcoMask;
@@ -33,6 +34,7 @@ use PHPUnit\Framework\TestCase;
 #[UsesClass(MerchantAccount::class)]
 #[UsesClass(DataObject::class)]
 #[UsesClass(InvalidPaymentQrException::class)]
+#[UsesClass(AmbiguousPaymentQrFieldException::class)]
 final class PixBrCodeTest extends TestCase
 {
     use BuildsPayloads;
@@ -139,10 +141,30 @@ final class PixBrCodeTest extends TestCase
         $pix = new PixBrCode($payload);
 
         self::assertSame(['one@example.com', 'two@example.com'], $pix->pixKeys());
-        self::assertSame('info', $pix->additionalInfo());
         self::assertSame([], $pix->paymentUrls());
-        $this->expectException(InvalidPaymentQrException::class);
-        $pix->pixKey();
+
+        try {
+            $pix->pixKey();
+            self::fail('Expected an ambiguity.');
+        } catch (AmbiguousPaymentQrFieldException $e) {
+            self::assertSame('PixBrCode carries several distinct values for the Pix key; use the list accessor.', $e->getMessage());
+        }
+
+        $this->expectException(AmbiguousPaymentQrFieldException::class);
+        $pix->additionalInfo();
+    }
+
+    public function testTheWithdrawalProviderMustBeInEveryTemplateOrNone(): void
+    {
+        $with = self::tlv('00', 'br.gov.bcb.pix') . self::tlv('01', 'one@example.com') . self::tlv('03', '12345678');
+        $without = self::tlv('00', 'br.gov.bcb.pix') . self::tlv('01', 'one@example.com');
+
+        $both = new PixBrCode(self::sealed(self::tlv('00', '01'), self::tlv('26', $with), self::tlv('27', $with), ...$this->tail()));
+        $mixed = new PixBrCode(self::sealed(self::tlv('00', '01'), self::tlv('26', $with), self::tlv('27', $without), ...$this->tail()));
+
+        self::assertSame('12345678', $both->withdrawalProvider());
+        $this->expectException(AmbiguousPaymentQrFieldException::class);
+        $mixed->withdrawalProvider();
     }
 
     public function testTheSameKeyInTwoTemplatesIsOneValue(): void
@@ -164,8 +186,15 @@ final class PixBrCodeTest extends TestCase
         ));
 
         self::assertSame(['a.example.com/rec/1', 'a.example.com/rec/2'], $pix->recurrenceUrls());
-        $this->expectException(InvalidPaymentQrException::class);
+        $this->expectException(AmbiguousPaymentQrFieldException::class);
         $pix->recurrenceUrl();
+    }
+
+    public function testAnUnreservedTemplateOfAnotherArrangementWithoutSubId25IsIgnored(): void
+    {
+        $payload = self::sealed(self::tlv('00', '01'), self::tlv('26', self::tlv('00', 'br.gov.bcb.pix') . self::tlv('01', 'k@b.co')), ...$this->tail(), ...[self::tlv('80', self::tlv('00', 'br.com.outro') . self::tlv('01', 'x'))]);
+
+        self::assertSame([], new PixBrCode($payload)->recurrenceUrls());
     }
 
     public function testAnUnreservedTemplateThatIsNotDataObjectsIsSkipped(): void
@@ -281,6 +310,7 @@ final class PixBrCodeTest extends TestCase
         yield 'recurrence URL without a Pix template in 26 to 51' => [[$marker, self::tlv('26', self::tlv('00', 'br.com.outro') . self::tlv('01', 'abc')), $category, $currency, $country, $name, $city, $txid, self::tlv('80', $gui . self::tlv('25', 'pix.example.com/rec/abc'))]];
         yield 'withdrawal provider of 7 digits' => [[$marker, self::tlv('26', $gui . $key . self::tlv('03', '1234567')), $category, $currency, $country, $name, $city, $txid]];
         yield 'URL with a protocol prefix' => [[$marker, self::tlv('26', $gui . self::tlv('25', 'https://pix.example.com/abc')), $category, $currency, $country, $name, $city, $txid]];
+        yield 'Pix template in range 80 without the URL' => [[$marker, $pix, $category, $currency, $country, $name, $city, $txid, self::tlv('80', $gui . self::tlv('01', 'x'))]];
         yield 'currency other than 986' => [[$marker, $pix, $category, self::tlv('53', '840'), $country, $name, $city, $txid]];
         yield 'country other than BR' => [[$marker, $pix, $category, $currency, self::tlv('58', 'PT'), $name, $city, $txid]];
         yield 'merchant name of 26 characters' => [[$marker, $pix, $category, $currency, $country, self::tlv('59', \str_repeat('n', 26)), $city, $txid]];

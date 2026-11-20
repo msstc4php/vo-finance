@@ -91,6 +91,13 @@ final class DuitNowQrTest extends TestCase
         self::assertSame(PointOfInitiation::Static, $qr->pointOfInitiation());
     }
 
+    public function testTheAidIsComparedCaseInsensitively(): void
+    {
+        $account = self::tlv('26', self::tlv('00', 'a0000006150001') . self::tlv('01', '501664') . self::tlv('02', '123456789'));
+
+        self::assertSame('501664', new DuitNowQr(self::sealed(...$this->frame($account)))->acquirerId());
+    }
+
     public function testTheOptionalAccountFields(): void
     {
         $account = self::tlv('26', self::tlv('00', 'A0000006150001') . self::tlv('01', '501664') . self::tlv('02', 'MERCHANT-77') . self::tlv('03', 'Interesting Wares') . self::tlv('04', '60123456789'));
@@ -164,7 +171,6 @@ final class DuitNowQrTest extends TestCase
         yield 'point of initiation 13' => [[self::tlv('00', '02'), self::tlv('01', '13'), ...\array_slice($frame($valid), 2)]];
         yield 'no merchant account' => [$without('26')];
         yield 'merchant account with another AID' => [$frame(self::tlv('26', self::tlv('00', 'A0000006150002') . self::tlv('01', '501664') . self::tlv('02', '1')))];
-        yield 'AID in the wrong case' => [$frame(self::tlv('26', self::tlv('00', 'a0000006150001') . self::tlv('01', '501664') . self::tlv('02', '1')))];
         yield 'AID in ID 27 only' => [$frame(self::tlv('27', self::tlv('00', 'A0000006150001') . self::tlv('01', '501664') . self::tlv('02', '1')))];
         yield 'no acquirer ID' => [$frame($account(self::tlv('02', '1')))];
         yield 'acquirer ID of 7 characters' => [$frame($account(self::tlv('01', '5016640'), self::tlv('02', '1')))];

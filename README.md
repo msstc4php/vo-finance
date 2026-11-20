@@ -15,10 +15,14 @@ the CRC with asterisks.
 | Class | Payload |
 |---|---|
 | `PaymentQr\Emvco\MerchantPresentedQr` | EMVCo merchant-presented QR (generic) |
-| `PaymentQr\Brazil\PixBrCode` | Pix BR Code (BCB): `pixKey()`, `paymentUrl()`, `recurrenceUrl()`, `txid()` |
-| `PaymentQr\Thailand\PromptPayQr` | Thai QR / PromptPay (BOT): `proxyType()`, `proxy()`, `billerId()`, `reference1()` |
+| `PaymentQr\Brazil\PixBrCode` | Pix BR Code (BCB): `pixKey()`, `paymentUrl()`, `recurrenceUrl()`, `txid()`; lists `pixKeys()`, `paymentUrls()`, `recurrenceUrls()` |
+| `PaymentQr\Thailand\PromptPayQr` | Thai QR / PromptPay (BOT): `proxyType()`, `proxy()`, `billerId()`, `reference1()`; lists `proxyTypes()`, `proxyOf()` |
 | `PaymentQr\Malaysia\DuitNowQr` | DuitNow QR (PayNet): `acquirerId()`, `qrId()`, `isJomPay()` |
 | `PaymentQr\PaymentQrFactory` | the profile that accepts an EMVCo payload; several profiles throw `AmbiguousValueException`; none gives `MerchantPresentedQr` |
+
+The single-value accessors (`pixKey()`, `paymentUrl()`, `recurrenceUrl()`, `additionalInfo()`, `withdrawalProvider()`,
+`proxyType()`, `proxy()`) throw `Exception\AmbiguousPaymentQrFieldException` when the payload carries several distinct
+values; the list accessors above return all of them and never throw.
 
 ## Format only
 

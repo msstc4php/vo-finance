@@ -19,7 +19,7 @@ use Override;
 /**
  * DuitNow QR merchant-presented payload, PayNet's national standard: payload format indicator `02` (not the generic
  * `01`), a point of initiation (11 static, 12 dynamic), the merchant account template ID 26 with the AID
- * `A0000006150001`, an acquirer ID (sub-ID 01, up to 6 characters) and a QR ID (02, up to 28); currency 458, country MY,
+ * `A0000006150001` (compared case-insensitively), an acquirer ID (sub-ID 01, up to 6 characters) and a QR ID (02, up to 28); currency 458, country MY,
  * merchant name up to 25 and city up to 15 characters. Enforced besides: a postal code of 5 digits; amounts (54, 56)
  * other than zero; the fixed fee (56) exactly when the indicator 55 is 02 and the percentage (57) exactly when it is 03;
  * a language template (64) with its language and name; for JomPAY (acquirer ID 898989) the additional data template with
@@ -98,7 +98,7 @@ final class DuitNowQr extends AbstractStringValueObject implements Maskable
 
         $account = array_find(
             $payload->accounts(),
-            static fn (MerchantAccount $candidate): bool => $candidate->id === '26' && $candidate->globallyUniqueIdentifier === self::AID,
+            static fn (MerchantAccount $candidate): bool => $candidate->id === '26' && \strtoupper((string) $candidate->globallyUniqueIdentifier) === self::AID,
         ) ?? throw new InvalidPaymentQrException(\sprintf('%s requires merchant account template 26 with the AID %s.', self::TYPE, self::AID));
 
         $acquirerId = $account->subField('01');

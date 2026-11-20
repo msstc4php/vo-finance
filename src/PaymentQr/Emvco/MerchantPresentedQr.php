@@ -47,8 +47,29 @@ final class MerchantPresentedQr extends AbstractStringValueObject implements Mas
 
     private const int MAX_GUI_LENGTH = 32;
 
+    private static bool $withoutLengthBound = false;
+
     /** @var list<DataObject> */
     private array $objects = [];
+
+    /**
+     * Builds the payload without the 7089-character bound, for a profile's modified copy whose placeholders may exceed it
+     * while the original does not; the profile checks the bound on the original.
+     *
+     * @internal
+     *
+     * @throws InvalidPaymentQrException
+     */
+    public static function withoutLengthBound(string $value): self
+    {
+        self::$withoutLengthBound = true;
+
+        try {
+            return new self($value);
+        } finally {
+            self::$withoutLengthBound = false;
+        }
+    }
 
     public function pointOfInitiation(): ?PointOfInitiation
     {
@@ -195,7 +216,7 @@ final class MerchantPresentedQr extends AbstractStringValueObject implements Mas
     #[Override]
     protected function parse(string $value): string
     {
-        if (\strlen($value) > EmvcoTlv::MAX_PAYLOAD_LENGTH * 4 || EmvcoTlv::length($value) > EmvcoTlv::MAX_PAYLOAD_LENGTH) {
+        if (!self::$withoutLengthBound && (\strlen($value) > EmvcoTlv::MAX_PAYLOAD_LENGTH * 4 || EmvcoTlv::length($value) > EmvcoTlv::MAX_PAYLOAD_LENGTH)) {
             throw new InvalidPaymentQrException(\sprintf('%s must not exceed %d characters.', self::TYPE, EmvcoTlv::MAX_PAYLOAD_LENGTH));
         }
 

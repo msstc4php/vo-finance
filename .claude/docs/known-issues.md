@@ -31,4 +31,5 @@
 - The Thai guideline prints no full payload; PromptPay tests are synthetic. Thai tag 29 AID `...114` is for customer-presented QR and is refused.
 - bi.go.id drops curl connections; files there were read through WebFetch (binary saved by the harness). A browser-like User-Agent was not used.
 - `Internal\ProfileRule::atMost` replaces min/max pairs: every present data object has at least one character, so the minimum 1 is implied.
-- A payload lacking ID 52 or 60 within 13 characters of the 7089 bound cannot be checked for a Thai QR: the twin's placeholders push it over the generic bound.
+- `MerchantPresentedQr::withoutLengthBound()` (@internal) lets `ProfilePayload` validate a twin whose placeholders exceed 7089 characters; the bound runs on the original payload only. It flips a private static flag inside try/finally.
+- Single-value accessors of the profiles (`pixKey()`, `proxy()`, ...) throw `AmbiguousPaymentQrFieldException` (a `DomainException`, no value in the message) when the payload carries several distinct values; the list accessors never throw.

@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace MSSTC4PHP\ValueObject\Financial\PaymentQr\Brazil;
 
 use MSSTC4PHP\ValueObject\Contract\Maskable;
+use MSSTC4PHP\ValueObject\Financial\Exception\AmbiguousPaymentQrFieldException;
 use MSSTC4PHP\ValueObject\Financial\Exception\InvalidPaymentQrException;
 use MSSTC4PHP\ValueObject\Financial\Internal\EmvcoTlv;
 use MSSTC4PHP\ValueObject\Financial\Internal\ExposesRootFields;
@@ -50,11 +51,11 @@ final class PixBrCode extends AbstractStringValueObject implements Maskable
      *
      * @return non-empty-string|null
      *
-     * @throws InvalidPaymentQrException when several Pix templates carry different keys; see {@see pixKeys()}
+     * @throws AmbiguousPaymentQrFieldException when several Pix templates carry different keys; see {@see pixKeys()}
      */
     public function pixKey(): ?string
     {
-        return $this->single($this->pixKeys());
+        return $this->single($this->pixKeys(), 'the Pix key');
     }
 
     /**
@@ -70,11 +71,11 @@ final class PixBrCode extends AbstractStringValueObject implements Maskable
      *
      * @return non-empty-string|null
      *
-     * @throws InvalidPaymentQrException when several Pix templates carry different URLs; see {@see paymentUrls()}
+     * @throws AmbiguousPaymentQrFieldException when several Pix templates carry different URLs; see {@see paymentUrls()}
      */
     public function paymentUrl(): ?string
     {
-        return $this->single($this->paymentUrls());
+        return $this->single($this->paymentUrls(), 'the payment URL');
     }
 
     /**
@@ -90,11 +91,11 @@ final class PixBrCode extends AbstractStringValueObject implements Maskable
      *
      * @return non-empty-string|null
      *
-     * @throws InvalidPaymentQrException when several templates carry different URLs; see {@see recurrenceUrls()}
+     * @throws AmbiguousPaymentQrFieldException when several templates carry different URLs; see {@see recurrenceUrls()}
      */
     public function recurrenceUrl(): ?string
     {
-        return $this->single($this->recurrenceUrls);
+        return $this->single($this->recurrenceUrls, 'the recurrence URL');
     }
 
     /**
@@ -108,11 +109,11 @@ final class PixBrCode extends AbstractStringValueObject implements Maskable
     /**
      * @return non-empty-string|null
      *
-     * @throws InvalidPaymentQrException when several Pix templates carry different values
+     * @throws AmbiguousPaymentQrFieldException with several Pix templates when they do not all carry the same value
      */
     public function additionalInfo(): ?string
     {
-        return $this->single($this->subFields('02'));
+        return $this->sameInEveryTemplate('02', 'the additional information');
     }
 
     /**
@@ -120,11 +121,11 @@ final class PixBrCode extends AbstractStringValueObject implements Maskable
      *
      * @return non-empty-string|null
      *
-     * @throws InvalidPaymentQrException when several Pix templates carry different values
+     * @throws AmbiguousPaymentQrFieldException with several Pix templates when they do not all carry the same value
      */
     public function withdrawalProvider(): ?string
     {
-        return $this->single($this->subFields('03'));
+        return $this->sameInEveryTemplate('03', 'the withdrawal provider');
     }
 
     /**
@@ -182,15 +183,33 @@ final class PixBrCode extends AbstractStringValueObject implements Maskable
 
     /**
      * @param list<non-empty-string> $values
+     * @param non-empty-string $field
      *
      * @return non-empty-string|null
      */
-    private function single(array $values): ?string
+    private function single(array $values, string $field): ?string
     {
         $distinct = \array_values(\array_unique($values));
-        ProfileRule::ensure(\count($distinct) <= 1, self::TYPE, 'a single value here, but the payload carries several; use the list accessor');
+        if (\count($distinct) > 1) {
+            throw new AmbiguousPaymentQrFieldException(self::TYPE, $field);
+        }
 
         return $distinct[0] ?? null;
+    }
+
+    /**
+     * @param non-empty-string $field
+     *
+     * @return non-empty-string|null
+     */
+    private function sameInEveryTemplate(string $subId, string $field): ?string
+    {
+        $values = $this->subFields($subId);
+        if ($values !== [] && \count($values) !== \count($this->accounts)) {
+            throw new AmbiguousPaymentQrFieldException(self::TYPE, $field);
+        }
+
+        return $this->single($values, $field);
     }
 
     /**
@@ -238,10 +257,12 @@ final class PixBrCode extends AbstractStringValueObject implements Maskable
             }
 
             $gui = array_find($subFields, static fn (DataObject $subField): bool => $subField->id === '00')?->value;
-            $url = array_find($subFields, static fn (DataObject $subField): bool => $subField->id === '25')?->value;
-            if ($url !== null && $this->hasPixGui($gui)) {
-                $urls[] = $url;
+            if (!$this->hasPixGui($gui)) {
+                continue;
             }
+
+            $urls[] = (array_find($subFields, static fn (DataObject $subField): bool => $subField->id === '25')
+                ?? throw new InvalidPaymentQrException(\sprintf('%s requires the URL (sub-ID 25) in a Pix template of the unreserved range.', self::TYPE)))->value;
         }
 
         return $urls;
