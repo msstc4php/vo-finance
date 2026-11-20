@@ -11,7 +11,7 @@ namespace MSSTC4PHP\ValueObject\Financial\Internal;
  * reflection, no final XOR, written as four uppercase hex digits. For a payload the checksum covers everything up to and
  * including the `6304` of the CRC data object.
  *
- * @see https://www.bcb.gov.br/content/estabilidadefinanceira/spb_docs/ManualBRCode.pdf Banco Central do Brasil, Manual do BR Code 2.0.1, section 2.2: polynomial '1021', initial value 'FFFF', and a complete payload with its CRC `AD38`
+ * @see https://www.bcb.gov.br/content/estabilidadefinanceira/spb_docs/ManualBRCode.pdf Banco Central do Brasil, Manual do BR Code 2.0.1, section 2.1 "Definições Comuns" (note 10: polynomial '1021', initial value 'FFFF') and section 2.2 (a complete payload with its CRC `AD38`)
  * @see https://www.hkma.gov.hk/media/chi/doc/key-functions/financial-infrastructure/infrastructure/retail-payment-initiatives/Common_QR_Code_Specification.pdf HKMA Common QR Code Specification 1.0, section 4.1
  */
 final class Crc16CcittFalse

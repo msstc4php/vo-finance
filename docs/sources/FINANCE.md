@@ -11,7 +11,7 @@ Outcome per rule (revised after review round 1):
 | Rule | Outcome |
 |---|---|
 | ISIN check digit | enforced: three worked examples of a numbering agency (SET), the formula named by ANNA and ISO 6166 |
-| ISIN prefix | format only (two letters or digits as in the prefix list; never refused for being outside ISO 3166) |
+| ISIN prefix | format only: two letters (alpha-2 country codes, reserved codes, `XS`, `EZ`, `ZZ` or other RA-determined prefixes per ISO 6166:2021 clause 4.1); never refused for being outside ISO 3166 |
 | LEI check pair | enforced (ISO 17442:2012, text reached) |
 | UPI | format only (ISO 4914 Annex C and the ANNA DSB technical guidance unreachable) |
 | CFI | six letters; decoding from SIX's list (Task 4) |
@@ -281,8 +281,7 @@ ends before clause 4.4 and Annex B:
 > card issuer and the cardholder"; "the IIN, 8 numeric digits in length"; "the individual account number"; "a check digit
 > (see 4.4)". Contents: "Annex B (normative) Luhn formula for computing modulus-10 “double-add-double” check digits".
 
-So the PAN is 10 to 19 digits; the earlier proposal of a 14-digit floor is withdrawn (it would refuse valid 12-digit
-Maestro numbers and the standard's own 10). Pay.UK, which "acts as agent for the British Standards Institute in assigning
+So the PAN is 10 to 19 digits; the earlier proposal of a 14-digit floor is withdrawn (the standard's own minimum is 10). Pay.UK, which "acts as agent for the British Standards Institute in assigning
 UK national and international IINs",
 <https://www.wearepay.uk/what-we-do/standards-authority/obtaining-a-standard-or-identifier-number/iin/>, agrees: "an IIN is
 the first eight digits of the long account number"; "up to a maximum of 19 digits"; "an accompanying check digit (1 digit),
@@ -352,7 +351,7 @@ digits and any other 4 digits in a 16 digit PAN."
 
 The EMV QRCPS document itself (version 1.1, 27 November 2020) is **unreachable** (the specification page serves no PDF
 link). Two official publications quote its rule. Banco Central do Brasil, "Manual do BR Code" 2.0.1 (31 August 2020),
-<https://www.bcb.gov.br/content/estabilidadefinanceira/spb_docs/ManualBRCode.pdf>, note 10 to its example:
+<https://www.bcb.gov.br/content/estabilidadefinanceira/spb_docs/ManualBRCode.pdf>, section 2.1 "Definições Comuns", note 10:
 
 > "Segundo seção 4.7.3 CRC (ID “63”) da referência #1, utiliza-se para o cálculo do CRC, o polinômio ‘1021’ (hexa) e valor
 > inicial ‘FFFF’ (hexa), que corresponde ao CRC “CRC-16-CCITT-FFFF”."
@@ -365,7 +364,7 @@ value of '007B' is included in the QR Code as "6304007B"". Pix's EMV-QRCPS profi
 `6304` plus four hexadecimal digits.
 
 **Reflection and final XOR are not stated in words by either publication.** The BCB manual prints a complete payload (270
-characters, section 2.2: `00020104141234567890123426580014BR.GOV.BCB.PIX0136123e4567-e12b-12d1-a456-426655440000` and on,
+characters, section 2.2 "Exemplo de um BR Code": `00020104141234567890123426580014BR.GOV.BCB.PIX0136123e4567-e12b-12d1-a456-426655440000` and on,
 ending `6304AD38`) with the table entry "63 CRC16-CCITT (0xffff) 04 0xAD38". The checksum over the payload up to and
 including `6304` is `AD38` only with no input or output reflection and no final XOR; the reflected, XOR-final and both
 variants of the same text give `BFA2`, `52C7` and `405D`. That payload, with its printed CRC, is the test of
