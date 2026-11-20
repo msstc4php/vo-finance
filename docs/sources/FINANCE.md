@@ -560,8 +560,81 @@ for an unknown code). The 512-character recommendation is not enforced (see the 
 
 ### National EMVCo profiles
 
-Task 5/6: Pix BR Code (BCB), PromptPay (BOT), SGQR (MAS/IMDA), DuitNow (PayNet), QRIS (Bank Indonesia), VietQR (NAPAS),
-KHQR (NBC), HK FPS (HKMA; the Common QR Code Specification read here is its base), JPQR, QR Ph (BSP), Bharat QR (NPCI).
+Research date 2026-11-20 (UTC). Each built profile composes `MerchantPresentedQr` (through `Internal\ProfilePayload`) and adds
+only the rules quoted below. A profile is built only when its publisher's own specification was read.
+
+**Built**
+
+| Profile | Source read | Edition |
+|---|---|---|
+| Pix BR Code | Banco Central do Brasil, Manual de Padroes para Iniciacao do Pix, <https://www.bcb.gov.br/content/estabilidadefinanceira/pix/Regulamento_Pix/II_ManualdePadroesparaIniciacaodoPix.pdf> (SHA-256 `fd4422bac3bb3237d26decedc8725c08449aeb7729c243165fbe5832cb236b3d`); Manual do BR Code, <https://www.bcb.gov.br/content/estabilidadefinanceira/spb_docs/ManualBRCode.pdf> | Pix manual 2.10.0 (the page also announces 2.11.0-rc1); BR Code manual 2.0.1 |
+| PromptPay (Thai QR) | Bank of Thailand, Policy Guideline "Standardized Thai QR Code for Payment Transactions", 17 April 2019, <https://www.bot.or.th/content/dam/bot/fipcs/documents/FPG/2562/EngPDF/25620084.pdf> (SHA-256 `1b924d0befa061766c5b0d3ff403b8bcc83630bdac641fea910b544492977b5f`) | 2019 (B.E. 2562), section 2.3 holds the data structure |
+| DuitNow QR | PayNet developer documentation, DuitNow QR, merchant-presented mode V1.5, "QR Data Object" and "Examples": <https://docs.developer.paynet.my/docs/duitNow-QR/integration/QR-generation-specification/merchant-presented-mode/qr-data-object> and `.../example` | V1.5; the pages carry the notice that the site is no longer updated and point to a newer PayNet documentation site, which was not read |
+
+Pix rules (all Pix manual 2.10.0 unless marked BR Code manual):
+
+| Rule | Quote | Section |
+|---|---|---|
+| GUI `br.gov.bcb.pix`, case-insensitive | "GUI - Globally Unique Identifier: br.gov.bcb.pix ... 14 caracteres"; "O GUI - DNS reverso - e case insensitive" (footnote 10) | 2.5 |
+| Template 26..51 with sub-IDs 00, 01 chave (1..77), 02 infoAdicional (1..72), 03 fss (08) | "01 chave 01..77 M Chave Pix", "02 infoAdicional 01..72 O", "03 fss 08 O ISPB do facilitador de servico de saque" | 2.6 |
+| Static code: the key is mandatory; dynamic: the URL (sub-ID 25, 1..77) | "Chave Pix ... Obrigatorio"; "25 URL 01..77 M Link para payload JSON"; "Link URL ... Obrigatorio" | 2.6, 2.7 |
+| The maxima 77 and 72 follow from the 99-character template | "os campos: chave, infoAdicional e fss disputam o espaco de 99 caracteres do ID raiz" | 2.6.1 |
+| URL without protocol prefix | "As URLs presentes nos QR Codes ... nao devem incluir prefixo de protocolo" | 2.5.2 |
+| Composite code: recurrence URL in a template 80..99 with the Pix GUI, mandatory; key or payment URL optional in the recurrence-only case | "80..99 ... 25 URL 01..77 M Link para payload JSON dos parametros de recorrencia"; "sem necessidade de preenchimentos da chave DICT ou da URL de payload" | 2.8.3, 2.4 |
+| Currency 986, country BR | BR Code manual table 1: `53` "986 - BRL", `58` "BR" | BR Code 2.1 |
+| Merchant name 1..25, city 1..15 | BR Code table 1: `59` "01..25", `60` "01..15" | BR Code 2.1 |
+| Reference label 62-05 present, 1..25 characters; `***` when no identifier is used | "Additional Data Field - Reference Label, sempre presente em um BR Code" (footnote 21); BR Code table 1 `62` "M", `05` "01..25"; "se o gerador do QR optar por nao utilizar um transactionID, o valor '***' devera ser usado" (footnote 25) | 2.6 |
+| Not enforced: letters and digits for the txid | "Os caracteres permitidos no contexto do Pix para o campo txid (EMV 62-05) sao: letras minusculas, maiusculas, digitos" (2.6.2); the BR Code manual's own example payload carries `RP12345678-2019` | 2.6.2, BR Code 2.2 |
+| Not enforced: the form of the key | "A regra ... segue estritamente as regras definidas no Manual Operacional do DICT" (the DICT manual was not read) | 2.5.1 |
+
+Pix official vectors: static, section 2.6.3, `...6304 1D3D`; dynamic, section 2.7, `...630464E4`; BR Code manual section 2.2, `...6304AD38` (a Pix template next to a card account and another arrangement). Their CRCs verify.
+
+PromptPay rules (BOT guideline section 2.3 tag table):
+
+| Rule | Quote | 
+|---|---|
+| Tag 29, credit transfer, AID `A000000677010111` for merchant-presented QR | "29 ... Reserved for PromptPay - Credit Transfer with PromptPayID"; "AID 00 ans 16 M A000000677010111 for merchant-presented QR" |
+| One proxy: 01 mobile number N 13, 02 national or tax ID N 13, 03 e-wallet ID N 15, 04 bank account N up to 43 | "Mobile number 01 N 13 One of them is mandatory", "National ID or Tax ID 02 N 13", "E-Wallet ID 03 N 15", "Bank account 04 N var. up to 43" |
+| Tag 30, bill payment, AID `A000000677010112` (domestic) or `A000000677012006` (cross-border); Biller ID N 15 M; reference 1 ans up to 20 M; reference 2 up to 20 O | "30 ... Reserved for PromptPay - Bill Payment ... Biller ID 01 N 15 M ... Reference 1 02 ans var. up to 20 M ... Reference 2 03 ans var. up to 20 O" |
+| Merchant category code and city optional | "Merchant Category Code 52 ... Only for payment/funds transfer through PromptPay - optional"; "Merchant City 60 ... Only for payment/funds transfer through PromptPay - optional" |
+| Tags 55, 56, 57 not allowed | "Payment/funds transfer service providers through PromptPay are not allowed to use this Tag ID" |
+| Not enforced: currency 764 / country TH | "For payment in Baht - enter 764"; "For domestic transactions - enter TH, for overseas transactions - enter country code of the respective country" (conditional wording) |
+| Not enforced: tag 31, 39, 80 | optional or reserved |
+
+The guideline prints no complete payload (only `0066XXXXXXXXX` and `3920000003000.00JP` fragments), so every PromptPay test payload is synthetic. The guideline makes the AID of tag 29 for customer-presented QR `A000000677010114`; it is refused here (merchant-presented only).
+
+DuitNow rules (PayNet V1.5):
+
+| Rule | Quote |
+|---|---|
+| Payload format indicator `02` | "Payload Format Indicator ... 00 N 02 M Version 02"; all four examples start `000202` |
+| Point of initiation mandatory, 11 static / 12 dynamic | "Point of initiation method 01 N 02 M 11 - Static QR Code 12 - Dynamic QR Code" |
+| Template 26 with AID `A0000006150001`; acquirer ID up to 6 (M); QR ID up to 28 (M); descriptor up to 20; mobile up to 15; 27 reserved | "Malaysia AID: A0000006150001", "Acquirer ID 01 ... Var. up to 06 M", "QR ID 02 ... Var. up to 28 M", "Merchant Descriptor 03 ... up to 20 O", "Mobile Number 04 ... up to 15 O", "ID 27 is Reserved for Future Use" |
+| MCC mandatory; currency 458; country MY | "Merchant Category Code 52 ... M", "Use 458 for Malaysian Ringgit", "Use MY for Malaysia" |
+| Name up to 25, city up to 15 (M) | "Merchant Name 59 ... Var. up to 25 M", "Merchant City 60 ... Var. up to 15 M" |
+| Postal code 5 digits | "Postal Code 61 ANS 05 O Must be 5 numeric values" |
+| Amounts non-zero | "If present, the amount shall be different from zero" |
+| Fee 56 exactly when 55 = 02; 57 exactly when 55 = 03 | "must be present if the data object ID 55 is present with a value of 02. Otherwise, this data object must be absent"; the same for 03 and ID 57 |
+| Template 64 needs 00 and 01 | "If the ID 64 is present, the Language Preference (ID 00) and Merchant Name (ID 01) must be present" |
+| JomPAY (acquirer 898989) needs template 62 with RRN 90 | "RRN 90 ... C ... Required for JomPAY QR"; "Required for JomPAY QR" on ID 62 |
+| Not enforced | the hash of ID 82 (the input of the SHA-256 is not stated), the acquirer ID table (BIC listing "shared by your PayNet Partner") |
+
+DuitNow official vectors: examples 1 to 4 of the "Examples" page (POS, P2P, with a data integrity check, JomPAY); CRCs `343F`, `3A23`, `B623`, `5DFB` verify.
+
+**Not built** (no official specification reached; the generic `MerchantPresentedQr` parses their payloads)
+
+| Profile | What was reached | Reason |
+|---|---|---|
+| SGQR (MAS/IMDA) | MAS SGQR pages (<https://www.mas.gov.sg/sgqr>), search results | No specification document is published on the pages; the Payments Council endorsement is announced, the document itself was not found |
+| QRIS (Bank Indonesia) | BI "Bahan Sosialisasi QRIS" (SHA-256 `600c834989236d89425bc6cfa378845d1a49b3227f5d96ffebbff546a9ff2604`), PADG 21/18/PADG/2019 | Both describe the standard but carry no data-object table; the specification document was not found (bi.go.id drops curl, files were read through WebFetch; an ASPI bulletin returned HTML) |
+| VietQR (NAPAS) | napas.com.vn answers | No NAPAS specification found; only third-party libraries describe it |
+| KHQR (NBC) | "KHQR SDK Documentation" 2.9, May 2025, <https://bakong.nbc.gov.kh/download/KHQR/integration/KHQR%20SDK%20Document.pdf> (SHA-256 `9ce224ccf7ade79f92bf52604b52c17e383c4d3e0b4aa7b50ec4535d135fd974`) | The SDK usage guide: generator parameters and sample payloads; the Prakas specification of the data objects and any GUI rule are not in it |
+| HK FPS (HKMA/HKICL) | HKMA Common QR Code Specification 1.0 | It defines the common template only (GUI, tables 4.1 to 4.5); the FPS-specific template is HKICL's and was not reached |
+| JPQR (Payments Japan) | none | paymentsjapan.or.jp is outside this environment's allowed hosts; only secondary articles found |
+| QR Ph (BSP) | bsp.gov.ph answers | No BSP or PPMI specification found; only third-party descriptions |
+| Bharat QR (NPCI) | none | npci.org.in answers 403; only secondary statements found |
+
+The searches for the unbuilt profiles were limited to a few queries each; a follow-up with a different network or a vendor-supplied copy may reach more.
 
 ### EPC069-12
 

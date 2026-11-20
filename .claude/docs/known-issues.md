@@ -24,3 +24,10 @@
 - `masked()` hides IDs 02-51, 80-99 and the CRC (`6304****`); the masked string is no valid payload.
 - Annex B.7 of the EMVCo document has line breaks inside values in its printed text; use the hexadecimal representation printed under it.
 - The GUI (sub-ID 00) is accepted anywhere in its template (EMV QRCPS 4.6.1); `MerchantPresentedQrBuilder` writes it first.
+- DuitNow uses payload format indicator `02` and Thai QR makes ID 52 and 60 optional; the generic `MerchantPresentedQr` refuses both. `ProfilePayload` validates a twin (indicator 01, placeholders `0000` / `NA`, CRC recomputed) so no structural logic is duplicated; never expose the twin.
+- The BCB's own BR Code example (manual 2.0.1, 2.2) has the txid `RP12345678-2019`; the Pix manual (2.6.2) says letters and digits only. `PixBrCode` does not enforce the charset.
+- Pix dynamic and composite codes: value and txid in the QR are ignored by the payer (Pix manual 2.7); `txid()` returns null for `***`.
+- PayNet's DuitNow pages are flagged "no longer updated" (V1.5); a newer PayNet docs site exists and was not read. Its four examples have valid CRCs.
+- The Thai guideline prints no full payload; PromptPay tests are synthetic. Thai tag 29 AID `...114` is for customer-presented QR and is refused.
+- bi.go.id drops curl connections; files there were read through WebFetch (binary saved by the harness). A browser-like User-Agent was not used.
+- `Internal\ProfileRule::atMost` replaces min/max pairs: every present data object has at least one character, so the minimum 1 is implied.

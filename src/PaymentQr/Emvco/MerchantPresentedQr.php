@@ -10,6 +10,7 @@ use MSSTC4PHP\ValueObject\Exception\InvalidValueObjectException;
 use MSSTC4PHP\ValueObject\Finance\Decimal;
 use MSSTC4PHP\ValueObject\Financial\Exception\InvalidPaymentQrException;
 use MSSTC4PHP\ValueObject\Financial\Internal\Crc16CcittFalse;
+use MSSTC4PHP\ValueObject\Financial\Internal\EmvcoMask;
 use MSSTC4PHP\ValueObject\Financial\Internal\EmvcoTlv;
 use MSSTC4PHP\ValueObject\I18n\CountryCode;
 use MSSTC4PHP\ValueObject\I18n\CurrencyCode;
@@ -190,14 +191,7 @@ final class MerchantPresentedQr extends AbstractStringValueObject implements Mas
     #[Override]
     public function masked(): string
     {
-        $masked = '';
-        foreach ($this->objects as $object) {
-            $masked .= EmvcoTlv::encode($this->isSecret($object->id) ? $this->asterisks($object) : $object);
-        }
-
-        \assert($masked !== '');
-
-        return $masked;
+        return EmvcoMask::apply($this->objects);
     }
 
     #[Override]
@@ -310,19 +304,6 @@ final class MerchantPresentedQr extends AbstractStringValueObject implements Mas
     private function required(string $id): string
     {
         return $this->get($id) ?? throw new LogicException('A validated payload lacks a mandatory data object.');
-    }
-
-    private function asterisks(DataObject $object): DataObject
-    {
-        $mask = \str_repeat('*', EmvcoTlv::length($object->value));
-        \assert($mask !== '');
-
-        return new DataObject($object->id, $mask);
-    }
-
-    private function isSecret(string $id): bool
-    {
-        return $this->isMerchantAccountId($id) || $id === '63' || ($id >= '80' && $id <= '99');
     }
 
     private function isMerchantAccountId(string $id): bool

@@ -53,6 +53,9 @@ final readonly class MerchantAccount
         }
     }
 
+    /**
+     * @return non-empty-string|null
+     */
     public function subField(string $id): ?string
     {
         return array_find($this->subFields, static fn (DataObject $object): bool => $object->id === $id)?->value;

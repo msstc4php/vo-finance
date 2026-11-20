@@ -1,0 +1,283 @@
+<?php
+
+declare(strict_types=1);
+
+namespace MSSTC4PHP\ValueObject\Financial\Tests\Unit\PaymentQr\Brazil;
+
+use MSSTC4PHP\ValueObject\Financial\Exception\InvalidPaymentQrException;
+use MSSTC4PHP\ValueObject\Financial\Internal\Crc16CcittFalse;
+use MSSTC4PHP\ValueObject\Financial\Internal\EmvcoMask;
+use MSSTC4PHP\ValueObject\Financial\Internal\EmvcoTlv;
+use MSSTC4PHP\ValueObject\Financial\Internal\ProfilePayload;
+use MSSTC4PHP\ValueObject\Financial\Internal\ProfileRule;
+use MSSTC4PHP\ValueObject\Financial\PaymentQr\Brazil\PixBrCode;
+use MSSTC4PHP\ValueObject\Financial\PaymentQr\Emvco\DataObject;
+use MSSTC4PHP\ValueObject\Financial\PaymentQr\Emvco\MerchantAccount;
+use MSSTC4PHP\ValueObject\Financial\PaymentQr\Emvco\MerchantPresentedQr;
+use MSSTC4PHP\ValueObject\Financial\PaymentQr\Emvco\PointOfInitiation;
+use MSSTC4PHP\ValueObject\Financial\Tests\Unit\PaymentQr\BuildsPayloads;
+use MSSTC4PHP\ValueObject\I18n\CountryCode;
+use MSSTC4PHP\ValueObject\I18n\CurrencyCode;
+use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\DataProvider;
+use PHPUnit\Framework\Attributes\UsesClass;
+use PHPUnit\Framework\TestCase;
+
+#[CoversClass(PixBrCode::class)]
+#[UsesClass(ProfilePayload::class)]
+#[UsesClass(ProfileRule::class)]
+#[UsesClass(EmvcoMask::class)]
+#[UsesClass(EmvcoTlv::class)]
+#[UsesClass(Crc16CcittFalse::class)]
+#[UsesClass(MerchantPresentedQr::class)]
+#[UsesClass(MerchantAccount::class)]
+#[UsesClass(DataObject::class)]
+#[UsesClass(InvalidPaymentQrException::class)]
+final class PixBrCodeTest extends TestCase
+{
+    use BuildsPayloads;
+
+    // BCB, Manual de Padroes para Iniciacao do Pix 2.10.0, section 2.6.3: the static QR Code.
+    private const string BCB_STATIC = '00020126580014br.gov.bcb.pix0136123e4567-e12b-12d1-a456-4266554400005204000053039865802BR5913Fulano de Tal6008BRASILIA62070503***63041D3D';
+
+    // BCB, Manual de Padroes para Iniciacao do Pix 2.10.0, section 2.7: the dynamic QR Code.
+    private const string BCB_DYNAMIC = '00020101021226700014br.gov.bcb.pix2548pix.example.com/8b3da2f39a4140d1a91abd93113bd4415204000053039865802BR5913Fulano de Tal6008BRASILIA62070503***630464E4';
+
+    // BCB, Manual do BR Code 2.0.1, section 2.2: a Pix account next to another arrangement and a card account.
+    private const string BCB_BR_CODE = '00020104141234567890123426580014BR.GOV.BCB.PIX0136123e4567-e12b-12d1-a456-426655440000'
+        . '27300012BR.COM.OUTRO011001234567895204000053039865406123.455802BR5917NOME DO RECEBEDOR6008BRASILIA'
+        . '61087007490062190515RP12345678-201980390012BR.COM.OUTRO01190123.ABCD.3456.WXYZ6304AD38';
+
+    public function testTheOfficialStaticQrCodeParses(): void
+    {
+        $pix = new PixBrCode(self::BCB_STATIC);
+
+        self::assertSame(self::BCB_STATIC, $pix->value);
+        self::assertSame('123e4567-e12b-12d1-a456-426655440000', $pix->pixKey());
+        self::assertNull($pix->paymentUrl());
+        self::assertNull($pix->recurrenceUrl());
+        self::assertNull($pix->additionalInfo());
+        self::assertNull($pix->withdrawalProvider());
+        self::assertNull($pix->txid());
+        self::assertNull($pix->pointOfInitiation());
+        self::assertNull($pix->amount());
+        self::assertSame('Fulano de Tal', $pix->merchantName());
+        self::assertSame('BRASILIA', $pix->merchantCity());
+        self::assertSame('0000', $pix->merchantCategoryCode());
+        self::assertSame('986', $pix->currency()?->numeric());
+        self::assertSame('BR', $pix->countryCode()?->value);
+    }
+
+    public function testTheOfficialDynamicQrCodeParses(): void
+    {
+        $pix = new PixBrCode(self::BCB_DYNAMIC);
+
+        self::assertNull($pix->pixKey());
+        self::assertSame('pix.example.com/8b3da2f39a4140d1a91abd93113bd441', $pix->paymentUrl());
+        self::assertSame(PointOfInitiation::Dynamic, $pix->pointOfInitiation());
+    }
+
+    public function testTheBrCodeManualPayloadIsAPixPayloadWithAnAmountAndATxid(): void
+    {
+        $pix = new PixBrCode(self::BCB_BR_CODE);
+
+        self::assertSame('123e4567-e12b-12d1-a456-426655440000', $pix->pixKey());
+        self::assertSame('RP12345678-2019', $pix->txid());
+        self::assertSame('123.45', $pix->amount()?->value);
+        self::assertSame('NOME DO RECEBEDOR', $pix->merchantName());
+        self::assertSame(CurrencyCode::fromNumeric('986'), $pix->currency());
+        self::assertSame(CountryCode::from('BR'), $pix->countryCode());
+    }
+
+    public function testTheGuiIsCaseInsensitive(): void
+    {
+        $lower = self::sealed(
+            self::tlv('00', '01'),
+            self::tlv('26', self::tlv('00', 'BR.GOV.BCB.PIX') . self::tlv('01', 'fulano@example.com')),
+            ...$this->tail(),
+        );
+
+        self::assertSame('fulano@example.com', new PixBrCode($lower)->pixKey());
+    }
+
+    public function testTheLongestKeyAndTheLongestAdditionalInfoThatFitTheTemplate(): void
+    {
+        $longKey = self::sealed(self::tlv('00', '01'), self::tlv('26', self::tlv('00', 'br.gov.bcb.pix') . self::tlv('01', \str_repeat('k', 77))), ...$this->tail());
+        $longInfo = self::sealed(self::tlv('00', '01'), self::tlv('26', self::tlv('00', 'br.gov.bcb.pix') . self::tlv('01', 'k') . self::tlv('02', \str_repeat('i', 72))), ...$this->tail());
+
+        self::assertSame(77, \strlen((string) new PixBrCode($longKey)->pixKey()));
+        self::assertSame(72, \strlen((string) new PixBrCode($longInfo)->additionalInfo()));
+    }
+
+    public function testTheTxidIsNotRestrictedToLettersAndDigits(): void
+    {
+        $payload = self::sealed(...$this->baseline());
+
+        self::assertSame('RP12345678-2019', new PixBrCode(self::BCB_BR_CODE)->txid());
+        self::assertNull(new PixBrCode($payload)->txid());
+    }
+
+    public function testTheOptionalTemplateFields(): void
+    {
+        $payload = self::sealed(
+            self::tlv('00', '01'),
+            self::tlv('26', self::tlv('00', 'br.gov.bcb.pix') . self::tlv('01', '+5561912345678') . self::tlv('02', 'Pagamento do pedido') . self::tlv('03', '12345678')),
+            ...$this->tail('RP12345678'),
+        );
+
+        $pix = new PixBrCode($payload);
+
+        self::assertSame('+5561912345678', $pix->pixKey());
+        self::assertSame('Pagamento do pedido', $pix->additionalInfo());
+        self::assertSame('12345678', $pix->withdrawalProvider());
+        self::assertSame('RP12345678', $pix->txid());
+    }
+
+    public function testACompositeQrCodeCarriesTheRecurrenceUrlInTheUnreservedRange(): void
+    {
+        $payload = self::sealed(
+            self::tlv('00', '01'),
+            self::tlv('26', self::tlv('00', 'br.gov.bcb.pix')),
+            ...$this->tail(),
+            ...[self::tlv('80', self::tlv('00', 'br.gov.bcb.pix') . self::tlv('25', 'pix.example.com/rec/2353c790eefb11ea'))],
+        );
+
+        $pix = new PixBrCode($payload);
+
+        self::assertSame('pix.example.com/rec/2353c790eefb11ea', $pix->recurrenceUrl());
+        self::assertNull($pix->pixKey());
+        self::assertNull($pix->paymentUrl());
+    }
+
+    public function testMaskingHidesTheKeyAndTheCrc(): void
+    {
+        $masked = new PixBrCode(self::BCB_STATIC)->masked();
+
+        self::assertStringNotContainsString('123e4567', $masked);
+        self::assertStringNotContainsString('1D3D', $masked);
+        self::assertStringContainsString('2658' . \str_repeat('*', 58), $masked);
+        self::assertStringEndsWith('6304****', $masked);
+        self::assertStringContainsString('Fulano de Tal', $masked);
+    }
+
+    public function testMaskingHidesThePaymentUrlAndTheRecurrenceUrl(): void
+    {
+        self::assertStringNotContainsString('pix.example.com', new PixBrCode(self::BCB_DYNAMIC)->masked());
+        self::assertStringNotContainsString('pix.example.com/8b3da2f39a4140d1a91abd93113bd441', new PixBrCode(self::BCB_DYNAMIC)->masked());
+    }
+
+    /**
+     * @param list<string> $objects
+     */
+    #[DataProvider('refusedPayloads')]
+    public function testRefusesPayloadsThatBreakTheSpecification(array $objects): void
+    {
+        $payload = self::sealed(...$objects);
+
+        self::assertFalse(PixBrCode::isValid($payload));
+        $this->expectException(InvalidPaymentQrException::class);
+        new PixBrCode($payload);
+    }
+
+    /**
+     * @return iterable<string, array{list<string>}>
+     */
+    public static function refusedPayloads(): iterable
+    {
+        $gui = self::tlv('00', 'br.gov.bcb.pix');
+        $key = self::tlv('01', 'fulano@example.com');
+        $pix = self::tlv('26', $gui . $key);
+        $marker = self::tlv('00', '01');
+        $category = self::tlv('52', '0000');
+        $currency = self::tlv('53', '986');
+        $country = self::tlv('58', 'BR');
+        $name = self::tlv('59', 'Fulano');
+        $city = self::tlv('60', 'BRASILIA');
+        $txid = self::tlv('62', self::tlv('05', '***'));
+
+        yield 'no Pix template' => [[$marker, self::tlv('26', self::tlv('00', 'br.com.outro') . $key), $category, $currency, $country, $name, $city, $txid]];
+        yield 'GUI of another arrangement in range 80' => [[$marker, self::tlv('26', self::tlv('00', 'br.com.outro') . $key), $category, $currency, $country, $name, $city, $txid, self::tlv('80', $gui . $key)]];
+        yield 'neither key nor URL' => [[$marker, self::tlv('26', $gui), $category, $currency, $country, $name, $city, $txid]];
+        yield 'recurrence URL without a Pix template in 26 to 51' => [[$marker, self::tlv('26', self::tlv('00', 'br.com.outro') . self::tlv('01', 'abc')), $category, $currency, $country, $name, $city, $txid, self::tlv('80', $gui . self::tlv('25', 'pix.example.com/rec/abc'))]];
+        yield 'key and URL together' => [[$marker, self::tlv('26', $gui . $key . self::tlv('25', 'pix.example.com/abc')), $category, $currency, $country, $name, $city, $txid]];
+        yield 'two Pix templates' => [[$marker, $pix, self::tlv('27', $gui . $key), $category, $currency, $country, $name, $city, $txid]];
+        yield 'withdrawal provider of 7 digits' => [[$marker, self::tlv('26', $gui . $key . self::tlv('03', '1234567')), $category, $currency, $country, $name, $city, $txid]];
+        yield 'URL with a protocol prefix' => [[$marker, self::tlv('26', $gui . self::tlv('25', 'https://pix.example.com/abc')), $category, $currency, $country, $name, $city, $txid]];
+        yield 'currency other than 986' => [[$marker, $pix, $category, self::tlv('53', '840'), $country, $name, $city, $txid]];
+        yield 'country other than BR' => [[$marker, $pix, $category, $currency, self::tlv('58', 'PT'), $name, $city, $txid]];
+        yield 'merchant name of 26 characters' => [[$marker, $pix, $category, $currency, $country, self::tlv('59', \str_repeat('n', 26)), $city, $txid]];
+        yield 'merchant city of 16 characters' => [[$marker, $pix, $category, $currency, $country, $name, self::tlv('60', \str_repeat('c', 16)), $txid]];
+        yield 'no transaction identifier template' => [[$marker, $pix, $category, $currency, $country, $name, $city]];
+        yield 'template 62 without the reference label' => [[$marker, $pix, $category, $currency, $country, $name, $city, self::tlv('62', self::tlv('01', 'bill'))]];
+        yield 'txid of 26 characters' => [[$marker, $pix, $category, $currency, $country, $name, $city, self::tlv('62', self::tlv('05', \str_repeat('t', 26)))]];
+    }
+
+    public function testTheBaselineCaseIsAccepted(): void
+    {
+        $payload = self::sealed(...$this->baseline());
+
+        self::assertTrue(PixBrCode::isValid($payload));
+    }
+
+    public function testRefusesAWrongCrcAndAGenericPayloadWithoutPix(): void
+    {
+        self::assertFalse(PixBrCode::isValid(\substr(self::BCB_STATIC, 0, -4) . '0000'));
+        self::assertFalse(PixBrCode::isValid(''));
+        self::assertFalse(PixBrCode::isValid('not a payload'));
+    }
+
+    public function testAMessageNeverContainsThePayload(): void
+    {
+        $payload = self::sealed(...$this->baseline(key: 'secret-key@example.com', category: self::tlv('52', 'abcd')));
+
+        try {
+            new PixBrCode($payload);
+            self::fail('Expected a refusal.');
+        } catch (InvalidPaymentQrException $e) {
+            self::assertStringNotContainsString('secret-key', $e->getMessage());
+            self::assertStringNotContainsString($payload, $e->getMessage());
+        }
+    }
+
+    public function testEqualityAndSerialisation(): void
+    {
+        $pix = new PixBrCode(self::BCB_STATIC);
+
+        self::assertTrue($pix->equals(PixBrCode::from(self::BCB_STATIC)));
+        self::assertFalse($pix->equals(new PixBrCode(self::BCB_DYNAMIC)));
+        self::assertSame(self::BCB_STATIC, (string) $pix);
+        self::assertSame('"' . self::BCB_STATIC . '"', \json_encode($pix));
+    }
+
+    /**
+     * @return list<string>
+     */
+    private function tail(string $txid = '***'): array
+    {
+        return [
+            self::tlv('52', '0000'),
+            self::tlv('53', '986'),
+            self::tlv('58', 'BR'),
+            self::tlv('59', 'Fulano de Tal'),
+            self::tlv('60', 'BRASILIA'),
+            self::tlv('62', self::tlv('05', $txid)),
+        ];
+    }
+
+    /**
+     * @return list<string>
+     */
+    private function baseline(string $key = 'fulano@example.com', ?string $category = null): array
+    {
+        return [
+            self::tlv('00', '01'),
+            self::tlv('26', self::tlv('00', 'br.gov.bcb.pix') . self::tlv('01', $key)),
+            $category ?? self::tlv('52', '0000'),
+            self::tlv('53', '986'),
+            self::tlv('58', 'BR'),
+            self::tlv('59', 'Fulano'),
+            self::tlv('60', 'BRASILIA'),
+            self::tlv('62', self::tlv('05', '***')),
+        ];
+    }
+}

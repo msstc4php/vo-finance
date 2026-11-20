@@ -25,3 +25,8 @@
   objects; the 512-character refusal is dropped (7089-character abuse bound); `amount()` accepts `.5`; `MerchantAccount`
   validates its input. `DataObject` is a public type and `additionalData()` is `array<array-key, non-empty-string>` (PHP
   turns the key "10" into an integer).
+- National EMVCo QR profiles: `PixBrCode` (BCB), `PromptPayQr` with `PromptPayProxyType` (Bank of Thailand), `DuitNowQr`
+  (PayNet) and `PaymentQrFactory`. SGQR, QRIS, VietQR, KHQR, HK FPS, JPQR, QR Ph and Bharat QR are not built: no official
+  specification was reached (README, `docs/sources/FINANCE.md`). `MerchantPresentedQr::masked()` now shares
+  `Internal\EmvcoMask` with the profiles (no behaviour change); `MerchantAccount::subField()` is typed
+  `non-empty-string|null`.
