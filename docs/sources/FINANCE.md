@@ -764,9 +764,18 @@ characters including spaces (5) and line feeds (10), 103 byte ISO 8859-1 code pa
 8859-1, checks 103 bytes and reads it through `fromBytes()`).
 
 Mapping tables of `Internal\Iso8859` (fix round 2), Unicode Consortium, <https://www.unicode.org/Public/MAPPINGS/ISO8859/>,
-table version 2.0 (2015-12-02 for 8859-2), downloaded 2026-11-20 13:15 UTC, status **reached**: `8859-2.TXT` (SHA-256
-`3441c373...`), `8859-4.TXT` (`bc72d7bd...`), `8859-5.TXT` (`020946e1...`), `8859-7.TXT` (`e7176999...`), `8859-10.TXT`
-(`9a2efea3...`), `8859-15.TXT` (`94f4a1c8...`). Each maps 0x00 to 0x9F to U+0000 to U+009F (checked while generating
+downloaded 2026-11-20 13:15 UTC, status **reached**; every file's header was updated 2015-12-02:
+
+| File | Table version | SHA-256 |
+|---|---|---|
+| `8859-2.TXT` | 2.0 | `020946e1...` |
+| `8859-4.TXT` | 2.0 | `e7176999...` |
+| `8859-5.TXT` | 2.0 | `9a2efea3...` |
+| `8859-7.TXT` | 3.0 (2003-Nov-12) | `94f4a1c8...` |
+| `8859-10.TXT` | 2.0 | `3441c373...` |
+| `8859-15.TXT` | 2.0 | `bc72d7bd...` |
+
+(Fix round 3: the round 2 text had paired these hashes with the wrong files; they were recomputed from the downloads.) Each maps 0x00 to 0x9F to U+0000 to U+009F (checked while generating
 the tables); the 0xA0 to 0xFF rows are the per-set character classes. 8859-7 leaves 0xAE, 0xD2 and 0xFF unmapped (93
 characters) and maps 0xA4 to U+20AC, 0xA5 to U+20AF and 0xAA to U+037A (the 2003 additions). ISO 8859-1 needs no table
 (0x00 to 0xFF map to U+0000 to U+00FF).
