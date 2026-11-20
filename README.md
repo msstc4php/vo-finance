@@ -22,6 +22,8 @@ Checked for length and character set, never for a check digit or a range no offi
 - `Figi`: the specification lists five excluded prefixes in its conformance table and seven in section 6.1 and its
   regular expression; the seven are refused.
 
+- `PaymentCardNumber::schemes()`: only the ranges a reached publication assigns to a scheme (Amex 34/37, JCB and UnionPay rows of Discover's IIN Range Summary); Mastercard, Visa, Mir, RuPay, Discover and Diners decode as an empty list.
+
 ## License
 
 MIT, see [`LICENSE`](LICENSE).

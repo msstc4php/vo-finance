@@ -372,8 +372,8 @@ are rendered by script and returned no numbers; ISO/IEC 7812-1's Annex B example
 | Discover, Diners Club International, JCB, UnionPay | Discover Global Network, "Global Payment Network – IIN Range Summary", © 2026, <https://www.discoverglobalnetwork.com/content/dam/discover/en_us/dgn/docs/IPP-VAR-Enabler-Compliance.pdf> | reached | the ranges and lengths below |
 | American Express | American Express UK merchant page, <https://www.americanexpress.com/uk/merchant/get-started.html> | reached | "Card account numbers begin with "34" or "37" and consist of 15 digits in a four-six-five formation." (no Luhn statement) |
 | Visa | Visa Core Rules and Visa Product and Service Rules (public), 24 October 2026, <https://usa.visa.com/content/dam/VCOM/download/about-visa/visa-rules-public.pdf>; Visa 8-Digit BIN Expansion FAQ | reached, searched for "Luhn", "modulus 10", "check digit" and account-number lengths: nothing | no prefix, length or Luhn statement; the FAQ says only "There is no change to the length of the PAN" |
-| Mastercard | Mastercard FAQ (`mastercard.us/en-us/frequently-asked-questions.html`, 403 live); Internet Archive raw copies of it and of `checkout.mastercard.com/faq/` | archive copies reached, they do not contain the 2-series Q&A | **not confirmed** (a search snippet states 222100-272099, "processed the same as 51-55"; not usable as a quote) |
-| Mir (NSPK) | nspk.ru pages found; the product standard `support.nspk.ru/documents/642` | **unreachable** (certificate error) | not listed |
+| Mastercard | Mastercard FAQ (`mastercard.us/en-us/frequently-asked-questions.html`, 403 live); Internet Archive raw copies of it and of `checkout.mastercard.com/faq/` | archive copies reached, they do not contain the 2-series Q&A | **not confirmed** (second attempt, Task 4: `mastercard.ae` and `mastercard.co.za` FAQs 403 live, their Internet Archive `id_` copies hold no 2-series text; a search snippet states 222100-272099, "processed the same as 51-55"; not usable as a quote) |
+| Mir (NSPK) | nspk.ru pages found; the product standard `support.nspk.ru/documents/642` | **unreachable** (certificate error; Task 4 search found only aggregators and news pages) | not listed |
 | RuPay | NPCI RuPay Consolidated Circular V1.0, <https://www.npci.org.in/uploads/Ru_Pay_Consolidated_Circular_V1_0_b9a1bd52b3.pdf> | reached | "the first six or eight digits of the Card that identifies the Issuer"; new issuance "exclusively using the 8-digit IIN structure"; revision list "withdrawal of 81/82 files". No prefix list or length statement: not listed |
 
 Discover's summary (start, end, PAN length min-max), with its footnotes `a` = JCB, `b` = UnionPay:
@@ -385,12 +385,14 @@ Discover's summary (start, end, PAN length min-max), with its footnotes `a` = JC
 3096 0000 - 3102 9999  16-19 (a)  6011 0000 - 6011 9999  16-19        6440 0000 - 6589 9999  16-19
 3112 0000 - 3120 9999  16-19 (a)  6210 9400 - 6210 9499  16-19 (b)    8100 0000 - 8171 9999  16-19 (b)
 3158 0000 - 3159 9999  16-19 (a)
-3337 0000 - 3349 9999  16-19
+3337 0000 - 3349 9999  16-19 (a)
 ```
 
 The document says an IIN is "the first six (6) or eight (8) digits" and that "To receive additional details ... please use
 the latest IIN range table publication", which is under NDA: the summary does not name the scheme of every range (only
-the `a`/`b` footnotes and, in the text, Diners Club International and Discover). Task 4 assigns a range to a scheme only
+the `a`/`b` footnotes and, in the text, Diners Club International and Discover). Footnote positions were read from the PDF's text coordinates (Task 4): the `a`/`b` marker sits on the row it labels, so
+3337 0000 - 3349 9999 is JCB (the block above omitted that marker). Unmarked rows: 3000-3059, 3095, 3600-3699,
+3800-3999, 6011, 6440-6589 (scheme not named). Task 4 assigns a range to a scheme only
 where this summary or another publication names it, and decodes the rest as an empty list.
 
 **No-Luhn ranges: none found.** No publication reached (Discover's summary, the Amex page, Visa's public rules and FAQ,

@@ -9,3 +9,6 @@
 - UPI (ISO 4914), Valor, Mastercard, Mir ranges, SBP and NPCI UPI documents: unreachable or unconfirmed (FINANCE.md).
 - The Internet Archive was offline mid-research (2026-11-20); WebFetch cannot reach web.archive.org, curl can (allowed domain).
 - Mastercard and Visa developer test-card pages are script-rendered: curl returns no numbers.
+- Discover's IIN Range Summary prints the `a`/`b` footnote markers as superscripts above each row in text extraction; the marker belongs to the row below it (checked with `pdftotext -bbox-layout`). 3337-3349 is JCB. Unmarked rows (Discover/Diners/PULSE) name no scheme, so `IinRanges` omits them.
+- `PaymentCardNumber::masked()` uses `*` for hidden digits, keeps `min(6, length - 5)` leading and 4 trailing digits.
+- `IinRanges::match()` takes the table as a parameter only so tests can exercise a co-badged range; the real table has no overlaps.
