@@ -274,6 +274,46 @@ front of the national code", so a national number fits in nine characters. **Out
 claims only what the inference supports: a non-empty value of at most nine ASCII alphanumerics; it does not claim
 digits-only. WKN and Valor can overlap for six digits (factory ambiguity).
 
+## Securities classes, Task 3 additions
+
+**CFI decode table (reached).** SIX, the ISO 10962 maintenance agency's secretariat, publishes the list at
+<https://www.six-group.com/dam/download/financial-information/data-center/cfi/cfi-20210507-current.xlsx>, downloaded
+2026-11-20 (UTC) and read sheet by sheet ("Categories" and one sheet per category). The sheet "Categories" gives the
+14 category letters (`E` Equities, `C` CIVs, `D` Debt instruments, `R` Entitlement (rights), `O` Listed options, `F`
+Futures, `S` Swaps, `H` Non-listed and complex listed options, `I` Spot, `J` Forwards, `K` Strategies, `L` Financing,
+`T` Referential instruments, `M` Others (miscellaneous)); each category sheet lists its groups with the pattern
+`E-S-*-*-*-*` (`ES` = "Common/ordinary shares"). `Cfi::category()` and `Cfi::group()` decode from these; the group
+rows whose letter is `X` (the category's own row) are not groups, because ISO 10962:2021 clause 5 forbids `X` for
+Category and Group. A letter outside the table decodes as null, never as invalid. `ESVUFR` decodes as category `E`,
+group `ES`.
+
+**LEI `louPrefix()` (not confirmed).** The GLEIF structure page
+(<https://www.gleif.org/en/about-lei/iso-17442-the-lei-code-structure>) read by fetch shows no breakdown of the 20
+characters; a web-search summary attributed "characters 1-4: prefix ensuring uniqueness among LEI issuers" to it, which
+the fetch did not reproduce. `Lei::louPrefix()` is therefore a plain slice of the first four characters with no check
+and no registry; the docblock says the meaning is GLEIF's description, not verified.
+
+**ISIN `cusip()` and `sedol()` (not confirmed).** No official publication reached says that the NSIN of a US or CA
+ISIN is the CUSIP, or that a GB or IE ISIN carries a SEDOL padded with two zeros (CGS guide: "a 12-character ISIN is
+also included" only; the LSEG guide lists ISIN as a field). Both accessors are conveniences resting on the plan
+decision: they refuse nothing and return null when the NSIN does not form a valid `Cusip` or `Sedol`.
+
+**UPI.** Format only, and the length of 12 uppercase letters or digits is **not quoted** from an official text (ISO
+4914 clause 4 and the ANNA DSB guidance unreachable); the class is excluded from `SecurityIdentifierFactory`, because
+this format would make every ISIN ambiguous.
+
+**FISN enforced.** From the ANNA Guidelines section 3.2 quoted above: at most 35 characters including `/`, a description
+of at most 19, uppercase only, single blanks, exactly one `/`. The issuer length of 15 is not enforced (CIVs and OTC
+derivatives may extend it up to the total). The guidelines' list of permitted special characters was not reached, so
+the class takes printable ASCII except lowercase letters and refuses non-ASCII (ISO 8859-1 letters).
+
+**Case.** Only `Isin` normalises (lowercase to uppercase, plan Review Focus 4); every other class takes its canonical
+uppercase form only, and `Valor` keeps the case given.
+
+**Factory.** `SecurityIdentifierFactory` offers Isin, Lei, Figi, Cfi, Fisn, Mic, Cusip, Sedol, Wkn and, for digit
+strings only, Valor. Genuine overlaps throw `AmbiguousValueException`: an ISIN that is also a FIGI (`MWG26Z8NW5M4`),
+six digits (WKN, Valor), six letters without `I` and `O` (CFI, WKN).
+
 ## ISO/IEC 7812-1, IIN and PAN
 
 ISO/IEC 7812-1:2017 (fifth edition) preview,

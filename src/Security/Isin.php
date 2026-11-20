@@ -1,0 +1,89 @@
+<?php
+
+declare(strict_types=1);
+
+namespace MSSTC4PHP\ValueObject\Financial\Security;
+
+use MSSTC4PHP\ValueObject\Financial\Internal\IsinCheckDigit;
+use MSSTC4PHP\ValueObject\Financial\Internal\SecurityRules;
+use MSSTC4PHP\ValueObject\I18n\CountryCode;
+use MSSTC4PHP\ValueObject\Support\AbstractStringValueObject;
+use Override;
+
+/**
+ * International Securities Identification Number (ISO 6166): a two-letter prefix, a nine-character basic number (NSIN)
+ * and a check digit. Lowercase input is stored uppercase. The prefix is never refused for being outside ISO 3166
+ * (`XS`, `EU`, `EZ`, `XT` and others exist); {@see countryCode()} is null for them.
+ *
+ * {@see cusip()} and {@see sedol()} read the NSIN of US and CA, or GB and IE, ISINs as a CUSIP or a SEDOL. No official
+ * publication reached states that mapping, so they are conveniences that return null rather than refusing anything.
+ *
+ * @see https://anna-web.org/identifiers/ ANNA, the ISIN structure and its "Double-Add-Double" check digit
+ * @see https://www.set.or.th/en/tsd/information/isin-calculate Stock Exchange of Thailand, worked check-digit examples
+ * @see docs/sources/FINANCE.md "ISIN, ISO 6166"
+ */
+final class Isin extends AbstractStringValueObject
+{
+    private const string TYPE = 'ISIN';
+
+    /**
+     * The NSIN is zero-padded on the left to nine characters, as ISO 6166 clause 4.1 says for national numbers.
+     */
+    public static function fromNsin(string $prefix, string $nsin): self
+    {
+        if ($nsin === '' || \strlen($nsin) > 9) {
+            throw SecurityRules::fail(self::TYPE, 'NSIN must have 1 to 9 characters');
+        }
+
+        $body = \strtoupper($prefix) . \str_pad(\strtoupper($nsin), 9, '0', STR_PAD_LEFT);
+        SecurityRules::shape($body, self::TYPE, 11, '/^[A-Z]{2}[A-Z0-9]{9}$/D', 'two letters, then nine letters or digits');
+
+        return new self($body . IsinCheckDigit::compute($body));
+    }
+
+    /**
+     * @return string two letters
+     */
+    public function prefix(): string
+    {
+        return \substr($this->value, 0, 2);
+    }
+
+    /**
+     * @return string nine characters
+     */
+    public function nsin(): string
+    {
+        return \substr($this->value, 2, 9);
+    }
+
+    public function countryCode(): ?CountryCode
+    {
+        return CountryCode::tryFrom($this->prefix());
+    }
+
+    public function cusip(): ?Cusip
+    {
+        return \in_array($this->prefix(), ['US', 'CA'], true) ? Cusip::tryFrom($this->nsin()) : null;
+    }
+
+    public function sedol(): ?Sedol
+    {
+        return \in_array($this->prefix(), ['GB', 'IE'], true) && \str_starts_with($this->nsin(), '00')
+            ? Sedol::tryFrom(\substr($this->nsin(), 2))
+            : null;
+    }
+
+    #[Override]
+    protected function parse(string $value): string
+    {
+        $value = \strtoupper($value);
+        SecurityRules::shape($value, self::TYPE, 12, '/^[A-Z]{2}[A-Z0-9]{9}[0-9]$/D', 'two letters, nine letters or digits, a digit');
+
+        if (!IsinCheckDigit::isValid($value)) {
+            throw SecurityRules::fail(self::TYPE, 'has a wrong check digit');
+        }
+
+        return $value;
+    }
+}
