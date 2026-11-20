@@ -129,6 +129,11 @@ final class IinRangesTest extends TestCase
         self::assertSame([], $ranges->schemes((string) ((int) $end + 1)));
     }
 
+    public function testDefaultTableIsBuiltOnce(): void
+    {
+        self::assertSame(IinRanges::default(), IinRanges::default());
+    }
+
     public function testDefaultTableLeavesUnmarkedDiscoverRowsOut(): void
     {
         foreach (['30000000', '30950000', '36000000', '38000000', '60110000', '64400000', '65890000'] as $iin) {

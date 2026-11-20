@@ -109,10 +109,10 @@ final class PaymentCardNumberTest extends TestCase
      */
     public static function masks(): iterable
     {
-        yield '16 digits' => [self::withCheckDigit('411111111111111'), '411111******1111'];
-        yield '19 digits' => [self::withCheckDigit('624000000000000000'), '624000*********0' . \substr(self::withCheckDigit('624000000000000000'), -3)];
-        yield '11 digits' => [self::withCheckDigit('4000000000'), '400000*' . \substr(self::withCheckDigit('4000000000'), -4)];
-        yield '10 digits' => [self::withCheckDigit('400000000'), '40000*' . \substr(self::withCheckDigit('400000000'), -4)];
+        yield '16 digits' => ['4111111111111111', '411111******1111'];
+        yield '19 digits' => ['6240000000000000006', '624000*********0006'];
+        yield '11 digits' => ['40000000006', '400000*0006'];
+        yield '10 digits' => ['4000000002', '40000*0002'];
     }
 
     #[DataProvider('masks')]

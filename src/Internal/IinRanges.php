@@ -29,7 +29,10 @@ final readonly class IinRanges
 
     public static function default(): self
     {
-        return new self(self::table());
+        /** @var self|null $default */
+        static $default = null;
+
+        return $default ??= new self(self::table());
     }
 
     /**
