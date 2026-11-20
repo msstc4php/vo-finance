@@ -47,4 +47,18 @@ final class PayloadBoundTest extends TestCase
 
         PayloadBound::ensure(\str_repeat("\xFF", 7089 * 4 + 1), 'Test');
     }
+
+    #[DoesNotPerformAssertions]
+    public function testTheLargestSingleByteContentPasses(): void
+    {
+        PayloadBound::ensureSingleByte(\str_repeat("\xE0", 7089), 'Test');
+    }
+
+    public function testOneSingleByteCharacterMoreIsRefused(): void
+    {
+        $this->expectException(InvalidPaymentQrException::class);
+        $this->expectExceptionMessage('Test must not exceed 7089 characters.');
+
+        PayloadBound::ensureSingleByte(\str_repeat("\xE0", 7090), 'Test');
+    }
 }

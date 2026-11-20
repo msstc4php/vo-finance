@@ -61,6 +61,7 @@ final class SecurityIdentifierFactoryTest extends TestCase
         self::assertInstanceOf(Figi::class, SecurityIdentifierFactory::fromString('BBG000BLNQ16'));
         self::assertInstanceOf(Fisn::class, SecurityIdentifierFactory::fromString('APPLE INC/SH'));
         self::assertInstanceOf(Valor::class, SecurityIdentifierFactory::fromString('ABC'));
+        self::assertInstanceOf(Cusip::class, SecurityIdentifierFactory::fromString('12345*AB7'));
     }
 
     public function testLowercaseIsin(): void

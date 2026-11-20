@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace MSSTC4PHP\ValueObject\Financial\PaymentQr;
 
 use LogicException;
-use MSSTC4PHP\ValueObject\Contract\Maskable;
 use MSSTC4PHP\ValueObject\Contract\ValueObject;
 use MSSTC4PHP\ValueObject\Exception\AmbiguousValueException;
 use MSSTC4PHP\ValueObject\Financial\Exception\InvalidPaymentQrException;
@@ -23,7 +22,6 @@ use MSSTC4PHP\ValueObject\Financial\PaymentQr\Ru\Gost56042Payload;
 use MSSTC4PHP\ValueObject\Financial\PaymentQr\Ru\SbpPaymentLink;
 use MSSTC4PHP\ValueObject\Financial\PaymentQr\Swiss\QrBill;
 use MSSTC4PHP\ValueObject\Financial\PaymentQr\Thailand\PromptPayQr;
-use MSSTC4PHP\ValueObject\Support\AbstractStringValueObject;
 
 /**
  * Builds a payment payload by its leading marker: `BCD` an {@see EpcQr}, `SPC` a {@see QrBill}, `ST0001` a {@see
@@ -75,7 +73,7 @@ final class PaymentQrFactory
      * @throws InvalidPaymentQrException when no class accepts it, or other bytes are not UTF-8
      * @throws LogicException without ext-mbstring, for an EPC or GOST payload in a single-byte character set
      */
-    public static function fromBytes(string $bytes): AbstractStringValueObject&Maskable
+    public static function fromBytes(string $bytes): EpcQr|QrBill|Gost56042Payload|SbpPaymentLink|UpiPaymentUri|PixBrCode|PromptPayQr|DuitNowQr|KhqrCode|JpqrCode|MerchantPresentedQr
     {
         if (\str_starts_with($bytes, 'BCD')) {
             return EpcQr::fromBytes($bytes);
@@ -99,7 +97,7 @@ final class PaymentQrFactory
      * @throws InvalidPaymentQrException when the marked class, every identified profile or the generic format does not
      *                                   accept it
      */
-    public static function fromString(string $payload): AbstractStringValueObject&Maskable
+    public static function fromString(string $payload): EpcQr|QrBill|Gost56042Payload|SbpPaymentLink|UpiPaymentUri|PixBrCode|PromptPayQr|DuitNowQr|KhqrCode|JpqrCode|MerchantPresentedQr
     {
         $marked = match (true) {
             \str_starts_with($payload, 'BCD') => new EpcQr($payload),

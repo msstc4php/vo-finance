@@ -77,7 +77,7 @@ final class Gost56042Payload extends AbstractStringValueObject implements Maskab
             return new self($bytes);
         }
 
-        PayloadBound::ensure($bytes, self::TYPE);
+        PayloadBound::ensureSingleByte($bytes, self::TYPE);
 
         return new self(\substr_replace(Transcoder::toUtf8($bytes, self::ENCODINGS[$match[1]], self::TYPE), '2', 6, 1));
     }

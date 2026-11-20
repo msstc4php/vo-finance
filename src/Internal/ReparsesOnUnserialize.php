@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace MSSTC4PHP\ValueObject\Financial\Internal;
 
+use LogicException;
 use MSSTC4PHP\ValueObject\Financial\Exception\InvalidPaymentQrException;
 
 /**
@@ -26,9 +27,14 @@ trait ReparsesOnUnserialize
      * @param array<array-key, mixed> $data untrusted: whatever the serialized string holds
      *
      * @throws InvalidPaymentQrException when the data holds no string value or the value is not valid
+     * @throws LogicException when called on an object that already holds a value
      */
     public function __unserialize(array $data): void
     {
+        if (isset($this->value)) {
+            throw new LogicException('A payment payload is immutable; __unserialize() runs only on a new object.');
+        }
+
         $value = $data['value'] ?? null;
         if (!\is_string($value) || \count($data) !== 1) {
             throw new InvalidPaymentQrException('A serialized payment payload must hold only its value, as a string.');

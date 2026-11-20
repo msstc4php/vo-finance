@@ -70,7 +70,7 @@ throws vo-base `AmbiguousValueException` with the candidates; the factories neve
 | `Security\Sedol` | SEDOL, check digit enforced |
 | `Security\Wkn` | German WKN (format only) |
 | `Security\Valor` | Swiss valor number (format only) |
-| `Security\SecurityIdentifierFactory` | `fromString()` builds the one type that accepts the value; several types accepting it (a 12-character value can be an ISIN and a FIGI, and a `Valor` accepts any one to nine letters or digits) throw `AmbiguousValueException`; none throws `InvalidSecurityIdentifierException`. Every `Mic`, `Wkn`, `Cfi`, `Sedol` and `Cusip` is also a valid `Valor`, so the factory never returns one of them: construct those types directly |
+| `Security\SecurityIdentifierFactory` | `fromString()` builds the one type that accepts the value; several types accepting it (a 12-character value can be an ISIN and a FIGI, and a `Valor` accepts any one to nine letters or digits) throw `AmbiguousValueException`; none throws `InvalidSecurityIdentifierException`. Every `Mic`, `Wkn`, `Cfi` and `Sedol`, and every `Cusip` of letters and digits only, is also a valid `Valor`, so the factory never returns one of them: construct those types directly; a `Cusip` holding `*`, `@` or `#` is not a `Valor` and comes back as a `Cusip` |
 
 Securities and entity identifiers carry no `masked()`.
 

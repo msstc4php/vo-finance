@@ -290,6 +290,23 @@ final class Gost56042PayloadTest extends TestCase
         $this->expectException(InvalidPaymentQrException::class);
         $this->expectExceptionMessage('Gost56042Payload must not exceed 7089 characters.');
 
-        Gost56042Payload::fromBytes('ST00011|' . \str_repeat("\xE0", 7082));
+        // 0x98 is undefined in Windows-1251: transcoding first would report the character set, not the bound.
+        Gost56042Payload::fromBytes('ST00011|' . \str_repeat("\x98", 7082));
+    }
+
+    public function testTheServiceBlockMustLead(): void
+    {
+        $this->expectException(InvalidPaymentQrException::class);
+        $this->expectExceptionMessage('Gost56042Payload requires the service block ST0001, a character set 1 to 3 and an ASCII graphic separator.');
+
+        Gost56042Payload::from('XST00012|' . self::MANDATORY);
+    }
+
+    public function testFromBytesRequiresTheServiceBlockToLead(): void
+    {
+        $this->expectException(InvalidPaymentQrException::class);
+        $this->expectExceptionMessage('Gost56042Payload requires the service block ST0001 and a character set 1 to 3.');
+
+        Gost56042Payload::fromBytes('XST00011|Name=A');
     }
 }

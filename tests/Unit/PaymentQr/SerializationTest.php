@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace MSSTC4PHP\ValueObject\Financial\Tests\Unit\PaymentQr;
 
+use LogicException;
 use MSSTC4PHP\ValueObject\Contract\Maskable;
 use MSSTC4PHP\ValueObject\Financial\Exception\InvalidPaymentQrException;
 use MSSTC4PHP\ValueObject\Financial\Internal\Crc16CcittFalse;
@@ -155,5 +156,26 @@ final class SerializationTest extends TestCase
         $this->expectExceptionMessage('A serialized payment payload must hold only its value, as a string.');
 
         \unserialize($serialized);
+    }
+
+    /**
+     * @param class-string<AbstractStringValueObject&Maskable> $class
+     */
+    #[DataProvider('payloads')]
+    public function testABuiltObjectRefusesUnserializeAndKeepsItsState(string $class, string $payload): void
+    {
+        $object = new $class($payload);
+        $masked = $object->masked();
+        self::assertTrue(\method_exists($object, '__unserialize'));
+
+        try {
+            $object->__unserialize(['value' => 'hello']);
+            self::fail('__unserialize() on a built object must throw.');
+        } catch (LogicException $e) {
+            self::assertSame('A payment payload is immutable; __unserialize() runs only on a new object.', $e->getMessage());
+        }
+
+        self::assertSame($payload, (string) $object);
+        self::assertSame($masked, $object->masked());
     }
 }
