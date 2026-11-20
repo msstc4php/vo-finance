@@ -15,8 +15,8 @@ use Override;
  * and a check digit. Lowercase input is stored uppercase. The prefix is never refused for being outside ISO 3166
  * (`XS`, `EU`, `EZ`, `XT` and others exist); {@see countryCode()} is null for them.
  *
- * {@see cusip()} reads the NSIN of a US or CA ISIN as a CUSIP, which CGS states ("A CUSIP or CINS identifier will always
- * appear in positions 3-11 of a CGS ISIN"). {@see sedol()} reads the NSIN of a GB or IE ISIN, behind two zeros, as a
+ * {@see cusip()} reads the NSIN of a US or CA ISIN as a CUSIP, which CGS states ("A CUSIP or CINS identifier will
+ * always appear in positions 3-11 of a CGS ISIN"). {@see sedol()} reads the NSIN of a GB or IE ISIN, behind two zeros, as a
  * SEDOL; no official publication reached states that, so it is a convenience that returns null rather than refusing
  * anything.
  *

@@ -163,7 +163,8 @@ final class EmvcoMerchantPresented
     /**
      * @param list<DataObject> $objects
      *
-     * @return array<array-key, non-empty-string> the sub-fields of template 62 by sub-ID; a repeated sub-ID keeps its last value
+     * @return array<array-key, non-empty-string> the sub-fields of template 62 by sub-ID; a repeated sub-ID keeps its
+     *                                            last value
      */
     public static function additionalData(array $objects): array
     {

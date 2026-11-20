@@ -20,7 +20,8 @@ final readonly class MerchantAccount
     /**
      * @param non-empty-string $value the whole value of the data object, template content included
      * @param non-empty-string|null $globallyUniqueIdentifier required for IDs 26 to 51, absent for 02 to 25
-     * @param list<DataObject> $subFields the sub-fields of a template other than the first GUI, in payload order; empty for IDs 02 to 25
+     * @param list<DataObject> $subFields the sub-fields of a template other than the first GUI, in payload order; empty
+     *                                    for IDs 02 to 25
      *
      * @throws InvalidPaymentQrException when the ID is outside 02 to 51 or the GUI and sub-fields do not fit the ID
      */

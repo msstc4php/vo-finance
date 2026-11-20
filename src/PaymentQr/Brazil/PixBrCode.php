@@ -18,15 +18,16 @@ use Override;
 
 /**
  * Pix BR Code: an EMVCo merchant-presented payload with a merchant account template (ID 26 to 51) whose GUI is
- * `br.gov.bcb.pix`, compared case-insensitively. Enforced from the BCB manuals: at least one Pix template, and somewhere the Pix key
- * (sub-ID 01, a static code), the payment URL (sub-ID 25, no protocol prefix; a dynamic code) or the recurrence URL
- * (sub-ID 25 of a template 80 to 99 with the Pix GUI, a composite code). No source forbids several Pix templates or a key
- * with a URL, so they are accepted; the single-value accessors throw when the values differ and the list accessors give
- * all. Templates 80 to 99 that are not data objects are skipped. The additional information (02, 1 to 72), the withdrawal provider ISPB (03, 8 characters);
- * currency 986, country BR, merchant name up to 25 and city up to 15 characters; the reference label (62-05, 1 to 25
- * characters). The maxima of the key, URL and additional information (77, 77, 72) follow from the 99-character template
- * and need no check of their own. The key type is decoded ({@see pixKeyType()}), never enforced. Not enforced: the letters and
- * digits rule for a static code's txid, which the BCB's own BR Code example (`RP12345678-2019`) breaks.
+ * `br.gov.bcb.pix`, compared case-insensitively. Enforced from the BCB manuals: at least one Pix template, and
+ * somewhere the Pix key (sub-ID 01, a static code), the payment URL (sub-ID 25, no protocol prefix; a dynamic code) or
+ * the recurrence URL (sub-ID 25 of a template 80 to 99 with the Pix GUI, a composite code). No source forbids several
+ * Pix templates or a key with a URL, so they are accepted; the single-value accessors throw when the values differ and
+ * the list accessors give all. Templates 80 to 99 that are not data objects are skipped. The additional information
+ * (02, 1 to 72), the withdrawal provider ISPB (03, 8 characters); currency 986, country BR, merchant name up to 25 and
+ * city up to 15 characters; the reference label (62-05, 1 to 25 characters). The maxima of the key, URL and additional
+ * information (77, 77, 72) follow from the 99-character template and need no check of their own. The key type is
+ * decoded ({@see pixKeyType()}), never enforced. Not enforced: the letters and digits rule for a static code's txid,
+ * which the BCB's own BR Code example (`RP12345678-2019`) breaks.
  *
  * @see https://www.bcb.gov.br/content/estabilidadefinanceira/pix/Regulamento_Pix/II_ManualdePadroesparaIniciacaodoPix.pdf BCB, Manual de Padroes para Iniciacao do Pix 2.10.0, section 2.5 to 2.8
  * @see https://www.bcb.gov.br/content/estabilidadefinanceira/spb_docs/ManualBRCode.pdf BCB, Manual do BR Code 2.0.1, section 2.1 table 1 and section 2.2
@@ -51,7 +52,8 @@ final class PixBrCode extends AbstractStringValueObject implements Maskable
      *
      * @return non-empty-string|null
      *
-     * @throws AmbiguousPaymentQrFieldException when several Pix templates carry different keys; {@see pixKeys()} lists them
+     * @throws AmbiguousPaymentQrFieldException when several Pix templates carry different keys; {@see pixKeys()} lists
+     *                                          them
      */
     public function pixKey(): ?string
     {
@@ -83,7 +85,8 @@ final class PixBrCode extends AbstractStringValueObject implements Maskable
      *
      * @return non-empty-string|null
      *
-     * @throws AmbiguousPaymentQrFieldException when several Pix templates carry different URLs; {@see paymentUrls()} lists them
+     * @throws AmbiguousPaymentQrFieldException when several Pix templates carry different URLs; {@see paymentUrls()}
+     *                                          lists them
      */
     public function paymentUrl(): ?string
     {
@@ -103,7 +106,8 @@ final class PixBrCode extends AbstractStringValueObject implements Maskable
      *
      * @return non-empty-string|null
      *
-     * @throws AmbiguousPaymentQrFieldException when several templates carry different URLs; {@see recurrenceUrls()} lists them
+     * @throws AmbiguousPaymentQrFieldException when several templates carry different URLs; {@see recurrenceUrls()}
+     *                                          lists them
      */
     public function recurrenceUrl(): ?string
     {

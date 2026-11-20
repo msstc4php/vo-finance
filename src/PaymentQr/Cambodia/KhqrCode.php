@@ -20,12 +20,12 @@ use Override;
  * Bakong account ID, 01 the account information (29) or merchant ID (30), 02 the acquiring bank, and country KH (the
  * Prakas makes KHQR the code for payment in Cambodia, and the specification has "KH" put for a merchant transacting in
  * Cambodia; without it any EMVCo payload with tag 29 or 30, a Thai QR or EMVCo's own example, would pass as KHQR).
- * Enforced from the specification: merchant name up to 25, city up to 15 and postal code up to 10 characters; an amount (54) of up to 13
- * characters other than zero; the tip indicator (55) of 2 digits, the fixed fee (56) up to 13 and the percentage (57) up
- * to 5 characters; sub-IDs 01 to 09 of the additional data template up to 25 characters; a language template (64) with
- * a language of 2 letters and a merchant name up to 25 (city up to 15). Not enforced: currency 116 (an example in the
- * specification; the guideline's own examples use 840 too), the content of the Bakong templates beyond their tags (the
- * specification leaves it to the operator), template 99.
+ * Enforced from the specification: merchant name up to 25, city up to 15 and postal code up to 10 characters; an amount
+ * (54) of up to 13 characters other than zero; the tip indicator (55) of 2 digits, the fixed fee (56) up to 13 and the
+ * percentage (57) up to 5 characters; sub-IDs 01 to 09 of the additional data template up to 25 characters; a language
+ * template (64) with a language of 2 letters and a merchant name up to 25 (city up to 15). Not enforced: currency 116
+ * (an example in the specification; the guideline's own examples use 840 too), the content of the Bakong templates
+ * beyond their tags (the specification leaves it to the operator), template 99.
  *
  * @see https://web.archive.org/web/20230330080021id_/https://www.nbc.gov.kh/download_files/legislation/prakas_kh/Prakas_F14-020-351-PR_KHQR_for_Payment_in_Cambodia_appendix.pdf National Bank of Cambodia, Prakas on KHQR for Payment in Cambodia, appendix "KHQR Code Specification in Cambodia, Merchant-Presented Mode" 3.0 (April 2020), section 4
  * @see https://web.archive.org/web/20230201043137id_/https://bakong.nbc.gov.kh/download/KHQR/integration/KHQR%20Content%20Guideline%20v.1.3.pdf National Bank of Cambodia, KHQR Content Guideline 1.3, tags 29 and 30 and FAQ 3 to 5
@@ -55,7 +55,8 @@ final class KhqrCode extends AbstractStringValueObject implements Maskable
     /**
      * @return non-empty-string
      *
-     * @throws AmbiguousPaymentQrFieldException when tags 29 and 30 carry different account IDs; {@see bakongAccountIds()} lists them
+     * @throws AmbiguousPaymentQrFieldException when tags 29 and 30 carry different account IDs; {@see
+     *                                          bakongAccountIds()} lists them
      */
     public function bakongAccountId(): string
     {

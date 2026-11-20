@@ -8,7 +8,8 @@ use LogicException;
 
 /**
  * The ISIN check digit, the modulus 10 "double-add-double" formula: each letter of the prefix and basic number becomes
- * two digits (`A` = 10 ... `Z` = 35) and the digit string is checked with {@see Luhn}, which doubles the rightmost digit of the body, as the Thai examples do.
+ * two digits (`A` = 10 ... `Z` = 35) and the digit string is checked with {@see Luhn}, which doubles the rightmost
+ * digit of the body, as the Thai examples do.
  *
  * @internal
  *

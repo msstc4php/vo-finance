@@ -10,8 +10,8 @@ use MSSTC4PHP\ValueObject\Financial\Internal\EmvcoTlv;
 
 /**
  * Immutable builder of {@see MerchantPresentedQr}: `build()` writes the payload format indicator first (value 01 unless
- * set), the other objects in the order they were added and the computed CRC last. Setting an ID twice replaces its value in
- * place; ID 63 cannot be set.
+ * set), the other objects in the order they were added and the computed CRC last. Setting an ID twice replaces its
+ * value in place; ID 63 cannot be set.
  *
  * @see https://mvallim.github.io/emv-qrcode/docs/EMVCo-Merchant-Presented-QR-Specification-v1.1.pdf EMV QRCPS Merchant-Presented Mode 1.1 (third-party copy), sections 4.6 and 4.7.3
  * @see docs/sources/FINANCE.md "EMVCo QRCPS merchant-presented mode"

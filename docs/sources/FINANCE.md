@@ -6,7 +6,7 @@ unmodified Internet Archive copy of one. An aggregator counts only "as quoted fr
 **unreachable** or **not confirmed**; for it the outcome is **format only** (the class checks length and character set,
 never a check digit or a range that no official source gives). No test vector comes from Wikipedia or a library.
 
-Outcome per rule (revised after review round 1):
+Outcome per rule:
 
 | Rule | Outcome |
 |---|---|
@@ -94,10 +94,10 @@ specified in Annex C." The 2013 and 2021 clause 4.1 agree on the structure; the 
 
 **Check digit.** The text of Annex C is paywalled, but the Stock Exchange of Thailand (SET; the Thai numbering agency's
 group publishes it under TSD, the Thailand Securities Depository) prints the method with worked examples at
-<https://www.set.or.th/en/tsd/information/isin-calculate>: "Computed according to modules 10 " Double-Add-Double "". Each
-example writes the 11 characters of ISIN without its check digit, expands letters to their numbers, aligns the weights
-`1 2 1 2 ...` so that the last digit of the body is doubled, adds the digits of the products, and takes the check digit
-as the complement to ten:
+<https://www.set.or.th/en/tsd/information/isin-calculate>: "Computed according to modules 10 " Double-Add-Double "".
+Each example writes the 11 characters of ISIN without its check digit, expands letters to their numbers, aligns the
+weights `1 2 1 2 ...` so that the last digit of the body is doubled, adds the digits of the products, and takes the
+check digit as the complement to ten:
 
 | ISIN body | Expanded digits (T = 29, H = 17, B = 11, Z = 35) | Sum | Check digit |
 |---|---|---|---|
@@ -150,21 +150,22 @@ not used.)
 ISO 10962:2021 preview (a redline against the 2019 edition),
 <https://cdn.standards.iteh.ai/samples/81140/575a3327c8d34576ad2932719988f966/ISO-10962-2021.pdf>, clause 5:
 
-> "The CFI code consists of six alphabetical characters."; "X  Not applicable/ or undefined: the character 'X' may be used
-> for any respective Attribute if the information is unknown, not available or applicable at the time of assignment";
-> "The character 'X' shall not be used as a value in the above described manner for Category or Group."
+> "The CFI code consists of six alphabetical characters."; "X  Not applicable/ or undefined: the character 'X' may be
+> used for any respective Attribute if the information is unknown, not available or applicable at the time of
+> assignment"; "The character 'X' shall not be used as a value in the above described manner for Category or Group."
 
-The 1997 edition (<https://cdn.standards.iteh.ai/samples/1636/f4fe59e339b841149b7a05f1f93935e3/ISO-10962-1997.pdf>)
-says "The CFI Code consists of six alphabetic characters." and "X = not applicable, unknown, not available."; the six-letter
+The 1997 edition (<https://cdn.standards.iteh.ai/samples/1636/f4fe59e339b841149b7a05f1f93935e3/ISO-10962-1997.pdf>) says
+"The CFI Code consists of six alphabetic characters." and "X = not applicable, unknown, not available."; the six-letter
 rule is the same in both. In 2021 `X` is refused for Category and Group; the class accepts any six letters, so this is
 decode-only.
 
-SIX (maintenance agency secretariat), <https://www.six-group.com/en/products-services/financial-information/market-reference-data/data-standards/iso-cfi.html>:
+SIX (maintenance agency secretariat),
+<https://www.six-group.com/en/products-services/financial-information/market-reference-data/data-standards/iso-cfi.html>:
 "The six-letter code describes the structure and function of each financial instrument"; updates are published as
 spreadsheets, CSV, JSON-LD and TTL. The current list is
 <https://www.six-group.com/dam/download/financial-information/data-center/cfi/cfi-20210507-current.xlsx> (link found on
-the SIX page, file not downloaded at Task 2). The decode table (`category()`, `group()`) is typed from it by Task 4;
-the class itself accepts any six letters.
+the SIX page, file not downloaded at Task 2). The decode table (`category()`, `group()`) is typed from it by Task 4; the
+class itself accepts any six letters.
 
 ## FISN, ISO 18774
 
@@ -223,11 +224,11 @@ CGS, "CUSIP: A Common Language for Efficient Markets" (2022),
 > numbers in the identifier when it is calculated using the Modulus 10 Double Add Double technique."
 
 Example in the same guide: "037833 10 0 identifies Apple common stock (with a 0 as the final, or check, number) and
-037833 AL 4 ... identifies a specific Apple bond issue." CGS identifiers page (<https://www.cusip.com/identifiers.html>):
-FactSet Research Systems common stock `303075105`. Letters: "alpha characters ... were added" in 1984; "the check digit
-is always a number". CGS Private Placement Numbers fact sheet
-(<https://www.cusip.com/pdf/fact_sheet/CGS_Private_Placement_Numbers.pdf>): "The following characters *, @, # are utilized
-in position 6, 7 or 8 of the CUSIP number to identify PPNs".
+037833 AL 4 ... identifies a specific Apple bond issue." CGS identifiers page
+(<https://www.cusip.com/identifiers.html>): FactSet Research Systems common stock `303075105`. Letters: "alpha
+characters ... were added" in 1984; "the check digit is always a number". CGS Private Placement Numbers fact sheet
+(<https://www.cusip.com/pdf/fact_sheet/CGS_Private_Placement_Numbers.pdf>): "The following characters *, @, # are
+utilized in position 6, 7 or 8 of the CUSIP number to identify PPNs".
 
 **Not available, so format only.** The value of letters and of `*`, `@`, `#` in the check-digit sum is printed in no CGS
 publication reached (the CGS pages, guide and fact sheet were all read); ANSI X9.6, the standard, is paywalled (its ANSI
@@ -250,8 +251,8 @@ sections 8.1 to 8.4:
 > characters are B-Z excluding vowels"; "Numeric characters are 0-9"; "No SEDOL code will be issued without an alpha
 > first character."
 
-Values: B 11, C 12, D 13, F 15, G 16, H 17, J 19, K 20, L 21, M 22, N 23, P 25, Q 26, R 27, S 28, T 29, V 31, W 32,
-X 33, Y 34, Z 35. Weights 1, 3, 1, 7, 3, 9 and 1 for the check digit: "If the sum of the results is a multiple of ten, the
+Values: B 11, C 12, D 13, F 15, G 16, H 17, J 19, K 20, L 21, M 22, N 23, P 25, Q 26, R 27, S 28, T 29, V 31, W 32, X
+33, Y 34, Z 35. Weights 1, 3, 1, 7, 3, 9 and 1 for the check digit: "If the sum of the results is a multiple of ten, the
 number is taken to be correct." Derivation (8.4): "94 taken away from a 100 means a check digit of 6" for `B12345`.
 Examples: `B1F3M59` (sum 161, correct) and `B1H54P6` (sum 309, quoted incorrectly). "There will be no codes issued with
 0,3,2,4,5,6,7 and 9 as the lead character, which allows historic series to be maintained as well as dummy codes by
@@ -273,12 +274,13 @@ reservation conventions, not validity rules. Format only: six characters from `0
 ## Valor, SIX
 
 SIX is "the official securities numbering agency in Switzerland, Liechtenstein, and Belgium. We issue Valor (Swiss
-National Number) and/or ISIN identifiers" (<https://www.six-group.com/en/products-services/financial-information/data-standards.html>).
-**Not confirmed:** no SIX publication reached states the length, the character set or a check digit. The only bound is
-an **inference**: ISO 6166:2021 clause 4.1 b) makes the basic code of an ISIN nine characters with "zeros ... inserted in
-front of the national code", so a national number fits in nine characters. **Outcome:** format only, and the class
-claims only what the inference supports: a non-empty value of at most nine ASCII alphanumerics; it does not claim
-digits-only. WKN and Valor can overlap for six digits (factory ambiguity).
+National Number) and/or ISIN identifiers"
+(<https://www.six-group.com/en/products-services/financial-information/data-standards.html>). **Not confirmed:** no SIX
+publication reached states the length, the character set or a check digit. The only bound is an **inference**: ISO
+6166:2021 clause 4.1 b) makes the basic code of an ISIN nine characters with "zeros ... inserted in front of the
+national code", so a national number fits in nine characters. **Outcome:** format only, and the class claims only what
+the inference supports: a non-empty value of at most nine ASCII alphanumerics; it does not claim digits-only. WKN and
+Valor can overlap for six digits (factory ambiguity).
 
 ## Securities classes, Task 3 additions
 
@@ -344,10 +346,11 @@ ISO/IEC 7812-1:2017 (fifth edition) preview,
 <https://cdn.standards.iteh.ai/samples/70484/1b747b382337445fbbdae5584d268bcc/ISO-IEC-7812-1-2017.pdf>; the preview
 ends before clause 4.4 and Annex B:
 
-> "Clause 4: revised the length of an IIN to 8 digits (from 6 digits)"; "Clause 4: revised the minimum length of a PAN to
-> 10 digits (from 8 digits)"; "primary account number ... number consisting of a maximum of 19 digits that identifies the
-> card issuer and the cardholder"; "the IIN, 8 numeric digits in length"; "the individual account number"; "a check digit
-> (see 4.4)". Contents: "Annex B (normative) Luhn formula for computing modulus-10 “double-add-double” check digits".
+> "Clause 4: revised the length of an IIN to 8 digits (from 6 digits)"; "Clause 4: revised the minimum length of a PAN
+> to 10 digits (from 8 digits)"; "primary account number ... number consisting of a maximum of 19 digits that identifies
+> the card issuer and the cardholder"; "the IIN, 8 numeric digits in length"; "the individual account number"; "a check
+> digit (see 4.4)". Contents: "Annex B (normative) Luhn formula for computing modulus-10 “double-add-double” check
+> digits".
 
 So the PAN is 10 to 19 digits; the earlier proposal of a 14-digit floor is withdrawn (the standard's own minimum is 10).
 Pay.UK, which "acts as agent for the British Standards Institute in assigning UK national and international IINs",
@@ -358,18 +361,19 @@ digit), calculated by the Luhn formula".
 ## Luhn
 
 US patent 2,950,048, "Computer for verifying numbers" (H. P. Luhn, IBM, filed 6 January 1954, patented 23 August 1960),
-<https://patents.google.com/patent/US2950048A/en>: alternate digits are replaced by "twice the original digit plus an end
-around carry"; the check digit "is derived by adding to this sum its tens complement"; "A number with its check digit
-appended is verified when the cross addition yields zero." OMG FIGI 1.0 section 6.1 cites it: "the familiar Modulus 10
-algorithm developed initially by Hans Peter Luhn and described in U.S. Patent No. 2,950,048 and part of the public
-domain".
+<https://patents.google.com/patent/US2950048A/en>: alternate digits are replaced by "twice the original digit plus an
+end around carry"; the check digit "is derived by adding to this sum its tens complement"; "A number with its check
+digit appended is verified when the cross addition yields zero." OMG FIGI 1.0 section 6.1 cites it: "the familiar
+Modulus 10 algorithm developed initially by Hans Peter Luhn and described in U.S. Patent No. 2,950,048 and part of the
+public domain".
 
-Doubling position: the patent text (an OCR scan) does not fix it for a card number. ISO/IEC 7812-1 names its Annex B "Luhn
-formula for computing modulus-10 “double-add-double” check digits" (contents of the preview); the text of Annex B is not
-in the preview. The same "Double-Add-Double" formula, with the last digit of the body doubled, is shown with three
-worked examples by SET for the ISIN (see ISIN). `Internal\Luhn` follows that, and its tests are those three examples
-expanded to digit strings. **Gap:** no official card-number vector was reached (Mastercard's and Visa's test-card pages
-are rendered by script and returned no numbers; ISO/IEC 7812-1's Annex B example is outside the preview).
+Doubling position: the patent text (an OCR scan) does not fix it for a card number. ISO/IEC 7812-1 names its Annex B
+"Luhn formula for computing modulus-10 “double-add-double” check digits" (contents of the preview); the text of Annex B
+is not in the preview. The same "Double-Add-Double" formula, with the last digit of the body doubled, is shown with
+three worked examples by SET for the ISIN (see ISIN). `Internal\Luhn` follows that, and its tests are those three
+examples expanded to digit strings. **Gap:** no official card-number vector was reached (Mastercard's and Visa's
+test-card pages are rendered by script and returned no numbers; ISO/IEC 7812-1's Annex B example is outside the
+preview).
 
 ## Card IIN publications
 
@@ -412,50 +416,53 @@ Luhn is enforced for every range.
 
 PCI SSC FAQ 1492, <https://www.pcisecuritystandards.org/faqs/1492/>:
 
-> "PCI DSS Requirement 3.4.1 requires that no more than the BIN and last four digits of the PAN are displayed on computer
-> screens, reports, etc. unless there is a documented business justification for seeing more digits."
+> "PCI DSS Requirement 3.4.1 requires that no more than the BIN and last four digits of the PAN are displayed on
+> computer screens, reports, etc. unless there is a documented business justification for seeing more digits."
 
 The BIN is six or eight digits (see IIN). Keeping the first six and the last four is within the limit for both lengths.
-Visa's 8-digit BIN FAQ adds: "Rule 3.4 has been recently updated to allow exposure of up to, but no more than, the first 8
-digits and any other 4 digits in a 16 digit PAN."
+Visa's 8-digit BIN FAQ adds: "Rule 3.4 has been recently updated to allow exposure of up to, but no more than, the first
+8 digits and any other 4 digits in a 16 digit PAN."
 
 ## CRC of the EMVCo merchant-presented QR
 
 The EMV QRCPS document itself (version 1.1, 27 November 2020) is **unreachable** (the specification page serves no PDF
 link). Two official publications quote its rule. Banco Central do Brasil, "Manual do BR Code" 2.0.1 (31 August 2020),
-<https://www.bcb.gov.br/content/estabilidadefinanceira/spb_docs/ManualBRCode.pdf>, section 2.1 "Definições Comuns", note 10:
+<https://www.bcb.gov.br/content/estabilidadefinanceira/spb_docs/ManualBRCode.pdf>, section 2.1 "Definições Comuns", note
+10:
 
-> "Segundo seção 4.7.3 CRC (ID “63”) da referência #1, utiliza-se para o cálculo do CRC, o polinômio ‘1021’ (hexa) e valor
-> inicial ‘FFFF’ (hexa), que corresponde ao CRC “CRC-16-CCITT-FFFF”."
+> "Segundo seção 4.7.3 CRC (ID “63”) da referência #1, utiliza-se para o cálculo do CRC, o polinômio ‘1021’ (hexa) e
+> valor inicial ‘FFFF’ (hexa), que corresponde ao CRC “CRC-16-CCITT-FFFF”."
 
-The HKMA, in its Common QR Code Specification for Retail Payments in Hong Kong 1.0 (December 2017), section 4.1: "The CRC
-(ID “63”) shall be calculated according to [ISO/IEC 13239] using the polynomial '1021' (hex) and initial value 'FFFF'
-(hex). The data over which the checksum is calculated shall cover all data objects, including their ID, Length and Value
-... as well as the ID and Length of the CRC itself (but excluding its Value)", and "a CRC with a two-byte hexadecimal
-value of '007B' is included in the QR Code as "6304007B"". Pix's EMV-QRCPS profile (the BCB manual) writes the CRC as
-`6304` plus four hexadecimal digits.
+The HKMA, in its Common QR Code Specification for Retail Payments in Hong Kong 1.0 (December 2017), section 4.1: "The
+CRC (ID “63”) shall be calculated according to [ISO/IEC 13239] using the polynomial '1021' (hex) and initial value
+'FFFF' (hex). The data over which the checksum is calculated shall cover all data objects, including their ID, Length
+and Value ... as well as the ID and Length of the CRC itself (but excluding its Value)", and "a CRC with a two-byte
+hexadecimal value of '007B' is included in the QR Code as "6304007B"". Pix's EMV-QRCPS profile (the BCB manual) writes
+the CRC as `6304` plus four hexadecimal digits.
 
-**Reflection and final XOR are not stated in words by either publication.** The BCB manual prints a complete payload (270
-characters, section 2.2 "Exemplo de um BR Code": `00020104141234567890123426580014BR.GOV.BCB.PIX0136123e4567-e12b-12d1-a456-426655440000` and on,
-ending `6304AD38`) with the table entry "63 CRC16-CCITT (0xffff) 04 0xAD38". The checksum over the payload up to and
-including `6304` is `AD38` only with no input or output reflection and no final XOR; the reflected, XOR-final and both
-variants of the same text give `BFA2`, `52C7` and `405D`. That payload, with its printed CRC, is the test of
-`Internal\Crc16CcittFalse`. (An earlier draft of this file claimed that ISO/IEC 13239's default CRC-16 has no reflection;
-that is false: ISO/IEC 13239 / HDLC FCS is the reflected X.25 variant, and the claim is deleted.) The catalogue check value
-`29B1` for `123456789` is from the RevEng catalogue (<https://reveng.sourceforge.io/crc-catalogue/16.htm>, unreachable:
-HTTP 503); the helper's test keeps it as a second vector, agreeing with the BCB payload. Task 5 re-read the EMV QRCPS text (see "EMVCo QRCPS merchant-presented mode") and records the payload marker `000201` (HKMA table 4.1: ID `00`, length `02`, "A fixed value of “01”"; the BCB payload
-starts `000201`).
+**Reflection and final XOR are not stated in words by either publication.** The BCB manual prints a complete payload
+(270 characters, section 2.2 "Exemplo de um BR Code":
+`00020104141234567890123426580014BR.GOV.BCB.PIX0136123e4567-e12b-12d1-a456-426655440000` and on, ending `6304AD38`) with
+the table entry "63 CRC16-CCITT (0xffff) 04 0xAD38". The checksum over the payload up to and including `6304` is `AD38`
+only with no input or output reflection and no final XOR; the reflected, XOR-final and both variants of the same text
+give `BFA2`, `52C7` and `405D`. That payload, with its printed CRC, is the test of `Internal\Crc16CcittFalse`. (An
+earlier draft of this file claimed that ISO/IEC 13239's default CRC-16 has no reflection; that is false: ISO/IEC 13239 /
+HDLC FCS is the reflected X.25 variant, and the claim is deleted.) The catalogue check value `29B1` for `123456789` is
+from the RevEng catalogue (<https://reveng.sourceforge.io/crc-catalogue/16.htm>, unreachable: HTTP 503); the helper's
+test keeps it as a second vector, agreeing with the BCB payload. Task 5 re-read the EMV QRCPS text (see "EMVCo QRCPS
+merchant-presented mode") and records the payload marker `000201` (HKMA table 4.1: ID `00`, length `02`, "A fixed value
+of “01”"; the BCB payload starts `000201`).
 
 ## SIX QR reference, recursive modulo 10
 
 Swiss Implementation Guidelines for the QR-bill, version 2.3, valid from 21 November 2025,
-<https://www.six-group.com/dam/download/banking-services/standardization/qr-bill/ig-qr-bill-v2.3-en.pdf>, section 2.12 and
-Annex B:
+<https://www.six-group.com/dam/download/banking-services/standardization/qr-bill/ig-qr-bill-v2.3-en.pdf>, section 2.12
+and Annex B:
 
 > "The structure of the QR reference must always have 26 numerical characters followed by a Modulo 10 recursive check
-> digit (see Annex B) ... The reference must not consist exclusively of zeros."; "The sequence of numbers to be checked is
-> processed from left to right. For the first digit, the carry-forward = 0. The number to be checked corresponds to the
-> column number, and the carry-forward to the line number in the table."
+> digit (see Annex B) ... The reference must not consist exclusively of zeros."; "The sequence of numbers to be checked
+> is processed from left to right. For the first digit, the carry-forward = 0. The number to be checked corresponds to
+> the column number, and the carry-forward to the line number in the table."
 
 The matrix of Figure 21 (rows = carry 0-9, columns = digit 0-9, then the check digit of the final carry) is an image; it
 was read from the page render. Row 0 is `0 9 4 6 8 2 7 1 3 5`; each next row is that sequence shifted one place left;
@@ -467,33 +474,35 @@ check digit 7.
 ISO 11649:2009 preview (clauses 4 to 6 and Annex A and B in full),
 <https://cdn.standards.iteh.ai/samples/50649/a769e57fc5a34724bac3a5d18a2b8407/ISO-11649-2009.pdf>:
 
-> "The format of the RF Creditor Reference shall be: 2!a2!n21c"; "the first two letters ... shall always be “RF”";
-> "the remaining part ... (up to 21c) ... shall only contain upper and lower case letters (A to Z and a to z) and numeric
+> "The format of the RF Creditor Reference shall be: 2!a2!n21c"; "the first two letters ... shall always be “RF”"; "the
+> remaining part ... (up to 21c) ... shall only contain upper and lower case letters (A to Z and a to z) and numeric
 > characters (0 to 9)"; "The check digits are calculated based on the scheme defined in ISO/IEC 7064 (MOD 97-10)."
 
 Checking: delete blanks, "Move the first four characters to the right-hand end", convert letters, MOD 97-10, "If the
 remainder is 1 (one), the number is valid." Generating: add "RF" and "00" at the right, convert, mod 97, "Subtract the
-remainder from 98 and, if the result is less than ten, insert a leading zero." Annex B example: `2348231` -> `RF712348231`.
-**Lowercase is allowed.** Clause 5 permits "upper and lower case letters (A to Z and a to z)" in the reference part and
-clause 6.2.3 converts "upper and lower case letters to digits" with one table (`A` = 10 ... `Z` = 35, printed for capitals
-only). Task 7 must not refuse lowercase references; `Internal\Iso7064Mod97` takes capitals only, so the caller
-upper-cases a copy for the check and keeps the value as given. Whether `RF` itself may be lowercase is not stated.
+remainder from 98 and, if the result is less than ten, insert a leading zero." Annex B example: `2348231` ->
+`RF712348231`. **Lowercase is allowed.** Clause 5 permits "upper and lower case letters (A to Z and a to z)" in the
+reference part and clause 6.2.3 converts "upper and lower case letters to digits" with one table (`A` = 10 ... `Z` = 35,
+printed for capitals only). Task 7 must not refuse lowercase references; `Internal\Iso7064Mod97` takes capitals only, so
+the caller upper-cases a copy for the check and keeps the value as given. Whether `RF` itself may be lowercase is not
+stated.
 
-**Discrepancy in the standard:** Annex A.3 prints `RF68539007547034` / `RF68 5390 0754 7034` as its layout example, but the
-check of clause 6.2 on that string leaves a remainder other than 1. The check pair of `539007547034` is `18`: SIX
-Implementation Guidelines 2.3, Annex A (page 57, the "Reference" row of the example, `RF18539007547034`) and EPC069-12 v3.0,
-section 2.3 "Examples" (V1, "Remittance (Reference) RF18539007547034") both print the valid `RF18`. The helper follows
-clause 6, not the example, and a test records that the printed `RF68` example fails the standard's own check; the valid
-`RF18` reference is a test of the helper with the SIX and EPC source.
+**Discrepancy in the standard:** Annex A.3 prints `RF68539007547034` / `RF68 5390 0754 7034` as its layout example, but
+the check of clause 6.2 on that string leaves a remainder other than 1. The check pair of `539007547034` is `18`: SIX
+Implementation Guidelines 2.3, Annex A (page 57, the "Reference" row of the example, `RF18539007547034`) and EPC069-12
+v3.0, section 2.3 "Examples" (V1, "Remittance (Reference) RF18539007547034") both print the valid `RF18`. The helper
+follows clause 6, not the example, and a test records that the printed `RF68` example fails the standard's own check;
+the valid `RF18` reference is a test of the helper with the SIX and EPC source.
 
 The Finance Finland note
 (<https://www.finanssiala.fi/wp-content/uploads/2024/04/structure-of-the-rf-creditor-reference-iso-11649.pdf>) states
 "The check digit algorithm is the same as the algorithm used for calculating the check digit for the IBAN account
-transfer" and gives `RF54 1234` and `RF98 REF1 234` as examples; both pass the clause 6.2 check and are tests of the helper.
+transfer" and gives `RF54 1234` and `RF98 REF1 234` as examples; both pass the clause 6.2 check and are tests of the
+helper.
 
 SIX requires "a minimum of 5 and a maximum of 25 alphanumerical characters. Starting with RF, followed by the check
-digits" (IG 2.3, section 2.12.2); ISO 11649 allows a shorter reference (2 + 2 + at least one). The QR-bill profile applies
-SIX's bounds.
+digits" (IG 2.3, section 2.12.2); ISO 11649 allows a shorter reference (2 + 2 + at least one). The QR-bill profile
+applies SIX's bounds.
 
 ## Leading markers of the payment payloads
 
@@ -545,15 +554,15 @@ Rules the class enforces, with their text:
 | Amount `54` format (for `amount()`) | "shall only include (numeric) digits "0" to "9" and may contain a single "." character"; "98." is a valid example | EMV QRCPS 4.7.4.1; HKMA section 4.4 |
 | CRC parameters | see "CRC of the EMVCo merchant-presented QR" above | BCB, HKMA, EMV QRCPS 4.7.3.1 |
 
-Test vector 1: BCB section 2.2 (270 characters, ending `6304AD38`): IDs 00, 04 (primitive card account, length 14), 26 (GUI
-`BR.GOV.BCB.PIX` plus sub-ID 01), 27, 52, 53 (`986`), 54 (`123.45`), 58, 59, 60, 61, 62 (sub-ID 05), 80 (unreserved
+Test vector 1: BCB section 2.2 (270 characters, ending `6304AD38`): IDs 00, 04 (primitive card account, length 14), 26
+(GUI `BR.GOV.BCB.PIX` plus sub-ID 01), 27, 52, 53 (`986`), 54 (`123.45`), 58, 59, 60, 61, 62 (sub-ID 05), 80 (unreserved
 template), 63. Test vector 2: **EMV QRCPS-MPM 1.1 Annex B.7 "Representation"** (read via the third-party copy; it is the
 specification's own example, not synthetic): 248 characters ending `6304A13A`, IDs 00, 01 (`12`), 29 and 31 (templates),
-52 (`4111`), 58 (`CN`), 59 (`BEST TRANSPORT`), 60, 64 (template with `最佳运输` and `北京`, String format), 54
-(`23.72`), 53 (`156`), 55 (`01`), 62 (sub-IDs 03, 06 `***`, 07, 09), 91 (unreserved template), 63. The printed text wraps
-lines inside values; the characters used in the tests are decoded from the hexadecimal representation printed under it,
-and their CRC-16/CCITT-FALSE over the UTF-8 bytes is `A13A`, which also confirms the CRC covers bytes. Every other
-payload in the tests is marked synthetic.
+52 (`4111`), 58 (`CN`), 59 (`BEST TRANSPORT`), 60, 64 (template with `最佳运输` and `北京`, String format), 54 (`23.72`), 53
+(`156`), 55 (`01`), 62 (sub-IDs 03, 06 `***`, 07, 09), 91 (unreserved template), 63. The printed text wraps lines inside
+values; the characters used in the tests are decoded from the hexadecimal representation printed under it, and their
+CRC-16/CCITT-FALSE over the UTF-8 bytes is `A13A`, which also confirms the CRC covers bytes. Every other payload in the
+tests is marked synthetic.
 
 Masking: the BCB manual and Annex B.6 treat the templates `80`-`99` as payment-system data like the accounts, so
 `masked()` hides the values of IDs 02-51 and 80-99 and the CRC (`6304****`, not recomputed).
@@ -566,8 +575,8 @@ for an unknown code). The 512-character recommendation is not enforced (see the 
 
 ### National EMVCo profiles
 
-Research date 2026-11-20 (UTC). Each built profile composes `MerchantPresentedQr` (through `Internal\ProfilePayload`) and adds
-only the rules quoted below. A profile is built only when its publisher's own specification was read.
+Research date 2026-11-20 (UTC). Each built profile composes `MerchantPresentedQr` (through `Internal\ProfilePayload`)
+and adds only the rules quoted below. A profile is built only when its publisher's own specification was read.
 
 **Built**
 
@@ -595,7 +604,8 @@ Pix rules (all Pix manual 2.10.0 unless marked BR Code manual):
 | Not enforced: letters and digits for the txid | "Os caracteres permitidos no contexto do Pix para o campo txid (EMV 62-05) sao: letras minusculas, maiusculas, digitos" (2.6.2); the BR Code manual's own example payload carries `RP12345678-2019` | 2.6.2, BR Code 2.2 |
 | The form of the key: decoded only (`pixKeyType()`, see "Pix key types" below), never enforced | "A regra ... segue estritamente as regras definidas no Manual Operacional do DICT" | 2.5.1 |
 
-Pix official vectors: static, section 2.6.3, `...6304 1D3D`; dynamic, section 2.7, `...630464E4`; BR Code manual section 2.2, `...6304AD38` (a Pix template next to a card account and another arrangement). Their CRCs verify.
+Pix official vectors: static, section 2.6.3, `...6304 1D3D`; dynamic, section 2.7, `...630464E4`; BR Code manual section
+2.2, `...6304AD38` (a Pix template next to a card account and another arrangement). Their CRCs verify.
 
 PromptPay rules (BOT guideline section 2.3 tag table):
 
@@ -609,7 +619,9 @@ PromptPay rules (BOT guideline section 2.3 tag table):
 | Not enforced: currency 764 / country TH | "For payment in Baht - enter 764"; "For domestic transactions - enter TH, for overseas transactions - enter country code of the respective country" (conditional wording) |
 | Not enforced: tag 31, 39, 80 | optional or reserved |
 
-The guideline prints no complete payload (only `0066XXXXXXXXX` and `3920000003000.00JP` fragments), so every PromptPay test payload is synthetic. The guideline makes the AID of tag 29 for customer-presented QR `A000000677010114`; it is refused here (merchant-presented only).
+The guideline prints no complete payload (only `0066XXXXXXXXX` and `3920000003000.00JP` fragments), so every PromptPay
+test payload is synthetic. The guideline makes the AID of tag 29 for customer-presented QR `A000000677010114`; it is
+refused here (merchant-presented only).
 
 DuitNow rules (PayNet V1.5):
 
@@ -627,7 +639,8 @@ DuitNow rules (PayNet V1.5):
 | JomPAY (acquirer 898989) needs template 62 with RRN 90 | "RRN 90 ... C ... Required for JomPAY QR"; "Required for JomPAY QR" on ID 62 |
 | Not enforced | the hash of ID 82 (the input of the SHA-256 is not stated), the acquirer ID table (BIC listing "shared by your PayNet Partner") |
 
-DuitNow official vectors: examples 1 to 4 of the "Examples" page (POS, P2P, with a data integrity check, JomPAY); CRCs `343F`, `3A23`, `B623`, `5DFB` verify.
+DuitNow official vectors: examples 1 to 4 of the "Examples" page (POS, P2P, with a data integrity check, JomPAY); CRCs
+`343F`, `3A23`, `B623`, `5DFB` verify.
 
 KHQR rules (specification 3.0 unless marked guideline):
 
@@ -647,7 +660,11 @@ KHQR rules (specification 3.0 unless marked guideline):
 | Point of initiation optional | table 4.1: `"01"` Point of Initiation Method, length `"02"`, presence `O`; so not required (only its values 11/12, generic) | 4.1 |
 | Not enforced: template 99 (timestamp in the NBC examples), the content of other operators' templates | "the meaning of the other data objects in the template are context specific and outside of the scope of this specification" | 4.2 |
 
-KHQR official vectors (all CRCs verify): guideline 1.3 pages 04 (`...6304102F`, tag 29 static), 06 (`...6304D1EB`, dynamic, amount 1000), 07 (`...63042ACD`, remittance, account information `0000001112`), 08 (`...630402F7`, tag 30, USD 10.0, template 62); SDK 2.7 "Generate KHQR for Individual" (`...63042B5B`) and "for Merchant" (`...63049740`), both with a UnionPay ID 15 and a Khmer language template. The guideline prints line-wrapped payloads; the joined strings are the ones whose CRC verifies.
+KHQR official vectors (all CRCs verify): guideline 1.3 pages 04 (`...6304102F`, tag 29 static), 06 (`...6304D1EB`,
+dynamic, amount 1000), 07 (`...63042ACD`, remittance, account information `0000001112`), 08 (`...630402F7`, tag 30, USD
+10.0, template 62); SDK 2.7 "Generate KHQR for Individual" (`...63042B5B`) and "for Merchant" (`...63049740`), both with
+a UnionPay ID 15 and a Khmer language template. The guideline prints line-wrapped payloads; the joined strings are the
+ones whose CRC verifies.
 
 JPQR rules (MPM guideline 2.0, parts 1 static and 2 dynamic, tables 2.1-1, 2.1-2, 3.2):
 
@@ -667,7 +684,8 @@ JPQR rules (MPM guideline 2.0, parts 1 static and 2 dynamic, tables 2.1-1, 2.1-2
 
 The guideline prints the template layout but no complete payload; every JPQR test payload is synthetic and labelled.
 
-Pix key types (decoded only, `PixBrCode::pixKeyType()` and `PixKeyType::ofKey()`; a key of no listed format gives null and is never refused):
+Pix key types (decoded only, `PixBrCode::pixKeyType()` and `PixKeyType::ofKey()`; a key of no listed format gives null
+and is never refused):
 
 | Type (DICT `KeyType`) | Rule | Source |
 |---|---|---|
@@ -681,7 +699,14 @@ Pix key types (decoded only, `PixBrCode::pixKeyType()` and `PixKeyType::ofKey()`
 ^[a-z0-9.!#$%&'*+\/=?^_`{|}~-]+@[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?(?:\.[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?)*$
 ```
 
-Not enforced: the CPF and CNPJ check digits (the DICT texts mention them but give no algorithm); `KeyType` is open ("Tipo de chave. _Novos tipos podem surgir_."). Sources: <https://www.bcb.gov.br/content/estabilidadefinanceira/pix/Regulamento_Pix/X_ManualOperacionaldoDICT.pdf> (Versão 8.5, SHA-256 `b97a2ae8ec2086ccf74c6b23d7caac84c46913c3e153df2509629955983eb713`); <https://www.bcb.gov.br/content/estabilidadefinanceira/pix/API-DICT.html> (DICT API 2.13.0, SHA-256 `b0fec5cdecf81f112c9e4bd6a3650d54365115dd926b7026904c4cf1d9bc3867`). The BCB's GitHub `bacen/pix-dict-api` says it is obsolete and points to that page. Test vectors: the examples of the API table (`12345678901`, `12345678901234`, `+5510998765432`, `pix@bcb.gov.br`, `123e4567-e89b-12d3-a456-426655440000`).
+Not enforced: the CPF and CNPJ check digits (the DICT texts mention them but give no algorithm); `KeyType` is open
+("Tipo de chave. _Novos tipos podem surgir_."). Sources:
+<https://www.bcb.gov.br/content/estabilidadefinanceira/pix/Regulamento_Pix/X_ManualOperacionaldoDICT.pdf> (Versão 8.5,
+SHA-256 `b97a2ae8ec2086ccf74c6b23d7caac84c46913c3e153df2509629955983eb713`);
+<https://www.bcb.gov.br/content/estabilidadefinanceira/pix/API-DICT.html> (DICT API 2.13.0, SHA-256
+`b0fec5cdecf81f112c9e4bd6a3650d54365115dd926b7026904c4cf1d9bc3867`). The BCB's GitHub `bacen/pix-dict-api` says it is
+obsolete and points to that page. Test vectors: the examples of the API table (`12345678901`, `12345678901234`,
+`+5510998765432`, `pix@bcb.gov.br`, `123e4567-e89b-12d3-a456-426655440000`).
 
 **Not built** (no official specification reached; the generic `MerchantPresentedQr` parses their payloads)
 
@@ -715,7 +740,7 @@ All dates 2026-11-20 UTC. Downloads went to fresh directories and were only read
 | 11:28 | QRIS | <https://www.bi.go.id/id/publikasi/peraturan/Documents/padg_211819.pdf> | PDF (SHA-256 `a02fd6e3...`); article 5: copies on written request |
 | 11:28 | VietQR | <https://sbv.gov.vn/documents/d/sbv_portal/587714>, <https://sbv.gov.vn/documents/d/sbv_portal/587715>, <https://sbv.gov.vn/documents/d/sbv_portal/331375>, <https://sbv.gov.vn/documents/d/sbv_portal/539196> (curl: "Request Rejected"; WebFetch for the first three: OK) | 587714 = Decision 2525/QĐ-NHNN; 587715 = TCCS 04:2024 (customer-presented); 331375 = an IT-security circular |
 | 11:28-11:29 | VietQR | the WebSearch tool of this agent session (a search engine without a result URL), queries `Quyết định 1928/QĐ-NHNN 2018 tiêu chuẩn cơ sở đặc tả kỹ thuật QR Code hiển thị từ phía đơn vị chấp nhận thanh toán TCCS 03:2018/NHNN`, `"1928/QĐ-NHNN" QR Code`, `"TCCS 03:2018/NHNN"`; then <https://thuvienphapluat.vn/page/tim-van-ban.aspx?keyword=1928%2FQ%C4%90-NHNN&match=True&area=0> (403) | no copy of the decision or the standard |
-| 11:30 | VietQR | found by the WebSearch tool of this agent session (a search engine without a result URL) (extended mode), query `tiêu chuẩn cơ sở "QR Code hiển thị từ phía đơn vị chấp nhận thanh toán" NHNN 2018 TCCS`; <https://storage-edu.vnpt.vn/edu-tnh/2266/VANBAN/BGDDT/qd-4597.pdf> (MOET Decision 4597/QĐ-BGDĐT, SHA-256 `ca363ba9...`) | quotes sections 4.2.3.2, 4.2.4, 4.2.14 of 1928 for the education sector only; no NAPAS template |
+| 11:30 | VietQR | found by the WebSearch tool of this agent session (a search engine without a result URL; extended mode), query `tiêu chuẩn cơ sở "QR Code hiển thị từ phía đơn vị chấp nhận thanh toán" NHNN 2018 TCCS`; <https://storage-edu.vnpt.vn/edu-tnh/2266/VANBAN/BGDDT/qd-4597.pdf> (MOET Decision 4597/QĐ-BGDĐT, SHA-256 `ca363ba9...`) | quotes sections 4.2.3.2, 4.2.4, 4.2.14 of 1928 for the education sector only; no NAPAS template |
 | 11:30 | VietQR | the WebSearch tool of this agent session (a search engine without a result URL), query `NAPAS VietQR technical specification pdf "A000000727" "QRIBFTTA" napas.com.vn OR vietqr.net` | only third-party copies (v1.5.2) and libraries |
 | 11:31 | HK FPS | <https://fps.hkicl.com.hk/eng/fps/merchants/qr_code.php> | points to the HKMA specification; no FPS template |
 | 11:32 | HK FPS | <https://fps.hkicl.com.hk/eng/fps/about_fps/scheme_documentation.php>, <https://fps.hkicl.com.hk/files/page_file/126/3857/FPS%20Merchant%20Payment%20Scheme.pdf> (SHA-256 `7370985a...`), <https://fps.hkicl.com.hk/files/page_file/126/10937/HKD%20FPS%20Rules_redacted%20version_Jun%202025_dist%20ver..pdf> (SHA-256 `f31c390e...`) | no QR content |
@@ -752,9 +777,9 @@ and `002` of the payload are both defined by it.
 | Purpose | 2.2: "1..4an" | enforced (length) |
 | Reference / text | 2.2: "{Or 1..35an" structured, "Or} 1..140an" unstructured, "{Or}: Only one of the elements may be populated."; "Creditor Reference (ISO 11649 RF Creditor Reference may be used)" | enforced; `creditorReference()` decodes an RF reference, never refuses another |
 | Information | 2.2: "1..70an Beneficiary to Originator information" | enforced (length) |
-| Payload size | 2.2: "The total payload is limited to 331 bytes." | enforced: 331 bytes; a payload whose every character has one byte in one ISO 8859 set of 2.1 is held to 331 characters (fix round 1 ruling, option a: the transcoded form of `fromBytes()` input must still parse). The sets are checked without an extension (fix round 2 ruling): ISO 8859-1 as U+0000 to U+00FF, the others from the Unicode Consortium's mapping tables (below). Residual gap: such text given directly as UTF-8 is not held to 331 UTF-8 bytes |
+| Payload size | 2.2: "The total payload is limited to 331 bytes." | enforced: 331 bytes; a payload whose every character has one byte in one ISO 8859 set of 2.1 is held to 331 characters (the transcoded form of `fromBytes()` input must still parse). The sets are checked without an extension: ISO 8859-1 as U+0000 to U+00FF, the others from the Unicode Consortium's mapping tables (below). Residual gap: such text given directly as UTF-8 is not held to 331 UTF-8 bytes |
 | Separators | 2.2: "The elements separator is either a line feed (LF) or a carriage return line feed (CRLF)." | enforced; mixing is not forbidden and is accepted |
-| Last element | 2.2: "The last populated element is not followed by any character or element separator." | enforced (fix round 1 ruling: source over plan): a trailing separator or a trailing empty element is refused, so Review Focus 3's trailing-newline round trip does not hold for EPC |
+| Last element | 2.2: "The last populated element is not followed by any character or element separator." | enforced (the source over the plan): a trailing separator or a trailing empty element is refused, so Review Focus 3's trailing-newline round trip does not hold for EPC |
 
 Examples (2.3), the tests of `EpcQr`: V1 `BCD / 001 / 1 / SCT / BHBLDEHHXXX / Franz Mustermänn /
 DE71110220330123456789 / EUR12.3 / GDDS / RF18539007547034`, "95 characters including spaces (1) and line feeds (9), 96
@@ -763,8 +788,9 @@ FR1420041010050500013M02606 / EUR12.3 / (empty purpose) / (empty reference) / Cl
 characters including spaces (5) and line feeds (10), 103 byte ISO 8859-1 code payload" (the test encodes it in ISO
 8859-1, checks 103 bytes and reads it through `fromBytes()`).
 
-Mapping tables of `Internal\Iso8859` (fix round 2), Unicode Consortium, <https://www.unicode.org/Public/MAPPINGS/ISO8859/>,
-downloaded 2026-11-20 13:15 UTC, status **reached**; every file's header was updated 2015-12-02:
+Mapping tables of `Internal\Iso8859`, Unicode Consortium,
+<https://www.unicode.org/Public/MAPPINGS/ISO8859/>, downloaded 2026-11-20 13:15 UTC, status **reached**; every file's
+header was updated 2015-12-02:
 
 | File | Table version | SHA-256 |
 |---|---|---|
@@ -775,10 +801,9 @@ downloaded 2026-11-20 13:15 UTC, status **reached**; every file's header was upd
 | `8859-10.TXT` | 2.0 | `3441c373...` |
 | `8859-15.TXT` | 2.0 | `bc72d7bd...` |
 
-(Fix round 3: the round 2 text had paired these hashes with the wrong files; they were recomputed from the downloads.) Each maps 0x00 to 0x9F to U+0000 to U+009F (checked while generating
-the tables); the 0xA0 to 0xFF rows are the per-set character classes. 8859-7 leaves 0xAE, 0xD2 and 0xFF unmapped (93
-characters) and maps 0xA4 to U+20AC, 0xA5 to U+20AF and 0xAA to U+037A (the 2003 additions). ISO 8859-1 needs no table
-(0x00 to 0xFF map to U+0000 to U+00FF).
+Each maps 0x00 to 0x9F to U+0000 to U+009F (checked while generating the tables); the 0xA0 to 0xFF rows are the per-set
+character classes. 8859-7 leaves 0xAE, 0xD2 and 0xFF unmapped (93 characters) and maps 0xA4 to U+20AC, 0xA5 to U+20AF
+and 0xAA to U+037A (the 2003 additions). ISO 8859-1 needs no table (0x00 to 0xFF map to U+0000 to U+00FF).
 
 ### SIX QR-bill layout
 
@@ -791,7 +816,7 @@ fields in chapter 4.2.2" (revision history), so only address type `S` remains.
 |---|---|---|
 | Character set | 4.1.1: "Basic Latin (Unicode codepoints U+0020–U+007E) ... Latin1 Supplement (U+00A0–U+00FF) ... Latin Extended A (U+0100–U+017F)", Ș ș Ț ț (U+0218 to U+021B), "€ ... U+20AC"; "The message and the data in the Swiss QR Code must be UTF-8 encoded." | enforced on every element |
 | Separators | 4.1.4: "All data elements must be present. If the data element has no content, at least a new line must be present. The same type of carriage return must always be used within a document. ... CR + LF ... LF"; status "A" elements "are omitted if they are not used, and no further subsequent data element is used." | enforced: 31 to 34 elements, one separator kind |
-| Final separator | 4.1.4: "The carriage return after the final element is eliminated." | every separator ends an element (fix round 1 ruling): a final separator is one more, empty element and counts against the 34; Annex A examples end with an empty AP2 and no final ¶ |
+| Final separator | 4.1.4: "The carriage return after the final element is eliminated." | every separator ends an element : a final separator is one more, empty element and counts against the 34; Annex A examples end with an empty AP2 and no final ¶ |
 | Header | Table 8: QRType "Fixed value "SPC""; Version "only the version designation "0200" is permitted in master version 02"; Coding "Fixed value 1" | enforced |
 | IBAN | Table 8: "Fixed length: 21 alphanumeric characters, no spaces allowed, only IBANs with CH or LI country code permitted." | enforced |
 | Creditor | Table 8: AdrTp "S - structured address"; Name "Maximum 70"; StrtNmOrAdrLine1 "Maximum 70"; BldgNbOrAdrLine2 "max. 16"; PstCd "Maximum 16"; TwnNm "Maximum 35"; Ctry "Two-digit country code according to ISO 3166-1"; 4.3.1 ""Postal code", "Town" and "Country" must be filled in." | enforced (country: two capitals, decoded by vo-base `CountryCode`) |
@@ -807,12 +832,13 @@ fields in chapter 4.2.2" (revision history), so only address type `S` remains.
 | Maximum size | 6.2: "The maximum Swiss QR Code data content permitted is 997 characters (including the element separators)." | not enforced as a payload cap (the element limits above give at most 902 characters with CRLF); the Doctrine column length is 997 |
 | Postal code "without a country"; billing-information syntax (4.3.3, Annex D) | | not checked (no testable rule) |
 
-Annex A examples are the tests: example 1 (QR-IBAN `CH6431961000004421557`, QRR `000008207791225857421286694`), 2 (QR-IBAN
-`CH4431999123000889012`, QRR `210000000003139471430009017`, billing information `//S1/10/1234/11/201021/30/102673386/32/7.7/40/0:30`
-joined from its two printed lines, AP1 `eBill/B/simon.muster@example.com`), 3 (`CH5204835012345671000`, `NON`), 5 and 6
-(`CH5800791123000889012`, SCOR `RF18539007547034`). **Example 4 prints `RF720191230100405JSH0438`, which fails the
-ISO 11649 check** (the check pair of `0191230100405JSH0438` is 24, computed with `Internal\Iso7064Mod97`); `QrBill`
-refuses it and a test records it, as for ISO 11649's own `RF68` example.
+Annex A examples are the tests: example 1 (QR-IBAN `CH6431961000004421557`, QRR `000008207791225857421286694`), 2
+(QR-IBAN `CH4431999123000889012`, QRR `210000000003139471430009017`, billing information
+`//S1/10/1234/11/201021/30/102673386/32/7.7/40/0:30` joined from its two printed lines, AP1
+`eBill/B/simon.muster@example.com`), 3 (`CH5204835012345671000`, `NON`), 5 and 6 (`CH5800791123000889012`, SCOR
+`RF18539007547034`). **Example 4 prints `RF720191230100405JSH0438`, which fails the ISO 11649 check** (the check pair of
+`0191230100405JSH0438` is 24, computed with `Internal\Iso7064Mod97`); `QrBill` refuses it and a test records it, as for
+ISO 11649's own `RF68` example.
 
 ### GOST R 56042-2014 and the Bank of Russia account key
 
@@ -832,15 +858,17 @@ published); read **as quoted** by the database mirror <https://files.stroyinf.ru
 | Binary string | 5.4.2: "В двумерный символ штрихового кода кодируется строка двоичного типа ... программное обеспечение принимающей организации будет получать информацию об используемом наборе кодируемых знаков из элемента N 3" | `fromBytes()` transcodes 1 and 3 and rewrites the digit to 2 |
 
 Annex D example (declared `1`, WIN1251), the test vector in UTF-8, through `fromBytes()` from WIN1251 and KOI8-R:
-`ST00011|Name=ООО "Три кита"|PersonalAcc=40702810138250123017|BankName=ОАО "БАНК"|BIC=044525225|CorrespAcc=30101810400000000225|PayeeINN=6200098765|LastName=Иванов|FirstName=Иван|MiddleName=Иванович|Purpose=Оплата членского взноса|PayerAddress=г.Рязань ул.Ленина д.10 кв.15|Sum=100000`.
-The mirror prints the payee INN alias as `PayeelNN` (a lowercase L, an OCR or typesetting slip for Annex V's `PayeeINN`) and
-splits the line with stray hyphens; the test uses Annex V's alias. Table 3 step 6 of the mirror has Cyrillic letters in
-"РауегАddress", which the alias rule forbids; the Annex D text `PayerAddress` is used.
+`ST00011|Name=ООО "Три кита"|PersonalAcc=40702810138250123017|BankName=ОАО
+"БАНК"|BIC=044525225|CorrespAcc=30101810400000000225|PayeeINN=6200098765|LastName=Иванов|FirstName=Иван|MiddleName=Иванович|Purpose=Оплата
+членского взноса|PayerAddress=г.Рязань ул.Ленина д.10 кв.15|Sum=100000`. The mirror prints the payee INN alias as
+`PayeelNN` (a lowercase L, an OCR or typesetting slip for Annex V's `PayeeINN`) and splits the line with stray hyphens;
+the test uses Annex V's alias. Table 3 step 6 of the mirror has Cyrillic letters in "РауегАddress", which the alias rule
+forbids; the Annex D text `PayerAddress` is used.
 
 **Control key.** Bank of Russia, "Порядок расчета контрольного ключа в номере лицевого счета", 8 September 1997 No. 515
-(in force from 1 January 1998). Not found on cbr.ru (see the log); read **as quoted** by <https://pravo.ppt.ru/poryadok/98817>
-Положение 579-П (the chart of accounts of credit institutions) was not read; the search found the key rule only in
-Order 515, which is what `Internal\RussianAccountKey` implements.
+(in force from 1 January 1998). Not found on cbr.ru (see the log); read **as quoted** by
+<https://pravo.ppt.ru/poryadok/98817> Положение 579-П (the chart of accounts of credit institutions) was not read; the
+search found the key rule only in Order 515, which is what `Internal\RussianAccountKey` implements.
 
 > "2. Для расчета контрольного ключа используется совокупность двух реквизитов - условного номера РКЦ (если лицевой счет
 > открыт в РКЦ) или кредитной организации (если лицевой счет открыт в кредитной организации) и номера лицевого счета.
@@ -850,14 +878,14 @@ Order 515, which is what `Internal\RussianAccountKey` implements.
 > digits); "7.2. Рассчитывается сумма младших разрядов полученных произведений. При получении суммы, кратной 10 ...
 > значение контрольного ключа считается верным."
 
-Annex examples, tests of `Internal\RussianAccountKey`: `30101810800000000746` at BIC `049805000` and `40102810100000010001`
-at BIC `040305000` (both with the RKC number 005). A payment payload does not say whether the account is opened at an RKC
-or a credit institution, so either number gives a valid key (the GOST example account `40702810138250123017` passes with
-the credit institution number 225, its correspondent account with the RKC number 045). Item 8 (a letter in the sixth
-digit for clearing currency) does not arise: GOST requires 20 digits. Accounts shorter than 20 digits (`CorrespAcc=0`)
-have no key.
+Annex examples, tests of `Internal\RussianAccountKey`: `30101810800000000746` at BIC `049805000` and
+`40102810100000010001` at BIC `040305000` (both with the RKC number 005). A payment payload does not say whether the
+account is opened at an RKC or a credit institution, so either number gives a valid key (the GOST example account
+`40702810138250123017` passes with the credit institution number 225, its correspondent account with the RKC number
+045). Item 8 (a letter in the sixth digit for clearing currency) does not arise: GOST requires 20 digits. Accounts
+shorter than 20 digits (`CorrespAcc=0`) have no key.
 
-**Scope (fix round 1).** The order's preamble ties the key to "Схема обозначения лицевых счетов, приведенная в
+**Scope.** The order's preamble ties the key to "Схема обозначения лицевых счетов, приведенная в
 Правилах ведения бухгалтерского учета в кредитных организациях", and item 2 to accounts opened "в РКЦ" or "в кредитной
 организации". A treasury account of the Federal Treasury (since 2021; first digit 0, e.g. `03100643000000017300` at the
 treasury BIC `004525988` of the Federal Tax Service's Moscow requisites) is numbered outside that scheme and fails the
@@ -876,32 +904,32 @@ Archive copy
 <https://web.archive.org/web/20251221101611id_/https://sbp.nspk.ru/file/pravila-informacionno-tekhnologicheskogo-vzaimodejstviya_v.4.0.pdf>
 (SHA-256 `812dcc19...`), status **archive**: "Правила размещаются на Сайте. Стандарты ОПКЦ СБП размещаются на Портале."
 and "взаимодействие ... с использованием QR-кода, в соответствии со Стандартами ОПКЦ СБП"; the portal is
-<https://support.nspk.ru>, open to participants only. The text contains no `qr.nspk.ru` link, no identifier shape and
-no query field. The only link examples found are third-party (a Habr article with `?type=01&bank=...&crc=...`), so
+<https://support.nspk.ru>, open to participants only. The text contains no `qr.nspk.ru` link, no identifier shape and no
+query field. The only link examples found are third-party (a Habr article with `?type=01&bank=...&crc=...`), so
 `SbpPaymentLink` checks the host `qr.nspk.ru` over HTTPS, one identifier segment of ASCII letters and digits and a query
 without spaces or fragment, as the plan allows ("otherwise format only (host, id shape)"). Its test link is synthetic.
 
 ### NPCI UPI linking specification
 
-The NPCI "UPI Linking Specifications" (deep linking specs 1.5.1, the version NPCI's circulars name) were **not reached**:
-NPCI says they were "provided to member banks"; the copies found (labnol.org, version 1.6 draft) are third-party. Reached,
-from NPCI itself through the Internet Archive:
+The NPCI "UPI Linking Specifications" (deep linking specs 1.5.1, the version NPCI's circulars name) were **not
+reached**: NPCI says they were "provided to member banks"; the copies found (labnol.org, version 1.6 draft) are
+third-party. Reached, from NPCI itself through the Internet Archive:
 
 - NPCI/UPI/OC No. 18/2016-17, 20 March 2017, "Bank Compliances to enable UPI Merchant ecosystem",
   <https://web.archive.org/web/2024id_/https://www.npci.org.in/PDF/npci/upi/circular/2017/Circular18_BankCompliances_to_enbaleUPIMerchantecosystem_0.pdf>
   (SHA-256 `6e543716...`), status **archive**. Annexure A Table 1 "QR (Key Deep Linking parameters)", column "As per
   'Deep linking specs'": "Pa Payee virtual payment address M", "Pn Payee Name M", "Tr Transaction Ref No. (upto 35
   digits) C", "Am Amount O", "Mam Minimum amount O"; "PN: ... other additional parameters which are optional and can be
-  referred to, from the Deep Linking Specs provided to member banks." D.7: "While generating an intent/QR string, ‘space’
-  has to be represented by ’%’ ... ‘’tn=test%transaction’’".
+  referred to, from the Deep Linking Specs provided to member banks." D.7: "While generating an intent/QR string,
+  ‘space’ has to be represented by ’%’ ... ‘’tn=test%transaction’’".
 - NPCI/UPI/OC No. 37/2017-18, 1 November 2017,
   <https://web.archive.org/web/20241010082959id_/https://www.npci.org.in/PDF/npci/upi/circular/2017/Circular%20on%20Non-compliance%20of%20UPI%20apps%20to%20Deeplinking%20specs%20Circular%2037-%201.11.2017.pdf>
   (SHA-256 `6b39d795...`): "UPI Deep linking Specs 1.5.1" is the binding version; no parameter text.
 
 Outcome: `pa` and `pn` present and filled; `tr` 1 to 35 characters (the length; "digits" is not enforced, merchant
 references are commonly alphanumeric and the specification itself was not read); no percent-decoding (the bare `%`
-space). The scheme `upi://pay` is **not confirmed** from an NPCI text (the plan's and the marker table's); the test URI is
-synthetic.
+space). The scheme `upi://pay` is **not confirmed** from an NPCI text (the plan's and the marker table's); the test URI
+is synthetic.
 
 ### Task 7 search log
 

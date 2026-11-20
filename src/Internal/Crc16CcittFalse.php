@@ -6,8 +6,8 @@ namespace MSSTC4PHP\ValueObject\Financial\Internal;
 
 /**
  * CRC-16/CCITT-FALSE as the EMVCo merchant-presented QR payload uses it: polynomial 0x1021, initial value 0xFFFF, no
- * reflection, no final XOR, written as four uppercase hex digits. For a payload the checksum covers everything up to and
- * including the `6304` of the CRC data object.
+ * reflection, no final XOR, written as four uppercase hex digits. For a payload the checksum covers everything up to
+ * and including the `6304` of the CRC data object.
  *
  * @internal
  *

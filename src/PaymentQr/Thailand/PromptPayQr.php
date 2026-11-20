@@ -15,12 +15,12 @@ use Override;
 
 /**
  * Thai QR Code (PromptPay) merchant-presented payload as the Bank of Thailand guideline defines it: tag 29 (credit
- * transfer, AID `A000000677010111`, hex compared case-insensitively) with at least one proxy of sub-tags 01 to 04 (no source makes them exclusive; {@see proxyTypes()} lists all), or tag 30 (bill payment, AID
- * `A000000677010112` domestic or `A000000677012006` cross-border) with a biller ID of 15 digits and a reference 1 of up
- * to 20 characters (reference 2 up to 20, optional); at least one of the two. The merchant category code and the city
- * are optional here, as the guideline makes them; tags 55, 56 and 57 are refused. Not enforced: currency 764 and country
- * TH (the guideline gives other countries for cross-border use), tags 31, 39 and 80, and the character set of the
- * references.
+ * transfer, AID `A000000677010111`, hex compared case-insensitively) with at least one proxy of sub-tags 01 to 04 (no
+ * source makes them exclusive; {@see proxyTypes()} lists all), or tag 30 (bill payment, AID `A000000677010112` domestic
+ * or `A000000677012006` cross-border) with a biller ID of 15 digits and a reference 1 of up to 20 characters (reference
+ * 2 up to 20, optional); at least one of the two. The merchant category code and the city are optional here, as the
+ * guideline makes them; tags 55, 56 and 57 are refused. Not enforced: currency 764 and country TH (the guideline gives
+ * other countries for cross-border use), tags 31, 39 and 80, and the character set of the references.
  *
  * @see https://www.bot.or.th/content/dam/bot/fipcs/documents/FPG/2562/EngPDF/25620084.pdf Bank of Thailand, Policy Guideline: Standardized Thai QR Code for Payment Transactions (17 April 2019), section 2.3
  * @see docs/sources/FINANCE.md "National EMVCo profiles"
@@ -66,7 +66,8 @@ final class PromptPayQr extends AbstractStringValueObject implements Maskable
     /**
      * The only proxy type of the credit transfer; null without a credit transfer.
      *
-     * @throws AmbiguousPaymentQrFieldException when the template carries several proxies; {@see proxyTypes()} lists them
+     * @throws AmbiguousPaymentQrFieldException when the template carries several proxies; {@see proxyTypes()} lists
+     *                                          them
      */
     public function proxyType(): ?PromptPayProxyType
     {

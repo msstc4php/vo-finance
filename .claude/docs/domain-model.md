@@ -1,7 +1,16 @@
 # Domain model
 
-Empty until Task 3. Canonical forms and the exception family (`Financial\Exception\Invalid*Exception`) are fixed by the
-finance wave plan; `docs/sources/FINANCE.md` states per rule whether it is enforced or format only.
+Every value object is a string value object with the canonical form stored uppercase where the identifier is
+case-insensitive. Exceptions are `Financial\Exception\Invalid*Exception` (messages never carry the input);
+`docs/sources/FINANCE.md` states per rule whether it is enforced or format only. Registry data decodes, never refuses
+(IIN ranges, CFI tables, `Isin::countryCode()`), and a value that fits several types is `AmbiguousValueException` in the
+two factories.
+
+## Securities and entity identifiers
+
+`Isin` (check digit; `cusip()` for US/CA, `sedol()` for GB/IE, null elsewhere), `Lei`, `Upi` (format only), `Cfi`
+(`category()`/`group()` null for an unknown letter), `Fisn`, `Mic` (format only), `Figi`, `Cusip` (check digit for an
+all-digit value only), `Sedol`, `Wkn`, `Valor` (format only). No `masked()`.
 
 ## Payment cards
 

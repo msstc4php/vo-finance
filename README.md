@@ -3,11 +3,93 @@
 Value objects for securities identifiers (ISIN, LEI, FIGI, CUSIP, SEDOL and others), payment card numbers and payment
 QR payloads. Built on [`msstc4php/vo-base`](https://github.com/msstc4php/vo-base); PHP >= 8.4.
 
-Work in progress: the value objects arrive with the 0.1.0 release. Every rule cites its official source in
-[`docs/sources/FINANCE.md`](docs/sources/FINANCE.md); what a class cannot check from a published source is checked for
-format only and listed here under "Format only" once the classes exist.
+Every check digit and structural rule cites its official source; the notes, with quotes, are in
+[`docs/sources/FINANCE.md`](docs/sources/FINANCE.md). What a class cannot check from a published source is checked for
+format only and listed under "Format only" below.
 
-## Payment QR classes
+## Install
+
+Not on Packagist yet; register the GitHub repositories:
+
+```json
+{
+    "repositories": [
+        { "type": "vcs", "url": "https://github.com/msstc4php/vo-base" },
+        { "type": "vcs", "url": "https://github.com/msstc4php/vo-finance" }
+    ],
+    "require": {
+        "msstc4php/vo-finance": "^0.1"
+    }
+}
+```
+
+Runtime requirement: `msstc4php/vo-base ^1.2`. No framework. `ext-mbstring` is suggested: `EpcQr::fromBytes()`,
+`Gost56042Payload::fromBytes()` and `PaymentQrFactory::fromBytes()` need it for payloads in a single-byte character set
+and throw `LogicException` without it.
+
+## Usage
+
+```php
+use MSSTC4PHP\ValueObject\Financial\Card\PaymentCardNumber;
+use MSSTC4PHP\ValueObject\Financial\PaymentQr\PaymentQrFactory;
+use MSSTC4PHP\ValueObject\Financial\Security\Isin;
+
+$isin = Isin::from('us0378331005');              // stored uppercase
+$isin->nsin();                                   // 037833100
+$isin->cusip();                                  // Cusip 037833100
+
+$card = PaymentCardNumber::from('3782 822463 10005');
+(string) $card;                                  // 378282246310005 (full value; spaces and hyphens are stripped)
+$card->masked();                                 // 378282*****0005
+$card->schemes();                                // [CardScheme::Amex]
+
+$qr = PaymentQrFactory::fromString($payload);    // the class that fits, or AmbiguousValueException
+```
+
+## Classes
+
+All value objects are string value objects (`AbstractStringValueObject`): `(string) $vo` and `jsonSerialize()` give the
+full value, card numbers and payment payloads included, and `equals()` compares it. A failure is an exception of the
+area's family in `MSSTC4PHP\ValueObject\Financial\Exception\`, all extending vo-base `InvalidValueObjectException`
+(`InvalidSecurityIdentifierException`, `InvalidPaymentCardNumberException`, `InvalidPaymentQrException`,
+`InvalidPaymentReferenceException`); exception messages never contain the input. A value that fits several classes
+throws vo-base `AmbiguousValueException` with the candidates; the factories never pick silently.
+
+### Securities and entity identifiers
+
+| Class | Value |
+|---|---|
+| `Security\Isin` | ISO 6166, check digit enforced; `fromNsin()`, `prefix()`, `nsin()`, `countryCode()`, `cusip()` (US, CA), `sedol()` (GB, IE) |
+| `Security\Lei` | ISO 17442, MOD 97-10 check pair enforced; `louPrefix()` |
+| `Security\Upi` | ISO 4914 UPI, format of the Regulatory Oversight Committee |
+| `Security\Cfi` | ISO 10962, six letters; `category()` (`CfiCategory`) and `group()` decode from the SIX list, null for an unknown letter |
+| `Security\Fisn` | ANNA FISN, issuer and description; `issuerName()`, `description()` |
+| `Security\Mic` | ISO 10383, four characters (format only) |
+| `Security\Figi` | OMG FIGI 1.0, check digit enforced |
+| `Security\Cusip` | CUSIP, nine characters; check digit enforced for an all-digit CUSIP |
+| `Security\Sedol` | SEDOL, check digit enforced |
+| `Security\Wkn` | German WKN (format only) |
+| `Security\Valor` | Swiss valor number (format only) |
+| `Security\SecurityIdentifierFactory` | `fromString()` builds the one type that accepts the value; several types accepting it (a 12-character value can be an ISIN and a FIGI, and a `Valor` accepts any one to nine letters or digits) throw `AmbiguousValueException`; none throws `InvalidSecurityIdentifierException` |
+
+Securities and entity identifiers carry no `masked()`.
+
+### Payment cards and references
+
+| Class | Value |
+|---|---|
+| `Card\PaymentCardNumber` | ISO/IEC 7812-1: 10 to 19 digits, Luhn; spaces and hyphens are stripped; `iin()` (8 digits), `last4()`, `schemes()`, `matchesSchemeLength()`; `masked()` keeps at most the first six and the last four digits and hides at least one |
+| `Card\CardScheme` | `Amex`, `Jcb`, `UnionPay` with `lengths()`; a decoding result only, never a reason to refuse |
+| `Reference\QrReference` | Swiss QR reference, 27 digits, recursive modulo 10; `checkDigit()` |
+| `Reference\CreditorReference` | ISO 11649 `RF` reference, MOD 97-10; lowercase is folded to capitals; `checkDigits()`, `body()` |
+
+**IIN table.** `schemes()` reads a built-in table (`Internal\IinRanges`) of the ranges a reached publication assigns to
+a scheme. The table decodes and never refuses: a well-formed number outside it has an empty `schemes()`, and a length
+outside the scheme's published lengths is reported by `matchesSchemeLength()`, not refused. The table changes only in a
+minor release of this package, so a given version always decodes the same way; a range is added when a reached
+publication states it (see "Format only" for what is missing today).
+
+### Payment QR payloads
 
 All implement `Maskable`. On the EMVCo classes `masked()` replaces the values of the merchant accounts (IDs 02 to 51),
 the templates 80 to 99 and the CRC with asterisks; on the others it hides the IBAN, account, identifier or VPA, keeping
@@ -43,21 +125,24 @@ goes through `fromBytes()`, which transcodes it and rewrites the character set e
 the stored bytes differ from the scanned ones in that element; `fromBytes()` needs ext-mbstring (composer `suggest`).
 
 The single-value accessors (`pixKey()`, `pixKeyType()`, `paymentUrl()`, `recurrenceUrl()`, `proxyType()`, `proxy()`,
-`bakongAccountId()`, `acquiringBank()`, `storeId()`, and the query accessors of `SbpPaymentLink` and `UpiPaymentUri`) throw
-`Exception\AmbiguousPaymentQrFieldException` when the payload carries several distinct values; their list accessors
-(`pixKeys()`, `paymentUrls()`, `recurrenceUrls()`, `proxyTypes()`, `proxyOf()`, `bakongAccountIds()`, `storeIds()`)
-return all of them and never throw. On
-`PixBrCode`, `additionalInfo()` and `withdrawalProvider()` throw the same exception when several Pix templates do not
-all carry the same value; they have no list accessor.
+`bakongAccountId()`, `acquiringBank()`, `storeId()`, and the query accessors of `SbpPaymentLink` and `UpiPaymentUri`)
+throw `Exception\AmbiguousPaymentQrFieldException` when the payload carries several distinct values; their list
+accessors (`pixKeys()`, `paymentUrls()`, `recurrenceUrls()`, `proxyTypes()`, `proxyOf()`, `bakongAccountIds()`,
+`storeIds()`) return all of them and never throw. On `PixBrCode`, `additionalInfo()` and `withdrawalProvider()` throw
+the same exception when several Pix templates do not all carry the same value; they have no list accessor.
 
 ## Format only
 
 Checked for length and character set, never for a check digit or a range no official source gives; the reasons are in
 [`docs/sources/FINANCE.md`](docs/sources/FINANCE.md).
 
-- `Upi`: the format is the Regulatory Oversight Committee's (`QZ` and ten characters); the check character is not verified, because ISO 4914 Annex C and the ANNA DSB guidance are not reachable.
+- `Upi`: the format is the Regulatory Oversight Committee's (`QZ` and ten characters); the check character is not
+  verified, because ISO 4914 Annex C and the ANNA DSB guidance are not reachable.
 - `Cusip`: the check digit is verified only for an all-digit CUSIP; letters and `*`, `@`, `#` have no published value.
-- `Isin::sedol()`: no official text states that a GB or IE ISIN carries a SEDOL; it returns null rather than refusing anything.
+- `Isin`: the prefix is two letters and is never refused for being outside ISO 3166 (`XS`, `EZ` and other prefixes set
+  by the registration authority exist); `countryCode()` is null for them.
+- `Isin::sedol()`: no official text states that a GB or IE ISIN carries a SEDOL; it returns null rather than refusing
+  anything.
 - `Lei::louPrefix()`: a plain slice of four characters; its meaning is not confirmed.
 - `Mic`: no embedded list (it changes monthly), so no operating-MIC link.
 - `Wkn`: WM Datenservice defines no check digit.
@@ -72,7 +157,8 @@ Checked for length and character set, never for a check digit or a range no offi
   abuse bound are enforced; the 512-character recommendation (a "should", third-party copy only), the "var. up to"
   lengths of the other objects, the content of IDs 02-25 and of the templates 64 and 80-99, the position of the payload
   format indicator and repeated IDs inside templates are not. The EMVCo document is read through a third-party copy and
-  two official publications (HKMA, Banco Central do Brasil). `additionalData()` keys such as "10" become integers in PHP.
+  two official publications (HKMA, Banco Central do Brasil). `additionalData()` keys such as "10" become integers in
+  PHP.
 - `PixBrCode`, `PromptPayQr`, `DuitNowQr`, `KhqrCode`, `JpqrCode`: only the rules quoted from the publisher's own
   specification (see [`docs/sources/FINANCE.md`](docs/sources/FINANCE.md)). Not enforced: the form of a Pix key (the
   DICT formats only decode `pixKeyType()`), the letters-and-digits rule for a Pix txid (the BCB's own BR Code example
@@ -119,6 +205,11 @@ members), so their payloads parse as the generic `MerchantPresentedQr`:
 - Bharat QR (NPCI): NPCI's circular says the Merchant QR Code Specification 4.0 was released to member banks; no copy
   was found among NPCI's archived public files.
 - QR Ph (BSP): none found.
+
+## With the bridge
+
+`msstc4php/vo-finance-doctrine` stores these value objects in Doctrine ORM and MongoDB ODM columns: one type per string
+value object, `fin_<snake_name>`.
 
 ## License
 

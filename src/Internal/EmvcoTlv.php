@@ -23,7 +23,8 @@ final class EmvcoTlv
     /**
      * @return list<DataObject>
      *
-     * @throws InvalidPaymentQrException when the data is not UTF-8, is cut, or a length overruns it; repeated IDs are kept
+     * @throws InvalidPaymentQrException when the data is not UTF-8, is cut, or a length overruns it; repeated IDs are
+     *                                   kept
      */
     public static function parse(string $data): array
     {

@@ -17,12 +17,12 @@ use Override;
 /**
  * DuitNow QR merchant-presented payload, PayNet's national standard: payload format indicator `02` (not the generic
  * `01`), a point of initiation (11 static, 12 dynamic), the merchant account template ID 26 with the AID
- * `A0000006150001` (compared case-insensitively), an acquirer ID (sub-ID 01, up to 6 characters) and a QR ID (02, up to 28); currency 458, country MY,
- * merchant name up to 25 and city up to 15 characters. Enforced besides: a postal code of 5 digits; amounts (54, 56)
- * other than zero; the fixed fee (56) exactly when the indicator 55 is 02 and the percentage (57) exactly when it is 03;
- * a language template (64) with its language and name; for JomPAY (acquirer ID 898989) the additional data template with
- * the RRN (62-90). Not enforced: the hash of ID 82, the acquirer ID table, and the character sets beyond the generic
- * ones.
+ * `A0000006150001` (compared case-insensitively), an acquirer ID (sub-ID 01, up to 6 characters) and a QR ID (02, up to
+ * 28); currency 458, country MY, merchant name up to 25 and city up to 15 characters. Enforced besides: a postal code
+ * of 5 digits; amounts (54, 56) other than zero; the fixed fee (56) exactly when the indicator 55 is 02 and the
+ * percentage (57) exactly when it is 03; a language template (64) with its language and name; for JomPAY (acquirer ID
+ * 898989) the additional data template with the RRN (62-90). Not enforced: the hash of ID 82, the acquirer ID table,
+ * and the character sets beyond the generic ones.
  *
  * @see https://docs.developer.paynet.my/docs/duitNow-QR/integration/QR-generation-specification/merchant-presented-mode/qr-data-object PayNet, DuitNow QR merchant-presented mode 1.5, "QR Data Object"
  * @see https://docs.developer.paynet.my/docs/duitNow-QR/integration/QR-generation-specification/merchant-presented-mode/example PayNet, DuitNow QR merchant-presented mode 1.5, "Examples"

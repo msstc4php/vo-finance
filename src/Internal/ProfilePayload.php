@@ -13,11 +13,12 @@ use MSSTC4PHP\ValueObject\I18n\CountryCode;
 use MSSTC4PHP\ValueObject\I18n\CurrencyCode;
 
 /**
- * A national profile's payload read through the generic {@see EmvcoMerchantPresented} validation. A profile may differ from the generic format in
- * the payload format indicator (DuitNow uses 02) or leave the merchant category code or the city out (BOT's Thai QR
- * makes both optional). The original objects are kept as given; the generic structure, character-set and template
- * checks run, without the length bound (checked on the original), on a modified copy where the indicator is 01 and the missing objects hold a placeholder, with the CRC recomputed.
- * Accessors answer from the original objects, so no placeholder ever shows.
+ * A national profile's payload read through the generic {@see EmvcoMerchantPresented} validation. A profile may differ
+ * from the generic format in the payload format indicator (DuitNow uses 02) or leave the merchant category code or the
+ * city out (BOT's Thai QR makes both optional). The original objects are kept as given; the generic structure,
+ * character-set and template checks run, without the length bound (checked on the original), on a modified copy where
+ * the indicator is 01 and the missing objects hold a placeholder, with the CRC recomputed. Accessors answer from the
+ * original objects, so no placeholder ever shows.
  *
  * @internal
  *
@@ -43,7 +44,8 @@ final readonly class ProfilePayload
      * @param non-empty-string $profile the class name used in failure messages
      * @param non-empty-string $formatIndicator the value of data object 00 the profile fixes
      *
-     * @throws InvalidPaymentQrException when the payload is not a valid payload of the generic format apart from the relaxations
+     * @throws InvalidPaymentQrException when the payload is not a valid payload of the generic format apart from the
+     *                                   relaxations
      */
     public static function parse(string $payload, string $profile, string $formatIndicator = '01', bool $categoryOptional = false, bool $cityOptional = false): self
     {

@@ -9,8 +9,8 @@ use LogicException;
 /**
  * The FIGI check digit over the first eleven characters: letters are `B` = 11 ... `Z` = 35 without vowels; from the
  * right, the last value is taken as it is and every second one before it is doubled; the digits of all results are
- * added and the check digit is the amount that brings the sum up to a multiple of ten. It differs from the ISIN's, which
- * works on the expanded digit string.
+ * added and the check digit is the amount that brings the sum up to a multiple of ten. It differs from the ISIN's,
+ * which works on the expanded digit string.
  *
  * @internal
  *

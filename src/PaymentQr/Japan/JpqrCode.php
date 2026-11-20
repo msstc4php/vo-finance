@@ -63,7 +63,8 @@ final class JpqrCode extends AbstractStringValueObject implements Maskable
     /**
      * @return non-empty-string
      *
-     * @throws AmbiguousPaymentQrFieldException when several JPQR templates carry different store IDs; {@see storeIds()} lists them
+     * @throws AmbiguousPaymentQrFieldException when several JPQR templates carry different store IDs; {@see storeIds()}
+     *                                          lists them
      */
     public function storeId(): string
     {

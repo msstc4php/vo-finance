@@ -15,15 +15,15 @@ use MSSTC4PHP\ValueObject\Support\AbstractStringValueObject;
 use Override;
 
 /**
- * Payment payload of GOST R 56042-2014: the eight-byte service block `ST`, version `0001`, the character set digit
- * (`1` WIN1251, `2` UTF-8, `3` KOI8-R) and the separator, then `alias=value` pairs. The first five are, in this order,
+ * Payment payload of GOST R 56042-2014: the eight-byte service block `ST`, version `0001`, the character set digit (`1`
+ * WIN1251, `2` UTF-8, `3` KOI8-R) and the separator, then `alias=value` pairs. The first five are, in this order,
  * `Name` (1 to 160 characters), `PersonalAcc` (20 digits), `BankName` (1 to 45), `BIC` (9 digits) and `CorrespAcc` (up
  * to 20 digits, `0` when the bank has none); further pairs follow. Aliases are Latin letters, digits and `_`, compared
  * case-insensitively; a value is everything after the first `=`; of repeated aliases the last counts, as the standard
- * says, and every occurrence of a mandatory alias must have its format. A 20-digit account carries the Bank of Russia control key
- * against the BIC within the scope of Bank of Russia Order 515 (not a treasury account starting with 0), checked on every
- * occurrence of `PersonalAcc` and `CorrespAcc` against the BIC that counts (the last). The separator must be one ASCII
- * graphic character (the block is eight bytes in UTF-8 too).
+ * says, and every occurrence of a mandatory alias must have its format. A 20-digit account carries the Bank of Russia
+ * control key against the BIC within the scope of Bank of Russia Order 515 (not a treasury account starting with 0),
+ * checked on every occurrence of `PersonalAcc` and `CorrespAcc` against the BIC that counts (the last). The separator
+ * must be one ASCII graphic character (the block is eight bytes in UTF-8 too).
  *
  * {@see __construct()} takes UTF-8 text: a declared set `1` or `3` is accepted only for ASCII text; other text goes
  * through {@see fromBytes()}, which transcodes it and rewrites the character set to `2`. {@see masked()} hides the

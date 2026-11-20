@@ -5,8 +5,8 @@ declare(strict_types=1);
 namespace MSSTC4PHP\ValueObject\Financial\Card;
 
 /**
- * A card scheme whose IIN ranges and lengths a reached publication states. Mastercard, Visa, Mir and RuPay have no case:
- * no reached publication gives them a range. Discover, Diners Club International and PULSE share the summary's
+ * A card scheme whose IIN ranges and lengths a reached publication states. Mastercard, Visa, Mir and RuPay have no
+ * case: no reached publication gives them a range. Discover, Diners Club International and PULSE share the summary's
  * unmarked rows, which name no single scheme (docs/sources/FINANCE.md, "Card IIN publications").
  *
  * @see https://www.discoverglobalnetwork.com/content/dam/discover/en_us/dgn/docs/IPP-VAR-Enabler-Compliance.pdf Discover Global Network, IIN Range Summary: JCB and UnionPay ranges and lengths

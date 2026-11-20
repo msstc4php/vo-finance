@@ -21,14 +21,14 @@ use MSSTC4PHP\ValueObject\Financial\PaymentQr\Swiss\QrBill;
 use MSSTC4PHP\ValueObject\Financial\PaymentQr\Thailand\PromptPayQr;
 
 /**
- * Builds a payment payload by its leading marker: `BCD` an {@see EpcQr}, `SPC` a {@see QrBill}, `ST0001` a
- * {@see Gost56042Payload}, `https://qr.nspk.ru/` an {@see SbpPaymentLink} and `upi://` an {@see UpiPaymentUri} (the last
- * two compared case-insensitively, as URI schemes and hosts are). The markers exclude one another and the EMVCo
- * `000201`, so a marked payload that its class refuses throws that class's exception. Any other payload is EMVCo: the
- * factory builds the national profile that accepts an EMVCo merchant-presented payload. A payload that no profile accepts but
- * the generic format does (a profile that is not built, such as SGQR or QRIS) gives {@see MerchantPresentedQr}. A payload
- * that fits several profiles, which a code carrying several arrangements can, throws {@see AmbiguousValueException}
- * listing them; the factory never picks silently.
+ * Builds a payment payload by its leading marker: `BCD` an {@see EpcQr}, `SPC` a {@see QrBill}, `ST0001` a {@see
+ * Gost56042Payload}, `https://qr.nspk.ru/` an {@see SbpPaymentLink} and `upi://` an {@see UpiPaymentUri} (the last two
+ * compared case-insensitively, as URI schemes and hosts are). The markers exclude one another and the EMVCo `000201`,
+ * so a marked payload that its class refuses throws that class's exception. Any other payload is EMVCo: the factory
+ * builds the national profile that accepts an EMVCo merchant-presented payload. A payload that no profile accepts but
+ * the generic format does (a profile that is not built, such as SGQR or QRIS) gives {@see MerchantPresentedQr}. A
+ * payload that fits several profiles, which a code carrying several arrangements can, throws {@see
+ * AmbiguousValueException} listing them; the factory never picks silently.
  */
 final class PaymentQrFactory
 {
