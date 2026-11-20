@@ -7,7 +7,6 @@ namespace MSSTC4PHP\ValueObject\Financial\PaymentQr\Cambodia;
 use LogicException;
 use MSSTC4PHP\ValueObject\Contract\Maskable;
 use MSSTC4PHP\ValueObject\Financial\Exception\AmbiguousPaymentQrFieldException;
-use MSSTC4PHP\ValueObject\Financial\Internal\EmvcoTlv;
 use MSSTC4PHP\ValueObject\Financial\Internal\ExposesRootFields;
 use MSSTC4PHP\ValueObject\Financial\Internal\ProfilePayload;
 use MSSTC4PHP\ValueObject\Financial\Internal\ProfileRule;
@@ -128,7 +127,7 @@ final class KhqrCode extends AbstractStringValueObject implements Maskable
         ProfileRule::ensure($amount === null || \preg_match('/^[0.]+$/D', $amount) !== 1, self::TYPE, 'an amount other than zero');
         ProfileRule::ensure(ProfileRule::atMost($amount, 13), self::TYPE, 'an amount of at most 13 characters');
         $indicator = $payload->get('55');
-        ProfileRule::ensure($indicator === null || EmvcoTlv::length($indicator) === 2, self::TYPE, 'a tip or convenience indicator of 2 digits');
+        ProfileRule::ensure($indicator === null || \strlen($indicator) === 2, self::TYPE, 'a tip or convenience indicator of 2 digits');
         ProfileRule::ensure(ProfileRule::atMost($payload->get('56'), 13), self::TYPE, 'a fixed convenience fee of at most 13 characters');
         ProfileRule::ensure(ProfileRule::atMost($payload->get('57'), 5), self::TYPE, 'a percentage convenience fee of at most 5 characters');
 
@@ -146,16 +145,11 @@ final class KhqrCode extends AbstractStringValueObject implements Maskable
 
     private function assertLanguageTemplate(ProfilePayload $payload): void
     {
-        $template = $payload->get('64');
-        if ($template === null) {
+        if ($payload->get('64') === null) {
             return;
         }
 
-        $subFields = [];
-        foreach (EmvcoTlv::parse($template) as $subField) {
-            $subFields[$subField->id] = $subField->value;
-        }
-
+        $subFields = $payload->templateFields('64');
         $language = $subFields['00'] ?? null;
         ProfileRule::ensure($language !== null && \preg_match('/^[A-Za-z]{2}$/D', $language) === 1, self::TYPE, 'a language preference of 2 letters in the language template');
         ProfileRule::ensure(isset($subFields['01']) && ProfileRule::atMost($subFields['01'], 25), self::TYPE, 'an alternate merchant name of at most 25 characters in the language template');

@@ -46,3 +46,6 @@
   (Payments Japan MPM guideline 2.0), both in `PaymentQrFactory`; `PixBrCode::pixKeyType()` with `PixKeyType` decoded
   from the BCB DICT formats (null for any other key, never refused). SGQR, QRIS, VietQR, HK FPS, Bharat QR and QR Ph
   stay unbuilt (reasons in the README). `ProfilePayload` names its modified copy accordingly (no behaviour change).
+- National profiles 6b fix round 1: `JpqrCode` refuses payloads over 512 bytes (Payments Japan); the internal
+  `ProfilePayload::templateFields()` replaces three copies of the template-64 reader (KHQR, JPQR, DuitNow); search log,
+  SGQR and HK FPS verdicts and the KHQR/JPQR source notes corrected in `docs/sources/FINANCE.md`.

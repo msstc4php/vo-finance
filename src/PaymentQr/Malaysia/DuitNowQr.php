@@ -7,11 +7,9 @@ namespace MSSTC4PHP\ValueObject\Financial\PaymentQr\Malaysia;
 use LogicException;
 use MSSTC4PHP\ValueObject\Contract\Maskable;
 use MSSTC4PHP\ValueObject\Financial\Exception\InvalidPaymentQrException;
-use MSSTC4PHP\ValueObject\Financial\Internal\EmvcoTlv;
 use MSSTC4PHP\ValueObject\Financial\Internal\ExposesRootFields;
 use MSSTC4PHP\ValueObject\Financial\Internal\ProfilePayload;
 use MSSTC4PHP\ValueObject\Financial\Internal\ProfileRule;
-use MSSTC4PHP\ValueObject\Financial\PaymentQr\Emvco\DataObject;
 use MSSTC4PHP\ValueObject\Financial\PaymentQr\Emvco\MerchantAccount;
 use MSSTC4PHP\ValueObject\Support\AbstractStringValueObject;
 use Override;
@@ -143,13 +141,12 @@ final class DuitNowQr extends AbstractStringValueObject implements Maskable
 
     private function assertLanguageTemplate(ProfilePayload $payload): void
     {
-        $template = $payload->get('64');
-        if ($template === null) {
+        if ($payload->get('64') === null) {
             return;
         }
 
-        $subIds = \array_map(static fn (DataObject $subField): string => $subField->id, EmvcoTlv::parse($template));
-        ProfileRule::ensure(\in_array('00', $subIds, true) && \in_array('01', $subIds, true), self::TYPE, 'a language preference and a merchant name in the language template');
+        $subFields = $payload->templateFields('64');
+        ProfileRule::ensure(isset($subFields['00'], $subFields['01']), self::TYPE, 'a language preference and a merchant name in the language template');
     }
 
     /**

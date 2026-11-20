@@ -139,7 +139,13 @@ final class JpqrCodeTest extends TestCase
         $levels = static fn (string ...$levels): array => $frame(self::tlv('26', self::account(levels: \array_values($levels))));
 
         yield 'no JPQR template' => [$frame(self::tlv('26', self::tlv('00', 'jp.example.wallet') . self::tlv('01', 'M-1')))];
+        yield 'no payload format indicator' => [$without('00')];
         yield 'no point of initiation' => [$without('01')];
+        yield 'no merchant category code' => [$without('52')];
+        yield 'no currency' => [$without('53')];
+        yield 'no country code' => [$without('58')];
+        yield 'no merchant name' => [$without('59')];
+        yield 'no merchant city' => [$without('60')];
         yield 'no postal code' => [$without('61')];
         yield 'no language template' => [$without('64')];
         yield 'language template without the language' => [$frame(self::tlv('64', self::tlv('01', '協議会')))];
@@ -159,6 +165,34 @@ final class JpqrCodeTest extends TestCase
     {
         self::assertTrue(JpqrCode::isValid(self::sealed(...self::frame())));
         self::assertTrue(JpqrCode::isValid(self::sealed(...self::frame(self::tlv('01', '12'), self::tlv('54', '1')))));
+    }
+
+    public function testAPayloadOf512BytesIsAcceptedAndOneByteMoreIsRefused(): void
+    {
+        $atBound = self::sealed(...$this->paddedTo(512));
+        $over = self::sealed(...$this->paddedTo(513));
+
+        self::assertSame(512, \strlen($atBound));
+        self::assertTrue(JpqrCode::isValid($atBound));
+        self::assertSame(513, \strlen($over));
+        self::assertFalse(JpqrCode::isValid($over));
+    }
+
+    public function testTheBoundCountsUtf8Bytes(): void
+    {
+        $templates = \array_map(static fn (string $id): string => self::tlv($id, self::tlv('00', \str_repeat('日', 30))), ['80', '81', '82', '83']);
+        $payload = self::sealed(...self::frame(...$templates));
+
+        self::assertLessThan(512, \mb_strlen($payload));
+        self::assertGreaterThan(512, \strlen($payload));
+        self::assertFalse(JpqrCode::isValid($payload));
+
+        try {
+            new JpqrCode($payload);
+            self::fail('Expected a refusal.');
+        } catch (InvalidPaymentQrException $e) {
+            self::assertSame('JpqrCode requires a payload of at most 512 bytes.', $e->getMessage());
+        }
     }
 
     public function testRefusesAWrongCrcAndNonPayloads(): void
@@ -184,6 +218,25 @@ final class JpqrCodeTest extends TestCase
 
         self::assertTrue($qr->equals(JpqrCode::from($payload)));
         self::assertSame(\json_encode($payload), \json_encode($qr));
+    }
+
+    /**
+     * The static frame followed by unreserved templates 80, 81, ... of ASCII filler, so the sealed payload has exactly
+     * `$bytes` bytes.
+     *
+     * @return list<string>
+     */
+    private function paddedTo(int $bytes): array
+    {
+        $remaining = $bytes - \strlen(self::sealed(...self::frame()));
+        $templates = [];
+        for ($id = 80; $remaining > 0; $id++) {
+            $length = $remaining - 8 > 95 ? \min(95, $remaining - 17) : $remaining - 8;
+            $templates[] = self::tlv((string) $id, self::tlv('00', \str_repeat('x', $length)));
+            $remaining -= 8 + $length;
+        }
+
+        return self::frame(...$templates);
     }
 
     /**

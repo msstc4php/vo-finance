@@ -109,6 +109,27 @@ final readonly class ProfilePayload
         return EmvcoMerchantPresented::additionalData($this->copyObjects)[$subId] ?? null;
     }
 
+    /**
+     * The sub-fields of a root template (such as 64) as written, by sub-ID; empty when the template is absent. A
+     * repeated sub-ID keeps its last value.
+     *
+     * @return array<array-key, non-empty-string> PHP turns sub-IDs "10" to "99" into integer keys
+     */
+    public function templateFields(string $id): array
+    {
+        $template = $this->get($id);
+        if ($template === null) {
+            return [];
+        }
+
+        $subFields = [];
+        foreach (EmvcoTlv::parse($template) as $subField) {
+            $subFields[$subField->id] = $subField->value;
+        }
+
+        return $subFields;
+    }
+
     public function pointOfInitiation(): ?PointOfInitiation
     {
         return EmvcoMerchantPresented::pointOfInitiation($this->objects);

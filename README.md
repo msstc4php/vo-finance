@@ -57,23 +57,26 @@ Checked for length and character set, never for a check digit or a range no offi
   specification (see [`docs/sources/FINANCE.md`](docs/sources/FINANCE.md)). Not enforced: the form of a Pix key (the
   DICT formats only decode `pixKeyType()`), the letters-and-digits rule for a Pix txid (the BCB's own BR Code example
   breaks it), PromptPay currency 764 and country TH, the DuitNow ID 82 hash and acquirer ID table, the KHQR currency and
-  the content of the Bakong templates beyond their sub-tags, JPQR currency 392, country JP and language `JA`.
+  the content of the Bakong templates beyond their sub-tags, JPQR currency 392, country JP, language `JA` and the
+  maxima of 59, 60 and 62 (none stated). `JpqrCode` refuses a payload over 512 bytes (Payments Japan's own bound).
 
 ## Profiles not built
 
-No official specification was reached for these, so their payloads parse as the generic `MerchantPresentedQr`:
+No official specification was reached for these (QRIS and Bharat QR: their publishers give it only to applicants or
+members), so their payloads parse as the generic `MerchantPresentedQr`:
 
-- SGQR (MAS/IMDA): the specification is not published; MAS's pages, the 2018 IMDA fact sheet and the 2022 MAS/IMDA
-  consultation paper and guidelines say only that SGQR is based on EMVCo, with no data-object rule.
+- SGQR (MAS/IMDA): not reached; the MAS/IMDA publications reached (MAS's pages, the 2018 fact sheets, the 2022
+  consultation paper, its response and guidelines, the SGQR+ PoC report) say only that SGQR is based on EMVCo and carry
+  no data-object rule.
 - QRIS (Bank Indonesia/ASPI): PADG 21/18/PADG/2019 article 5 makes the QRIS document available only on written request
   to the standards body; the regulation has no data-object annex.
 - VietQR (NAPAS): the State Bank of Vietnam's base standard TCCS 03:2018 (Decision 1928/QĐ-NHNN) was not reached
   (Decision 2525/QĐ-NHNN is the customer-presented standard); the NAPAS specification circulates only as third-party
   copies.
-- HK FPS (HKICL): the HKMA publishes only the common template and an implementation guideline; the FPS template is not
-  in HKICL's public scheme documents.
-- Bharat QR (NPCI): NPCI's circular says the Merchant QR Code Specification 4.0 was released to member banks; it is not
-  published.
+- HK FPS (HKICL): not reached; the HKICL/HKMA publications reached (the HKMA common template and implementation
+  guideline, HKICL's QR page and scheme documents) carry no data-object rule for the FPS template.
+- Bharat QR (NPCI): NPCI's circular says the Merchant QR Code Specification 4.0 was released to member banks; no copy
+  was found among NPCI's archived public files.
 - QR Ph (BSP): none found.
 
 ## License

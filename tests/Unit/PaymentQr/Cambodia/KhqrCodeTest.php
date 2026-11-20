@@ -148,6 +148,29 @@ final class KhqrCodeTest extends TestCase
         self::assertSame('0.5', new KhqrCode(self::sealed(...self::frame(self::solo(), self::tlv('54', '0.50'))))->amount()?->value);
     }
 
+    #[DataProvider('additionalDataSubIds')]
+    public function testEveryAdditionalDataSubFieldOf25CharactersIsAccepted(string $subId): void
+    {
+        self::assertTrue(KhqrCode::isValid(self::sealed(...self::frame(self::solo(), self::tlv('62', self::tlv($subId, \str_repeat('d', 25)))))));
+    }
+
+    /**
+     * @return iterable<string, array{string}>
+     */
+    public static function additionalDataSubIds(): iterable
+    {
+        foreach (['01', '02', '03', '04', '05', '06', '07', '08', '09'] as $subId) {
+            yield 'sub-ID ' . $subId => [$subId];
+        }
+    }
+
+    public function testThePointOfInitiationIsOptional(): void
+    {
+        $objects = \array_values(\array_filter(self::frame(self::solo()), static fn (string $object): bool => !\str_starts_with($object, '01')));
+
+        self::assertNull(new KhqrCode(self::sealed(...$objects))->pointOfInitiation());
+    }
+
     public function testTag29AndTag30TogetherAreAcceptedAndNeverPickedSilently(): void
     {
         $qr = new KhqrCode(self::sealed(...self::frame(
@@ -216,6 +239,7 @@ final class KhqrCodeTest extends TestCase
         $without = static fn (string $id): array => \array_values(\array_filter($frame($solo), static fn (string $object): bool => !\str_starts_with($object, $id)));
         $replaced = static fn (string $id, string $value): array => \array_map(static fn (string $object): string => \str_starts_with($object, $id) ? self::tlv($id, $value) : $object, $frame($solo));
 
+        yield 'no payload format indicator' => [$without('00')];
         yield 'no Bakong template' => [$frame(self::tlv('31', self::tlv('00', 'shop@bank')))];
         yield 'country other than KH' => [$replaced('58', 'TH')];
         yield 'no merchant category code' => [$without('52')];
@@ -232,8 +256,9 @@ final class KhqrCodeTest extends TestCase
         yield 'tip indicator of 1 digit' => [$frame($solo, self::tlv('55', '2'))];
         yield 'fixed fee of 14 characters' => [$frame($solo, self::tlv('55', '02'), self::tlv('56', '12345678901.12'))];
         yield 'percentage fee of 6 characters' => [$frame($solo, self::tlv('55', '03'), self::tlv('57', '12.505'))];
-        yield 'bill number of 26 characters' => [$frame($solo, self::tlv('62', self::tlv('01', \str_repeat('b', 26))))];
-        yield 'additional consumer data request of 26 characters' => [$frame($solo, self::tlv('62', self::tlv('09', \str_repeat('d', 26))))];
+        foreach (['01', '02', '03', '04', '05', '06', '07', '08', '09'] as $subId) {
+            yield \sprintf('additional data sub-ID %s of 26 characters', $subId) => [$frame($solo, self::tlv('62', self::tlv($subId, \str_repeat('d', 26))))];
+        }
         yield 'language template without the merchant name' => [$frame($solo, self::tlv('64', self::tlv('00', 'km')))];
         yield 'language template without the language' => [$frame($solo, self::tlv('64', self::tlv('01', 'Hang')))];
         yield 'language of 3 letters' => [$frame($solo, self::tlv('64', self::tlv('00', 'khm') . self::tlv('01', 'Hang')))];

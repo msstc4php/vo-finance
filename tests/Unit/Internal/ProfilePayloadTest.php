@@ -59,7 +59,7 @@ final class ProfilePayloadTest extends TestCase
         self::assertSame('5.5', $payload->amount()?->value);
     }
 
-    public function testAFixedFormatIndicatorIsRequiredAndRestoredOnlyInTheTwin(): void
+    public function testAFixedFormatIndicatorIsRequiredAndRestoredOnlyInTheModifiedCopy(): void
     {
         $objects = $this->objects();
         $objects[0] = self::tlv('00', '02');
@@ -156,6 +156,15 @@ final class ProfilePayloadTest extends TestCase
         $this->expectException(InvalidPaymentQrException::class);
         $this->expectExceptionMessage('Profile must not exceed 7089 characters.');
         ProfilePayload::parse(\str_repeat('é', 14200), 'Profile');
+    }
+
+    public function testTheSubFieldsOfARootTemplateAreReadBySubId(): void
+    {
+        $payload = ProfilePayload::parse(self::sealed(...[...$this->objects(), self::tlv('64', self::tlv('00', 'JA') . self::tlv('01', '協議会') . self::tlv('10', 'x'))]), 'Profile');
+
+        self::assertSame(['00' => 'JA', '01' => '協議会', 10 => 'x'], $payload->templateFields('64'));
+        self::assertSame([], $payload->templateFields('65'));
+        self::assertSame('SALE-1', $payload->templateFields('62')['05'] ?? null);
     }
 
     public function testMaskHidesAccountsTemplatesAndTheCrcOnly(): void
