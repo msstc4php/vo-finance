@@ -199,6 +199,7 @@ final class JpqrCodeTest extends TestCase
     {
         self::assertFalse(JpqrCode::isValid(\substr(self::sealed(...self::frame()), 0, -4) . '0000'));
         self::assertFalse(JpqrCode::isValid('hello'));
+        self::assertFalse(JpqrCode::isValid(\implode('', self::frame())));
     }
 
     public function testAMessageNeverContainsThePayload(): void
