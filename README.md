@@ -139,7 +139,7 @@ Checked for length and character set, never for a check digit or a range no offi
 - `Upi`: the format is the Regulatory Oversight Committee's (`QZ` and ten characters); the check character is not
   verified, because ISO 4914 Annex C and the ANNA DSB guidance are not reachable.
 - `Cusip`: the check digit is verified only for an all-digit CUSIP; letters and `*`, `@`, `#` have no published value.
-- `Isin`: the prefix is two letters and is never refused for being outside ISO 3166 (`XS`, `EZ` and other prefixes set
+- `Isin`: the prefix is two letters and is never refused for being outside ISO 3166 (`XS`, `EZ`, `ZZ` and other prefixes set
   by the registration authority exist); `countryCode()` is null for them.
 - `Isin::sedol()`: no official text states that a GB or IE ISIN carries a SEDOL; it returns null rather than refusing
   anything.
