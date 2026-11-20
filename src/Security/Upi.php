@@ -24,6 +24,7 @@ final class Upi extends AbstractStringValueObject
     protected function parse(string $value): string
     {
         $value = \strtoupper($value);
+
         SecurityRules::shape($value, 'UPI', 12, '/^QZ[0-9B-DF-HJ-NP-TV-XZ]{10}$/D', '"QZ" and ten digits or capital consonants except Y');
 
         return $value;

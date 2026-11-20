@@ -59,13 +59,8 @@ final class SecurityIdentifierFactoryTest extends TestCase
         self::assertInstanceOf(Lei::class, SecurityIdentifierFactory::fromString('F50EOCWSQFAUVO9Q8Z97'));
         self::assertInstanceOf(Upi::class, SecurityIdentifierFactory::fromString('QZ4TM8GJN9XW'));
         self::assertInstanceOf(Figi::class, SecurityIdentifierFactory::fromString('BBG000BLNQ16'));
-        self::assertInstanceOf(Cfi::class, SecurityIdentifierFactory::fromString('OCAFPS'));
         self::assertInstanceOf(Fisn::class, SecurityIdentifierFactory::fromString('APPLE INC/SH'));
-        self::assertInstanceOf(Mic::class, SecurityIdentifierFactory::fromString('XNAS'));
-        self::assertInstanceOf(Sedol::class, SecurityIdentifierFactory::fromString('B1F3M59'));
-        self::assertInstanceOf(Cusip::class, SecurityIdentifierFactory::fromString('037833AL4'));
-        self::assertInstanceOf(Wkn::class, SecurityIdentifierFactory::fromString('A0D9PT'));
-        self::assertInstanceOf(Valor::class, SecurityIdentifierFactory::fromString('12345678'));
+        self::assertInstanceOf(Valor::class, SecurityIdentifierFactory::fromString('ABC'));
     }
 
     public function testLowercaseIsin(): void
@@ -80,10 +75,15 @@ final class SecurityIdentifierFactoryTest extends TestCase
     {
         yield 'ISIN and FIGI' => ['MWG26Z8NW5M4', [Isin::class, Figi::class]];
         yield 'WKN and Valor' => ['519000', [Wkn::class, Valor::class]];
-        yield 'CFI and WKN' => ['ESVUFR', [Cfi::class, Wkn::class]];
+        yield 'WKN (letters and digits) and Valor' => ['A0D9PT', [Wkn::class, Valor::class]];
+        yield 'CFI, WKN and Valor' => ['ESVUFR', [Cfi::class, Wkn::class, Valor::class]];
+        yield 'CFI and Valor' => ['OCAFPS', [Cfi::class, Valor::class]];
         yield 'CUSIP and Valor' => ['037833100', [Cusip::class, Valor::class]];
+        yield 'CUSIP with letters and Valor' => ['037833AL4', [Cusip::class, Valor::class]];
         yield 'SEDOL and Valor' => ['1222171', [Sedol::class, Valor::class]];
+        yield 'SEDOL with letters and Valor' => ['B1F3M59', [Sedol::class, Valor::class]];
         yield 'MIC and Valor' => ['1234', [Mic::class, Valor::class]];
+        yield 'MIC with letters and Valor' => ['XNAS', [Mic::class, Valor::class]];
     }
 
     /**
@@ -106,9 +106,8 @@ final class SecurityIdentifierFactoryTest extends TestCase
         SecurityIdentifierFactory::fromString('not an identifier!');
     }
 
-    public function testLetteredShortValueIsNotAValor(): void
+    public function testLetteredShortValueIsAValor(): void
     {
-        $this->expectException(InvalidSecurityIdentifierException::class);
-        SecurityIdentifierFactory::fromString('ABC');
+        self::assertInstanceOf(Valor::class, SecurityIdentifierFactory::fromString('ABC'));
     }
 }

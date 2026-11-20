@@ -18,7 +18,7 @@ Checked for length and character set, never for a check digit or a range no offi
 - `Lei::louPrefix()`: a plain slice of four characters; its meaning is not confirmed.
 - `Mic`: no embedded list (it changes monthly), so no operating-MIC link.
 - `Wkn`: WM Datenservice defines no check digit.
-- `Valor`: SIX publishes no rule reached; digits-only is the owner's ruling and the nine-digit bound an inference.
+- `Valor`: SIX publishes no rule reached; one to nine ASCII letters or digits, the bound an inference.
 - `Figi`: the specification lists five excluded prefixes in its conformance table and seven in section 6.1 and its
   regular expression; the seven are refused.
 

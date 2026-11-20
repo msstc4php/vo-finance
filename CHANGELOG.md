@@ -10,4 +10,5 @@
   recursive modulo 10.
 - Securities and entity identifiers: `Isin`, `Lei`, `Upi`, `Cfi` (with `CfiCategory`), `Fisn`, `Mic`, `Figi`, `Cusip`,
   `Sedol`, `Wkn`, `Valor`, `SecurityIdentifierFactory` and `InvalidSecurityIdentifierException`.
-- Fixes: `Upi` enforces the ROC format, `Valor` is digits-only, `Fisn` accepts ISO 8859-1 capitals, every identifier folds to uppercase, and `SecurityIdentifierFactory` lists every accepting type.
+- Fixes: `Upi` enforces the ROC format, `Valor` stays format only, `Fisn` accepts ISO 8859-1 capitals, every identifier folds to uppercase, and `SecurityIdentifierFactory` lists every accepting type.
+- Fixes: `Valor` stays format only (one to nine ASCII letters or digits), `Fisn` folds ISO 8859-1 lowercase letters to capitals.

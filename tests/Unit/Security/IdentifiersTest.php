@@ -71,6 +71,7 @@ final class IdentifiersTest extends TestCase
         yield 'Valor synthetic' => [Valor::class, '1222171'];
         yield 'Valor 9 synthetic' => [Valor::class, '123456789'];
         yield 'Valor 1 synthetic' => [Valor::class, '7'];
+        yield 'Valor alphanumeric synthetic' => [Valor::class, 'AB12'];
     }
 
     /**
@@ -119,7 +120,6 @@ final class IdentifiersTest extends TestCase
         yield 'Valor empty' => [Valor::class, ''];
         yield 'Valor ten' => [Valor::class, '1234567890'];
         yield 'Valor punctuation' => [Valor::class, '12-45'];
-        yield 'Valor letters' => [Valor::class, 'AB12'];
     }
 
     /**
@@ -144,6 +144,7 @@ final class IdentifiersTest extends TestCase
         yield 'CUSIP' => [Cusip::class, '037833al4', '037833AL4'];
         yield 'SEDOL' => [Sedol::class, 'b1f3m59', 'B1F3M59'];
         yield 'WKN' => [Wkn::class, 'a0d9pt', 'A0D9PT'];
+        yield 'Valor' => [Valor::class, 'ab12', 'AB12'];
     }
 
     /**

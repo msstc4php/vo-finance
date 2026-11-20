@@ -10,10 +10,13 @@ use MSSTC4PHP\ValueObject\Support\AbstractStringValueObject;
 use Override;
 
 /**
- * CUSIP: eight letters, digits or the private-placement characters `*`, `@`, `#`, and a digit. Lowercase input is
- * stored uppercase. The check digit is verified only for an all-digit CUSIP, because no reached CGS publication gives.
+ * Committee on Uniform Securities Identification Procedures number, nine characters.
  *
- * the value of letters or `*@#` in the sum; any other CUSIP is checked for format only.
+ * The first eight are letters, digits or the private-placement characters `*`, `@`, `#`; the last is a digit.
+ * Lowercase input is stored uppercase.
+ *
+ * The check digit is verified only for an all-digit CUSIP, because no reached CGS publication gives the value of
+ * letters or of the private-placement characters in the sum. Any other CUSIP is checked for format only.
  *
  * @see https://www.cusip.com/pdf/news/CUSIP-ACommonLanguageForEfficientMarkets_2022.pdf CUSIP Global Services, "Modulus 10 Double Add Double"
  * @see https://www.cusip.com/pdf/fact_sheet/CGS_Private_Placement_Numbers.pdf CGS, the characters `*`, `@`, `#`

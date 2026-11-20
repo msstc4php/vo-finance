@@ -44,6 +44,12 @@ final class FisnTest extends TestCase
         self::assertSame('APPLE INC/SH', (string) new Fisn('Apple Inc/sh'));
     }
 
+    public function testLowercaseLatin1IsStoredUppercase(): void
+    {
+        self::assertSame("CAF\u{C9} \u{DE}/SH", (string) new Fisn("caf\u{E9} \u{FE}/sh"));
+        self::assertSame("A\u{D8}/SH", (string) new Fisn("a\u{F8}/sh"));
+    }
+
     public function testParts(): void
     {
         $fisn = new Fisn('APPLE INC/SH');
@@ -65,7 +71,7 @@ final class FisnTest extends TestCase
         yield 'empty issuer' => ['/SH'];
         yield 'empty description' => ['APPLE/'];
         yield 'double blank' => ['APPLE  INC/SH'];
-        yield 'lowercase accented' => ["caf\u{E9}/SH"];
+        yield 'division sign' => ["A\u{F7}B/SH"];
         yield 'multiplication sign' => ["A\u{D7}B/SH"];
         yield 'invalid UTF-8' => ["APPLE\xC9/SH"];
         yield 'control character' => ["APPLE\n/SH"];

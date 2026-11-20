@@ -17,7 +17,7 @@ Outcome per rule (revised after review round 1):
 | CFI | six letters; decoding from SIX's list (Task 4) |
 | FISN, MIC, FIGI, SEDOL, WKN | as quoted below |
 | CUSIP check digit | enforced for an all-digit CUSIP only; **format only for any CUSIP with a letter, `*`, `@` or `#`** (no official value table) |
-| Valor | format only; the nine-character bound is an inference |
+| Valor | format only: 1 to 9 ASCII letters or digits; the nine-character bound is an inference |
 | Card Luhn | enforced; the doubling position is cross-confirmed, the Annex B text is a gap (see Luhn) |
 | PAN length | 10 to 19 digits (ISO/IEC 7812-1:2017 preview) |
 | Card schemes | only what a reached publication states (Discover's summary); no no-Luhn range exists in any reached publication |
@@ -126,7 +126,7 @@ inference); GLEIF publishes `506700GE1G29325QX363` as its own LEI at
 <https://www.gleif.org/en/about-lei/iso-17442-the-lei-code-structure> and says it "adheres to four necessary principles
 of ISO 17442". The LOU prefix (characters 1 to 4) is not defined in the 2012 text. The GLEIF structure page does not
 state it; the ISO 10383 factsheet's LEI pattern `[A-Z0-9]{18,18}[0-9]{2,2}` agrees with 18!an2!n. `louPrefix()` (Task 3)
-therefore rests on GLEIF's LEI Code Structure documentation, **not confirmed** at Task 2.
+is therefore a plain slice with no confirmed meaning (see "Securities classes, Task 3 additions").
 
 ## UPI, ISO 4914
 
@@ -291,7 +291,7 @@ group `ES`.
 (<https://www.gleif.org/en/about-lei/iso-17442-the-lei-code-structure>) read by fetch shows no breakdown of the 20
 characters; a web-search summary attributed "characters 1-4: prefix ensuring uniqueness among LEI issuers" to it, which
 the fetch did not reproduce. `Lei::louPrefix()` is therefore a plain slice of the first four characters with no check
-and no registry; the docblock says the meaning is GLEIF's description, not verified.
+and no registry; the docblock says no official text reached confirms what the four characters mean.
 
 **ISIN `cusip()` (sourced) and `sedol()` (not confirmed).** CGS, <https://www.cusip.com/identifiers.html>: a CUSIP fills
 the national-number position of a US or Canadian ISIN ("A CUSIP or CINS identifier will always appear in positions 3-11
@@ -308,26 +308,27 @@ under the same restriction. `Upi` enforces `QZ` + ten such characters. The check
 there (ISO 4914 Annex C, the ANNA DSB guidance, and the CPMI-IOSCO technical guidance PDF at bis.org, which served only
 an HTML landing page, were not reachable), so it is not verified. The `[A-Z0-9]{1,64}` fallback was not needed.
 
-**Valor.** Digits only follows the owner's ruling; no SIX text reached states it (search results quote only
-low-authority pages). One to nine digits; the bound is the inference above.
+**Valor.** No SIX text states a character set (the SIX data-standards page was fetched again: only "We issue Valor
+(Swiss National Number) and/or ISIN identifiers"; search results quote only low-authority pages). The class stays format
+only: one to nine ASCII letters or digits, case-folded; the bound is the inference above.
 
 **FISN enforced.** From the ANNA Guidelines section 3.2 quoted above: at most 35 characters including `/` (counted as
 characters, the text being UTF-8), a description of at most 19, uppercase only, single blanks ("Use only maximum of a
 single blank"), exactly one `/`. "alphanumeric characters (as defined in ISO/IEC 8859-1)": the class takes ASCII capitals,
-digits, punctuation and the ISO 8859-1 capitals U+00C0 to U+00DE without U+00D7; lowercase ASCII input is folded to
-uppercase. A leading, trailing or `/`-adjacent blank is not refused: the guidelines quoted here do not forbid it. The
+digits, punctuation and the ISO 8859-1 capitals U+00C0 to U+00DE without U+00D7; lowercase ASCII and ISO 8859-1 input is folded to
+uppercase (U+00E0 to U+00FE without U+00F7 to U+00C0 to U+00DE). A leading, trailing or `/`-adjacent blank is not refused: the guidelines quoted here do not forbid it. The
 issuer length of 15 is not enforced (CIVs and OTC derivatives may extend it up to the total). The guidelines' list of
 permitted special characters was not reached, so printable ASCII punctuation is accepted.
 
-**Case.** Every identifier folds input to uppercase (ASCII `strtoupper`) before checking, as `Isin` does.
+**Case.** Every identifier folds input to uppercase (ASCII `strtoupper`; `Fisn` also folds ISO 8859-1 letters) before checking, as `Isin` does.
 
 **Test vectors without a source** are marked synthetic in the tests: `QZ4TM8GJN9XW`, the `*`, `@`, `#` CUSIPs, `XNAS`
 and `1234` (MIC), `519000` and `A0D9PT` (WKN), the valor numbers.
 
 **Factory.** Every type takes part (Isin, Lei, Upi, Figi, Cfi, Fisn, Mic, Cusip, Sedol, Wkn, Valor). Overlaps throw
 `AmbiguousValueException` with every accepting type, never a subset: ISIN and FIGI (`MWG26Z8NW5M4`), WKN and Valor (six
-digits), CFI and WKN (six letters without `I`, `O`), CUSIP and Valor (nine digits), SEDOL and Valor (seven digits), MIC
-and Valor (four digits).
+characters), CFI and WKN (six letters without `I`, `O`; Valor too), CUSIP and Valor (nine characters), SEDOL and Valor
+(seven), MIC and Valor (four), and so on: Valor accepts any 1 to 9 alphanumerics, so it joins every such overlap.
 
 ## ISO/IEC 7812-1, IIN and PAN
 
