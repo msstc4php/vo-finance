@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace MSSTC4PHP\ValueObject\Financial\Tests\Unit\Internal;
 
+use LogicException;
 use MSSTC4PHP\ValueObject\Financial\Exception\AmbiguousPaymentQrFieldException;
 use MSSTC4PHP\ValueObject\Financial\Exception\InvalidPaymentQrException;
 use MSSTC4PHP\ValueObject\Financial\Internal\Mask;
@@ -34,10 +35,10 @@ final class TextHelpersTest extends TestCase
     {
         $lines = TextLines::parse("a\r\nb\nc\n", 'Test');
 
-        self::assertSame(['a', 'b', 'c'], $lines->lines);
+        self::assertSame(['a', 'b', 'c', ''], $lines->lines);
         self::assertFalse($lines->isUniform());
         self::assertSame("a\r\nX\nc\n", $lines->withLine(1, 'X'));
-        self::assertSame('', $lines->line(3));
+        self::assertSame('', $lines->line(4));
     }
 
     public function testUniformLines(): void
@@ -45,7 +46,7 @@ final class TextHelpersTest extends TestCase
         self::assertTrue(TextLines::parse("a\r\nb\r\n", 'Test')->isUniform());
         self::assertTrue(TextLines::parse('a', 'Test')->isUniform());
         self::assertSame([''], TextLines::parse('', 'Test')->lines);
-        self::assertSame(['', ''], TextLines::parse("\n\n", 'Test')->lines);
+        self::assertSame(['', '', ''], TextLines::parse("\n\n", 'Test')->lines);
     }
 
     public function testABareCarriageReturnIsRefused(): void
@@ -73,7 +74,7 @@ final class TextHelpersTest extends TestCase
         self::assertSame('', $query->single('b', 'Test'));
         self::assertSame('x=y', $query->single('c', 'Test'));
         self::assertNull($query->single('d', 'Test'));
-        self::assertSame('a=*&b=&a=*&c=x=y', $query->withMasked('a', static fn (string $value): string => '*'));
+        self::assertSame('a=*&&b&a=*&c=x=y', $query->withMasked('a', static fn (string $value): string => '*'));
     }
 
     public function testQueryStringAmbiguityNamesOnlyAPlainParameter(): void
@@ -99,5 +100,18 @@ final class TextHelpersTest extends TestCase
         $this->expectException(InvalidPaymentQrException::class);
 
         Transcoder::toUtf8("\x98", 'Windows-1251', 'Test');
+    }
+
+    public function testTranscoderNeedsMbstring(): void
+    {
+        self::assertFalse(Transcoder::fitsOneOf('abc', ['ISO-8859-1'], false));
+        self::assertTrue(Transcoder::fitsOneOf('abc', ['ISO-8859-1']));
+        self::assertTrue(Transcoder::fitsOneOf('Ж', ['ISO-8859-1', 'ISO-8859-5']));
+        self::assertFalse(Transcoder::fitsOneOf('Жé', ['ISO-8859-1', 'ISO-8859-5']));
+
+        $this->expectException(LogicException::class);
+        $this->expectExceptionMessage('Test::fromBytes() requires ext-mbstring.');
+
+        Transcoder::toUtf8('abc', 'Windows-1251', 'Test', false);
     }
 }

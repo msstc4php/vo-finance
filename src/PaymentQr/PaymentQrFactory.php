@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace MSSTC4PHP\ValueObject\Financial\PaymentQr;
 
+use LogicException;
 use MSSTC4PHP\ValueObject\Contract\ValueObject;
 use MSSTC4PHP\ValueObject\Exception\AmbiguousValueException;
 use MSSTC4PHP\ValueObject\Financial\Exception\InvalidPaymentQrException;
@@ -39,6 +40,31 @@ final class PaymentQrFactory
         KhqrCode::class,
         JpqrCode::class,
     ];
+
+    /**
+     * Builds from scanned bytes: an EPC or GOST payload goes through its own `fromBytes()`, which transcodes a declared
+     * single-byte character set; any other payload must be UTF-8 and is handled as by {@see fromString()}.
+     *
+     * @throws AmbiguousValueException when several profiles accept the payload
+     * @throws InvalidPaymentQrException when no class accepts it, or other bytes are not UTF-8
+     * @throws LogicException without ext-mbstring, for an EPC or GOST payload in a single-byte character set
+     */
+    public static function fromBytes(string $bytes): EpcQr|QrBill|Gost56042Payload|SbpPaymentLink|UpiPaymentUri|PixBrCode|PromptPayQr|DuitNowQr|KhqrCode|JpqrCode|MerchantPresentedQr
+    {
+        if (\str_starts_with($bytes, 'BCD')) {
+            return EpcQr::fromBytes($bytes);
+        }
+
+        if (\str_starts_with($bytes, 'ST0001')) {
+            return Gost56042Payload::fromBytes($bytes);
+        }
+
+        if (\preg_match('//u', $bytes) !== 1) {
+            throw new InvalidPaymentQrException('A payment payload other than EPC or GOST must be UTF-8.');
+        }
+
+        return self::fromString($bytes);
+    }
 
     /**
      * @throws AmbiguousValueException when several profiles accept the payload

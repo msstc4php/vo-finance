@@ -752,9 +752,9 @@ and `002` of the payload are both defined by it.
 | Purpose | 2.2: "1..4an" | enforced (length) |
 | Reference / text | 2.2: "{Or 1..35an" structured, "Or} 1..140an" unstructured, "{Or}: Only one of the elements may be populated."; "Creditor Reference (ISO 11649 RF Creditor Reference may be used)" | enforced; `creditorReference()` decodes an RF reference, never refuses another |
 | Information | 2.2: "1..70an Beneficiary to Originator information" | enforced (length) |
-| Payload size | 2.2: "The total payload is limited to 331 bytes." | enforced on `fromBytes()` input; the stored UTF-8 form is bounded at 331 characters (a transcoded payload may grow in bytes and must still round-trip) |
+| Payload size | 2.2: "The total payload is limited to 331 bytes." | enforced: 331 bytes; a payload whose every character has one byte in one ISO 8859 set of 2.1 is held to 331 characters (fix round 1 ruling, option a: the transcoded form of `fromBytes()` input must still parse). Residual gap: such text given directly as UTF-8 is not held to 331 UTF-8 bytes |
 | Separators | 2.2: "The elements separator is either a line feed (LF) or a carriage return line feed (CRLF)." | enforced; mixing is not forbidden and is accepted |
-| Last element | 2.2: "The last populated element is not followed by any character or element separator." | **not enforced**: the plan's Review Focus 3 and the Task 7 ruling require a trailing newline to round-trip as given |
+| Last element | 2.2: "The last populated element is not followed by any character or element separator." | enforced (fix round 1 ruling: source over plan): a trailing separator or a trailing empty element is refused, so Review Focus 3's trailing-newline round trip does not hold for EPC |
 
 Examples (2.3), the tests of `EpcQr`: V1 `BCD / 001 / 1 / SCT / BHBLDEHHXXX / Franz Mustermänn /
 DE71110220330123456789 / EUR12.3 / GDDS / RF18539007547034`, "95 characters including spaces (1) and line feeds (9), 96
@@ -774,7 +774,7 @@ fields in chapter 4.2.2" (revision history), so only address type `S` remains.
 |---|---|---|
 | Character set | 4.1.1: "Basic Latin (Unicode codepoints U+0020–U+007E) ... Latin1 Supplement (U+00A0–U+00FF) ... Latin Extended A (U+0100–U+017F)", Ș ș Ț ț (U+0218 to U+021B), "€ ... U+20AC"; "The message and the data in the Swiss QR Code must be UTF-8 encoded." | enforced on every element |
 | Separators | 4.1.4: "All data elements must be present. If the data element has no content, at least a new line must be present. The same type of carriage return must always be used within a document. ... CR + LF ... LF"; status "A" elements "are omitted if they are not used, and no further subsequent data element is used." | enforced: 31 to 34 elements, one separator kind |
-| Final separator | 4.1.4: "The carriage return after the final element is eliminated." | **not enforced**: Review Focus 3 and the Task 7 ruling keep a trailing newline; Annex A example 3 itself ends `EPD¶ ¶ ¶` with the empty AP2 last, which reads the same as a trailing separator |
+| Final separator | 4.1.4: "The carriage return after the final element is eliminated." | every separator ends an element (fix round 1 ruling): a final separator is one more, empty element and counts against the 34; Annex A examples end with an empty AP2 and no final ¶ |
 | Header | Table 8: QRType "Fixed value "SPC""; Version "only the version designation "0200" is permitted in master version 02"; Coding "Fixed value 1" | enforced |
 | IBAN | Table 8: "Fixed length: 21 alphanumeric characters, no spaces allowed, only IBANs with CH or LI country code permitted." | enforced |
 | Creditor | Table 8: AdrTp "S - structured address"; Name "Maximum 70"; StrtNmOrAdrLine1 "Maximum 70"; BldgNbOrAdrLine2 "max. 16"; PstCd "Maximum 16"; TwnNm "Maximum 35"; Ctry "Two-digit country code according to ISO 3166-1"; 4.3.1 ""Postal code", "Town" and "Country" must be filled in." | enforced (country: two capitals, decoded by vo-base `CountryCode`) |
@@ -838,6 +838,17 @@ or a credit institution, so either number gives a valid key (the GOST example ac
 the credit institution number 225, its correspondent account with the RKC number 045). Item 8 (a letter in the sixth
 digit for clearing currency) does not arise: GOST requires 20 digits. Accounts shorter than 20 digits (`CorrespAcc=0`)
 have no key.
+
+**Scope (fix round 1).** The order's preamble ties the key to "Схема обозначения лицевых счетов, приведенная в
+Правилах ведения бухгалтерского учета в кредитных организациях", and item 2 to accounts opened "в РКЦ" or "в кредитной
+организации". A treasury account of the Federal Treasury (since 2021; first digit 0, e.g. `03100643000000017300` at the
+treasury BIC `004525988` of the Federal Tax Service's Moscow requisites) is numbered outside that scheme and fails the
+key; it is accepted. The boundary "first digit 0" is an inference: no Federal Treasury text on the numbering was reached
+(nalog.gov.ru memo 403, its archive copy 503, legalacts.ru TLS failure, 2026-11-20 12:58 UTC). The single treasury
+account `40102810545370000003` passes the key and stays checked. Every occurrence of `PersonalAcc` and `CorrespAcc` is
+checked against the BIC that counts (the last). `masked()` hides `PersonalAcc`, `PersAcc`, `PersonalAccount` (Annex V
+"Лицевой счет бюджетного получателя"), `PensAcc` (SNILS) and `PayerIdNum` (identity document number); structured
+references stay visible (ruling).
 
 ### NSPK SBP
 

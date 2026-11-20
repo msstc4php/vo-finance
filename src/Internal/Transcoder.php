@@ -9,7 +9,7 @@ use MSSTC4PHP\ValueObject\Financial\Exception\InvalidPaymentQrException;
 
 /**
  * Turns the bytes of a payload declared in a single-byte character set into UTF-8 with ext-mbstring, which the
- * `fromBytes()` constructors need (composer `suggest`).
+ * `fromBytes()` constructors need (composer `suggest`). `$mbstring` overrides the extension check, for tests.
  *
  * @internal
  */
@@ -20,22 +20,45 @@ final class Transcoder
      * @param non-empty-string $type
      *
      * @throws InvalidPaymentQrException when the bytes are not valid in the declared character set
+     * @throws LogicException without ext-mbstring
      */
-    public static function toUtf8(string $bytes, string $encoding, string $type): string
+    public static function toUtf8(string $bytes, string $encoding, string $type, ?bool $mbstring = null): string
     {
-        if (!\function_exists('mb_convert_encoding')) {
+        if (!($mbstring ?? self::hasMbstring())) {
             throw new LogicException(\sprintf('%s::fromBytes() requires ext-mbstring.', $type));
         }
 
-        if (!\mb_check_encoding($bytes, $encoding)) {
-            throw new InvalidPaymentQrException(\sprintf('%s bytes are not valid in the declared character set.', $type));
-        }
-
-        $utf8 = \mb_convert_encoding($bytes, 'UTF-8', $encoding);
+        $utf8 = \mb_check_encoding($bytes, $encoding) ? \mb_convert_encoding($bytes, 'UTF-8', $encoding) : false;
         if ($utf8 === false) {
             throw new InvalidPaymentQrException(\sprintf('%s bytes are not valid in the declared character set.', $type));
         }
 
         return $utf8;
+    }
+
+    /**
+     * Whether every character of the UTF-8 text has one byte in one of the encodings; false without ext-mbstring.
+     *
+     * @param list<non-empty-string> $encodings mbstring encoding names
+     */
+    public static function fitsOneOf(string $utf8, array $encodings, ?bool $mbstring = null): bool
+    {
+        if (!($mbstring ?? self::hasMbstring())) {
+            return false;
+        }
+
+        foreach ($encodings as $encoding) {
+            $encoded = \mb_convert_encoding($utf8, $encoding, 'UTF-8');
+            if ($encoded !== false && \mb_convert_encoding($encoded, 'UTF-8', $encoding) === $utf8) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    private static function hasMbstring(): bool
+    {
+        return \function_exists('mb_convert_encoding');
     }
 }

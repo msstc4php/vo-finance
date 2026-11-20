@@ -114,7 +114,10 @@ final class UpiPaymentUri extends AbstractStringValueObject implements Maskable
     #[Override]
     public function masked(): string
     {
-        return 'upi://pay?' . $this->query->withMasked('pa', Mask::keepEnds(...));
+        $scheme = \substr($this->value, 0, 10);
+        \assert($scheme !== '');
+
+        return $scheme . $this->query->withMasked('pa', Mask::keepEnds(...));
     }
 
     #[Override]

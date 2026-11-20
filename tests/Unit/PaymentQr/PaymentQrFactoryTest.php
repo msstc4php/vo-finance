@@ -18,6 +18,7 @@ use MSSTC4PHP\ValueObject\Financial\Internal\ProfileRule;
 use MSSTC4PHP\ValueObject\Financial\Internal\QueryString;
 use MSSTC4PHP\ValueObject\Financial\Internal\RussianAccountKey;
 use MSSTC4PHP\ValueObject\Financial\Internal\TextLines;
+use MSSTC4PHP\ValueObject\Financial\Internal\Transcoder;
 use MSSTC4PHP\ValueObject\Financial\PaymentQr\Brazil\PixBrCode;
 use MSSTC4PHP\ValueObject\Financial\PaymentQr\Cambodia\KhqrCode;
 use MSSTC4PHP\ValueObject\Financial\PaymentQr\Emvco\DataObject;
@@ -66,6 +67,7 @@ use PHPUnit\Framework\TestCase;
 #[UsesClass(QueryString::class)]
 #[UsesClass(RussianAccountKey::class)]
 #[UsesClass(Mask::class)]
+#[UsesClass(Transcoder::class)]
 #[UsesClass(QrReference::class)]
 #[UsesClass(CreditorReference::class)]
 #[UsesClass(Mod10Recursive::class)]
@@ -331,6 +333,42 @@ final class PaymentQrFactoryTest extends TestCase
         $this->expectExceptionMessage('MerchantPresentedQr');
 
         PaymentQrFactory::fromString($payload);
+    }
+
+    public function testFromBytesTranscodesARawWindows1251GostPayload(): void
+    {
+        // GOST R 56042-2014, Annex D, mandatory block, as scanned bytes declared "1" (WIN1251).
+        $bytes = \mb_convert_encoding('ST00011|Name=ООО "Три кита"|PersonalAcc=40702810138250123017|BankName=ОАО "БАНК"|BIC=044525225|CorrespAcc=30101810400000000225', 'Windows-1251', 'UTF-8');
+
+        $qr = PaymentQrFactory::fromBytes($bytes);
+
+        self::assertInstanceOf(Gost56042Payload::class, $qr);
+        self::assertSame('ООО "Три кита"', $qr->name());
+    }
+
+    public function testFromBytesTranscodesAnIso88591EpcPayload(): void
+    {
+        // EPC069-12 v3.0, section 2.3, example V2 in ISO 8859-1.
+        $bytes = \mb_convert_encoding("BCD\n002\n2\nSCT\n\nFrançois D'Alsace S.A.\nFR1420041010050500013M02606\nEUR12.3\n\n\nClient:Marie Louise La Lune", 'ISO-8859-1', 'UTF-8');
+
+        $qr = PaymentQrFactory::fromBytes($bytes);
+
+        self::assertInstanceOf(EpcQr::class, $qr);
+        self::assertSame(1, $qr->characterSet());
+    }
+
+    public function testFromBytesTreatsOtherUtf8PayloadsAsFromString(): void
+    {
+        self::assertInstanceOf(UpiPaymentUri::class, PaymentQrFactory::fromBytes('upi://pay?pa=merchant@bank&pn=Merchant'));
+        self::assertInstanceOf(MerchantPresentedQr::class, PaymentQrFactory::fromBytes(self::EMVCO_ANNEX_B7));
+    }
+
+    public function testFromBytesRefusesOtherNonUtf8Bytes(): void
+    {
+        $this->expectException(InvalidPaymentQrException::class);
+        $this->expectExceptionMessage('must be UTF-8');
+
+        PaymentQrFactory::fromBytes("upi://pay?pa=a@b&pn=\xE9");
     }
 
     private function promptPay(): string

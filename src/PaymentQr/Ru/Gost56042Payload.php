@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace MSSTC4PHP\ValueObject\Financial\PaymentQr\Ru;
 
+use LogicException;
 use MSSTC4PHP\ValueObject\Contract\Maskable;
 use MSSTC4PHP\ValueObject\Financial\Exception\InvalidPaymentQrException;
 use MSSTC4PHP\ValueObject\Financial\Internal\Mask;
@@ -19,12 +20,16 @@ use Override;
  * `Name` (1 to 160 characters), `PersonalAcc` (20 digits), `BankName` (1 to 45), `BIC` (9 digits) and `CorrespAcc` (up
  * to 20 digits, `0` when the bank has none); further pairs follow. Aliases are Latin letters, digits and `_`, compared
  * case-insensitively; a value is everything after the first `=`; of repeated aliases the last counts, as the standard
- * says, and its value must also have the mandatory format. A 20-digit account carries the Bank of Russia control key
- * against the BIC. The separator must be one ASCII graphic character (the block is eight bytes in UTF-8 too).
+ * says, and every occurrence of a mandatory alias must have its format. A 20-digit account carries the Bank of Russia control key
+ * against the BIC within the scope of Bank of Russia Order 515 (not a treasury account starting with 0), checked on every
+ * occurrence of `PersonalAcc` and `CorrespAcc` against the BIC that counts (the last). The separator must be one ASCII
+ * graphic character (the block is eight bytes in UTF-8 too).
  *
  * {@see __construct()} takes UTF-8 text: a declared set `1` or `3` is accepted only for ASCII text; other text goes
  * through {@see fromBytes()}, which transcodes it and rewrites the character set to `2`. {@see masked()} hides the
- * payee's account (`PersonalAcc`) and the payer's account with the provider (`PersAcc`).
+ * accounts and identifiers of Annex V: the payee's account (`PersonalAcc`), the payer's account with the provider
+ * (`PersAcc`), the budget recipient's personal account (`PersonalAccount`), the SNILS (`PensAcc`) and the payer's
+ * identity document number (`PayerIdNum`).
  *
  * @see https://files.stroyinf.ru/Data2/1/4293771/4293771168.htm GOST R 56042-2014 (as quoted), sections 5.2 to 5.5, Annexes V and D
  * @see https://pravo.ppt.ru/poryadok/98817 Bank of Russia, Order 515 of 08.09.1997 (as quoted)
@@ -45,7 +50,7 @@ final class Gost56042Payload extends AbstractStringValueObject implements Maskab
         'correspacc' => '/^\d{1,20}$/D',
     ];
 
-    private const array MASKED = ['personalacc', 'persacc'];
+    private const array MASKED = ['personalacc', 'persacc', 'personalaccount', 'pensacc', 'payeridnum'];
 
     /** @var non-empty-list<array{non-empty-string, string}> */
     private array $pairs;
@@ -55,6 +60,7 @@ final class Gost56042Payload extends AbstractStringValueObject implements Maskab
      * character set digit becomes `2`, so the stored bytes differ from the scanned ones in that digit.
      *
      * @throws InvalidPaymentQrException
+     * @throws LogicException without ext-mbstring, for character sets 1 and 3
      */
     public static function fromBytes(string $bytes): self
     {
@@ -188,8 +194,10 @@ final class Gost56042Payload extends AbstractStringValueObject implements Maskab
         }
 
         $bic = $this->bic();
-        foreach ([$this->personalAccount(), $this->correspondentAccount()] as $account) {
-            ProfileRule::ensure(\strlen($account) !== 20 || RussianAccountKey::isValid($account, $bic), self::TYPE, 'a correct control key of each 20-digit account against the BIC');
+        foreach ($pairs as [$alias, $content]) {
+            if (\in_array(\strtolower($alias), ['personalacc', 'correspacc'], true) && RussianAccountKey::isInScope($content)) {
+                ProfileRule::ensure(RussianAccountKey::isValid($content, $bic), self::TYPE, 'a correct control key of each account in the scope of Bank of Russia Order 515 against the BIC');
+            }
         }
 
         return $value;

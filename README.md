@@ -30,10 +30,15 @@ its first two and last four characters. A masked string is not a valid payload.
 
 Payment references, typed parts of the QR-bill: `Reference\QrReference` (27 digits, recursive modulo 10) and
 `Reference\CreditorReference` (ISO 11649 `RF`, MOD 97-10; lowercase is folded to capitals). Both throw
-`Exception\InvalidPaymentReferenceException`.
+`Exception\InvalidPaymentReferenceException`; they stay visible in `masked()`.
 
-Line-based payloads (EPC, QR-bill) keep their separators (LF or CRLF) and a trailing separator byte for byte; the LF and
-CRLF forms of one payload are not equal. The constructors take UTF-8 text. A payload declared in another character set
+`PaymentQrFactory::fromBytes()` takes scanned bytes: EPC and GOST payloads go through their own `fromBytes()`, any other
+payload must be UTF-8 and is handled as by `fromString()`.
+
+Line-based payloads (EPC, QR-bill) keep their separators (LF or CRLF) byte for byte; the LF and CRLF forms of one
+payload are not equal. EPC refuses any separator after the last populated element (EPC069-12 section 2.2), so a
+trailing newline does not round-trip there; on the QR-bill every separator ends an element, so a final separator is an
+empty element within the 34. The constructors take UTF-8 text. A payload declared in another character set
 goes through `fromBytes()`, which transcodes it and rewrites the character set element to UTF-8 (EPC `1`, GOST `2`), so
 the stored bytes differ from the scanned ones in that element; `fromBytes()` needs ext-mbstring (composer `suggest`).
 
@@ -74,16 +79,19 @@ Checked for length and character set, never for a check digit or a range no offi
   breaks it), PromptPay currency 764 and country TH, the DuitNow ID 82 hash and acquirer ID table, the KHQR currency and
   the content of the Bakong templates beyond their sub-tags, JPQR currency 392, country JP, language `JA` and the
   maxima of 59, 60 and 62 (none stated). `JpqrCode` refuses a payload over 512 bytes (Payments Japan's own bound).
-- `EpcQr`: the EPC's 331-byte limit is checked on `fromBytes()` input only; the stored UTF-8 form is bounded at 331
-  characters, because a transcoded payload may take more bytes than it had. The content of the purpose code and of a
-  non-RF reference is not checked.
+- `EpcQr`: at most 331 bytes, except a payload whose every character has one byte in one of the ISO 8859 sets of
+  section 2.1, which is held to 331 characters (the transcoded form of `fromBytes()` input must still parse). Residual
+  gap: such a payload given directly as UTF-8 may exceed 331 bytes in UTF-8, and without ext-mbstring it is refused. The
+  content of the purpose code and of a non-RF reference is not checked.
 - `QrBill`: the postal code "without a country", the billing-information syntax (`//` and an agreed code) and the
   alternative-procedure syntax are not checked; amount 0.00 is accepted (the "DO NOT USE FOR PAYMENT" notification).
   SIX IG 2.3's own Annex A example 4 (`RF72 0191 ...`) fails the ISO 11649 check and is refused.
 - `Gost56042Payload`: only the mandatory requisites have a format; the additional ones (Annex V maxima such as `Sum`
   18 characters, `Purpose` 210) are kept as written. The control key follows Bank of Russia Order 515 (read through a
   legal database); since the payload does not say whether an account is opened at an RKC or a credit institution, either
-  conditional number gives a valid key. The separator must be an ASCII graphic character (inferred from the eight-byte
+  conditional number gives a valid key. Treasury accounts of the Federal Treasury (first digit 0, e.g. `03100...`) are
+  outside the order's scope (accounts of credit institutions and RKCs) and are never refused for their key. `masked()`
+  hides `PersonalAcc`, `PersAcc`, `PersonalAccount`, `PensAcc` and `PayerIdNum`. The separator must be an ASCII graphic character (inferred from the eight-byte
   service block).
 - `SbpPaymentLink`: format only. NSPK keeps the link layout in its SBP OPKTs standards on a closed portal, so neither
   the identifier length nor any query field (`type`, `bank`, `sum`, `cur`, `crc`) is checked.

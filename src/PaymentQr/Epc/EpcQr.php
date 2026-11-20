@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace MSSTC4PHP\ValueObject\Financial\PaymentQr\Epc;
 
+use LogicException;
 use MSSTC4PHP\ValueObject\Contract\Maskable;
 use MSSTC4PHP\ValueObject\Finance\Bic;
 use MSSTC4PHP\ValueObject\Finance\Decimal;
@@ -21,11 +22,13 @@ use Override;
  * EPC QR code for a SEPA credit transfer (EPC069-12, versions `001` and `002`): service tag `BCD`, version, character
  * set `1` to `8`, `SCT`, the BIC (mandatory in `001`), the beneficiary name (1 to 70), the IBAN, the amount `EUR` with
  * 0.01 to 999999999.99, the purpose (1 to 4), then the structured reference (1 to 35) or the unstructured text (1 to
- * 140), never both, and the beneficiary to originator information (1 to 70): 7 to 12 elements, separated by LF or CRLF.
- * At most 331 characters (the EPC's 331-byte payload limit can only be checked on {@see fromBytes()} input, since the
- * stored form is UTF-8 whatever the declared set).
+ * 140), never both, and the beneficiary to originator information (1 to 70): 7 to 12 elements, separated by LF or CRLF,
+ * the last one populated and not followed by a separator. At most 331 bytes; a payload longer in UTF-8 whose every
+ * character has one byte in one of the ISO 8859 sets of section 2.1 is held to 331 characters instead, since the
+ * transcoded form of {@see fromBytes()} input must still parse (needs ext-mbstring; without it such a payload is
+ * refused).
  *
- * The payload is kept byte for byte, its separators and a trailing separator included. {@see __construct()} takes
+ * The payload is kept byte for byte, its separators included. {@see __construct()} takes
  * UTF-8 text: a declared set other than `1` is accepted only for ASCII text, whose bytes are the same in every set;
  * other text goes through {@see fromBytes()}, which transcodes it and rewrites the character set to `1`.
  * {@see masked()} hides the IBAN.
@@ -59,6 +62,7 @@ final class EpcQr extends AbstractStringValueObject implements Maskable
      * character set element becomes `1`, so the stored bytes differ from the scanned ones in that element.
      *
      * @throws InvalidPaymentQrException
+     * @throws LogicException without ext-mbstring, for character sets 2 to 8
      */
     public static function fromBytes(string $bytes): self
     {
@@ -192,8 +196,9 @@ final class EpcQr extends AbstractStringValueObject implements Maskable
         $lines = TextLines::parse($value, self::TYPE);
         $count = \count($lines->lines);
 
-        ProfileRule::ensure(\preg_match_all('/./su', $value) <= self::MAX_LENGTH, self::TYPE, 'at most 331 characters');
+        ProfileRule::ensure($this->withinSize($value), self::TYPE, 'at most 331 bytes, or 331 characters of one ISO 8859 set of section 2.1');
         ProfileRule::ensure($count >= 7 && $count <= 12, self::TYPE, '7 to 12 elements');
+        ProfileRule::ensure($lines->line($count - 1) !== '', self::TYPE, 'a populated last element not followed by a separator');
         ProfileRule::ensure($lines->line(0) === 'BCD', self::TYPE, 'the service tag BCD');
         ProfileRule::ensure(\in_array($lines->line(1), ['001', '002'], true), self::TYPE, 'version 001 or 002');
         ProfileRule::ensure(\preg_match('/^[1-8]$/D', $lines->line(2)) === 1, self::TYPE, 'a character set 1 to 8');
@@ -235,6 +240,12 @@ final class EpcQr extends AbstractStringValueObject implements Maskable
     private function filled(string $line, int $max): bool
     {
         return $line !== '' && ProfileRule::atMost($line, $max);
+    }
+
+    private function withinSize(string $value): bool
+    {
+        return \strlen($value) <= self::MAX_LENGTH
+            || (\preg_match_all('/./su', $value) <= self::MAX_LENGTH && Transcoder::fitsOneOf($value, \array_values(self::ENCODINGS)));
     }
 
     /**

@@ -195,12 +195,13 @@ final class Gost56042PayloadTest extends TestCase
 
     public function testMaskedHidesThePayeeAndPayerAccounts(): void
     {
-        $gost = Gost56042Payload::from('ST00012|' . self::MANDATORY . '|PersAcc=1234567890');
+        $gost = Gost56042Payload::from('ST00012|' . self::MANDATORY . '|PersAcc=1234567890|PersonalAccount=04123456789|PensAcc=11223344595|payerIdNum=4510123456|Sum=100');
 
         $masked = $gost->masked();
 
         self::assertSame(
-            'ST00012|Name=ООО "Три кита"|PersonalAcc=40**************3017|BankName=ОАО "БАНК"|BIC=044525225|CorrespAcc=30101810400000000225|PersAcc=12****7890',
+            'ST00012|Name=ООО "Три кита"|PersonalAcc=40**************3017|BankName=ОАО "БАНК"|BIC=044525225|CorrespAcc=30101810400000000225'
+            . '|PersAcc=12****7890|PersonalAccount=04*****6789|PensAcc=11*****4595|payerIdNum=45****3456|Sum=100',
             $masked,
         );
         self::assertFalse(Gost56042Payload::isValid($masked));
@@ -248,5 +249,25 @@ final class Gost56042PayloadTest extends TestCase
         $this->expectExceptionMessage('valid UTF-8');
 
         new Gost56042Payload('ST00012|' . self::MANDATORY . "|Purpose=\xC0");
+    }
+
+    public function testATreasuryAccountIsOutsideTheKeyRule(): void
+    {
+        // Synthetic from the Federal Tax Service's published Moscow requisites: treasury account 03100643000000017300 at
+        // the treasury BIC 004525988 fails the Order 515 key, which the order's scope (credit institution and RKC
+        // accounts) does not cover; the single treasury account 40102810545370000003 passes it.
+        $payload = 'ST00012|Name=Kaznachejstvo Rossii (FNS Rossii)|PersonalAcc=03100643000000017300|BankName=GU Banka Rossii po CFO'
+            . '|BIC=004525988|CorrespAcc=40102810545370000003';
+
+        self::assertSame('03100643000000017300', Gost56042Payload::from($payload)->personalAccount());
+    }
+
+    public function testEveryOccurrenceOfAnAccountMustCarryAValidKey(): void
+    {
+        // The last PersonalAcc counts; an earlier one with a wrong key is still refused.
+        $payload = 'ST00012|Name=A|PersonalAcc=40702810238250123017|BankName=B|BIC=044525225|CorrespAcc=0|PersonalAcc=40702810138250123017';
+
+        self::assertFalse(Gost56042Payload::isValid($payload));
+        self::assertTrue(Gost56042Payload::isValid(\str_replace('40702810238250123017', '40702810138250123017', $payload)));
     }
 }

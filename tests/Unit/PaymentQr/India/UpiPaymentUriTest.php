@@ -141,4 +141,9 @@ final class UpiPaymentUriTest extends TestCase
     {
         self::assertFalse(UpiPaymentUri::isValid("upi://pay?pa=a@b&pn=A\n"));
     }
+
+    public function testMaskedKeepsTheUriAsWritten(): void
+    {
+        self::assertSame('UPI://PAY?pa=me*******bank&&flag&pn=A', UpiPaymentUri::from('UPI://PAY?pa=merchant@bank&&flag&pn=A')->masked());
+    }
 }

@@ -8,8 +8,8 @@ use MSSTC4PHP\ValueObject\Financial\Exception\InvalidPaymentQrException;
 
 /**
  * Splits a line-based payload (EPC QR, Swiss QR-bill) into its elements and keeps every separator, so the payload can
- * be rebuilt byte for byte. A separator is LF or CRLF; a carriage return anywhere else is refused. One separator after
- * the last element is kept as given and does not count as an empty element.
+ * be rebuilt byte for byte. A separator is LF or CRLF; a carriage return anywhere else is refused. Every separator ends
+ * an element, so a separator after the last element gives a final empty element.
  *
  * @internal
  */
@@ -17,7 +17,7 @@ final readonly class TextLines
 {
     /**
      * @param non-empty-list<string> $lines
-     * @param list<non-empty-string> $separators LF or CRLF, one after each line but the last, plus a trailing one when present
+     * @param list<non-empty-string> $separators LF or CRLF, one after each line but the last
      */
     private function __construct(
         public array $lines,
@@ -53,12 +53,6 @@ final readonly class TextLines
 
             $lines[] = $piece;
         }
-
-        if ($last > 0 && $lines[$last] === '') {
-            \array_pop($lines);
-        }
-
-        \assert($lines !== []);
 
         return new self($lines, $separators);
     }

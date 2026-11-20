@@ -56,3 +56,9 @@
   parameters); `Reference\QrReference`, `Reference\CreditorReference` and `InvalidPaymentReferenceException`.
   `PaymentQrFactory::fromString()` routes them by leading marker before the EMVCo profiles. Line separators and a
   trailing separator are kept byte for byte. ext-mbstring is suggested for `fromBytes()`.
+- Payload fix round 1: `Gost56042Payload` checks the Order 515 key only within its scope (treasury accounts starting
+  with 0 are accepted) and on every occurrence of `PersonalAcc`/`CorrespAcc`, and masks `PersonalAccount`, `PensAcc`,
+  `PayerIdNum` too; `EpcQr` refuses a separator after the last populated element and bounds 331 bytes (331 characters
+  for text of one ISO 8859 set); `QrBill` counts a final separator as an element; `PaymentQrFactory::fromBytes()`;
+  `UpiPaymentUri::masked()` keeps the URI as written; `QrBillAddress` validates its constructor arguments;
+  `@throws LogicException` declared on the `fromBytes()` methods.

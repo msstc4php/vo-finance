@@ -28,8 +28,9 @@ use Override;
  * the "DO NOT USE FOR PAYMENT" notification of section 4.4), currency CHF or EUR; a QR-IBAN (IID 30000 to 31999 at
  * IBAN positions 5 to 9) with `QRR` and a {@see QrReference}, an IBAN with `SCOR` and a {@see CreditorReference} of 5
  * to 25 letters or digits, or `NON` and no reference; message and billing information together at most 140
- * characters; the character set of section 4.1.1. One kind of line separator, LF or CRLF, is used throughout; the
- * payload is kept byte for byte, a trailing separator included. {@see masked()} hides the IBAN.
+ * characters; the character set of section 4.1.1. One kind of line separator, LF or CRLF, is used throughout, and every
+ * separator ends an element, so a final separator counts as one more (empty) element within the 34; the payload is
+ * kept byte for byte. {@see masked()} hides the IBAN.
  *
  * @see https://www.six-group.com/dam/download/banking-services/standardization/qr-bill/ig-qr-bill-v2.3-en.pdf SIX Swiss Implementation Guidelines for the QR-bill 2.3, sections 2.8, 4.1 to 4.4 and Annex A
  * @see docs/sources/FINANCE.md "SIX QR-bill layout"

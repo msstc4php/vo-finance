@@ -182,12 +182,27 @@ final class EpcQrTest extends TestCase
     public function testLineEndingsRoundTripByteExact(string $separator): void
     {
         $payload = \implode($separator, self::V1);
-        $trailing = $payload . $separator;
 
         self::assertSame($payload, EpcQr::from($payload)->value);
-        self::assertSame($trailing, EpcQr::from($trailing)->value);
-        self::assertSame('RF18539007547034', EpcQr::from($trailing)->reference());
-        self::assertFalse(EpcQr::from($payload)->equals(EpcQr::from($trailing)));
+    }
+
+    #[DataProvider('lineEndings')]
+    public function testATrailingSeparatorIsRefused(string $separator): void
+    {
+        // EPC069-12 v3.0, section 2.2: "The last populated element is not followed by any character or element
+        // separator." Review Focus 3's trailing-newline round trip does not hold for EPC.
+        $this->expectException(InvalidPaymentQrException::class);
+        $this->expectExceptionMessage('populated last element');
+
+        new EpcQr(\implode($separator, self::V1) . $separator);
+    }
+
+    public function testATrailingEmptyElementIsRefused(): void
+    {
+        $lines = self::V2;
+        [$lines[2], $lines[5], $lines[10]] = ['1', 'Francois', ''];
+
+        self::assertFalse(EpcQr::isValid(\implode("\n", $lines)));
     }
 
     public function testLfAndCrlfFormsAreNotEqual(): void
@@ -472,5 +487,32 @@ final class EpcQrTest extends TestCase
         $this->expectExceptionMessage('header');
 
         EpcQr::fromBytes('x' . \implode("\n", self::V1));
+    }
+
+    public function testA332ByteUtf8PayloadOutsideTheIsoSetsIsRefused(): void
+    {
+        // EPC069-12 v3.0, section 2.2: "The total payload is limited to 331 bytes." Cyrillic and Greek together fit no
+        // single ISO 8859 set of section 2.1.
+        $lines = self::V2;
+        [$lines[2], $lines[5], $lines[10]] = ['1', 'Иван Ιωάννης', \str_repeat('я', 140)];
+        $payload = \implode("\n", $lines);
+        self::assertGreaterThan(331, \strlen($payload));
+        self::assertLessThanOrEqual(331, \preg_match_all('/./su', $payload));
+
+        self::assertFalse(EpcQr::isValid($payload));
+    }
+
+    public function testATranscodedPayloadOf331IsoCharactersParses(): void
+    {
+        $lines = self::V2;
+        [$lines[5], $lines[10]] = [\str_repeat('ç', 70), \str_repeat('é', 140)];
+        $lines[] = \str_repeat('à', 66);
+        $bytes = \mb_convert_encoding(\implode("\n", $lines), 'ISO-8859-1', 'UTF-8');
+        self::assertSame(331, \strlen($bytes));
+
+        $qr = EpcQr::fromBytes($bytes);
+
+        self::assertGreaterThan(331, \strlen($qr->value));
+        self::assertTrue($qr->equals(EpcQr::from($qr->value)));
     }
 }

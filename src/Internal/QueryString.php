@@ -18,8 +18,10 @@ final readonly class QueryString
     /**
      * @param list<array{string, string}> $pairs
      */
-    private function __construct(private array $pairs)
-    {
+    private function __construct(
+        private string $query,
+        private array $pairs,
+    ) {
     }
 
     public static function parse(string $query): self
@@ -32,7 +34,7 @@ final readonly class QueryString
             }
         }
 
-        return new self($pairs);
+        return new self($query, $pairs);
     }
 
     /**
@@ -76,15 +78,17 @@ final readonly class QueryString
     }
 
     /**
-     * The query with every value of `$name` replaced by the result of `$mask`.
+     * The query as written with every value of `$name` replaced by the result of `$mask`; other pairs, pairs without
+     * `=` and empty pairs stay as they are.
      *
      * @param Closure(string): string $mask
      */
     public function withMasked(string $name, Closure $mask): string
     {
+        $prefix = $name . '=';
         $parts = [];
-        foreach ($this->pairs as [$current, $value]) {
-            $parts[] = $current . '=' . ($current === $name ? $mask($value) : $value);
+        foreach (\explode('&', $this->query) as $pair) {
+            $parts[] = \str_starts_with($pair, $prefix) ? $prefix . $mask(\substr($pair, \strlen($prefix))) : $pair;
         }
 
         return \implode('&', $parts);

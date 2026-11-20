@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace MSSTC4PHP\ValueObject\Financial\Tests\Unit\PaymentQr\Swiss;
 
+use InvalidArgumentException;
 use MSSTC4PHP\ValueObject\Financial\Exception\InvalidPaymentQrException;
 use MSSTC4PHP\ValueObject\Financial\Internal\EmvcoTlv;
 use MSSTC4PHP\ValueObject\Financial\Internal\Iso7064Mod97;
@@ -179,12 +180,23 @@ final class QrBillTest extends TestCase
     #[DataProvider('lineEndings')]
     public function testLineEndingsRoundTripByteExact(string $separator): void
     {
-        $payload = \implode($separator, $this->exampleOne());
+        // Example 2 has 33 elements; a final separator adds the empty 34th (SIX IG 2.3, section 4.1.4).
+        $payload = \implode($separator, $this->exampleTwo());
         $trailing = $payload . $separator;
 
         self::assertSame($payload, QrBill::from($payload)->value);
         self::assertSame($trailing, QrBill::from($trailing)->value);
+        self::assertSame(['eBill/B/simon.muster@example.com'], QrBill::from($trailing)->alternativeProcedures());
         self::assertFalse(QrBill::from($payload)->equals(QrBill::from($trailing)));
+    }
+
+    #[DataProvider('lineEndings')]
+    public function testASeparatorAfterThe34thElementIsRefused(string $separator): void
+    {
+        $this->expectException(InvalidPaymentQrException::class);
+        $this->expectExceptionMessage('31 to 34 elements');
+
+        new QrBill(\implode($separator, $this->exampleOne()) . $separator);
     }
 
     public function testLfAndCrlfFormsAreNotEqual(): void
@@ -468,6 +480,29 @@ final class QrBillTest extends TestCase
         $lines[3] = 'ch5204835012345671000';
 
         self::assertSame('CH5204835012345671000', QrBill::from(\implode("\n", $lines))->iban()->value);
+    }
+
+    public function testTheAddressValidatesItsElements(): void
+    {
+        $address = new QrBillAddress('Name', null, null, '8000', 'Seldwyla', 'CH');
+        self::assertNull($address->street);
+
+        foreach ([
+            ['', null, null, '8000', 'Town', 'CH'],
+            ['Name', '', null, '8000', 'Town', 'CH'],
+            ['Name', null, '', '8000', 'Town', 'CH'],
+            ['Name', null, null, '', 'Town', 'CH'],
+            ['Name', null, null, '8000', '', 'CH'],
+            ['Name', null, null, '8000', 'Town', 'ch'],
+            ['Name', null, null, '8000', 'Town', "CH\n"],
+        ] as $arguments) {
+            try {
+                new QrBillAddress(...$arguments);
+                self::fail('Expected an exception.');
+            } catch (InvalidArgumentException) {
+                self::addToAssertionCount(1);
+            }
+        }
     }
 
     /**
