@@ -7,11 +7,11 @@ namespace MSSTC4PHP\ValueObject\Financial\Internal;
 use LogicException;
 
 /**
- * @internal
- *
  * The recursive modulo 10 check digit of the Swiss QR reference: the digits are processed from the left with a carry
  * that starts at 0; the carry and the digit select the next carry in the standard's matrix, and the check digit is read
- * off the last carry
+ * off the last carry.
+ *
+ * @internal
  *
  * @see https://www.six-group.com/dam/download/banking-services/standardization/qr-bill/ig-qr-bill-v2.3-en.pdf Swiss Implementation Guidelines for the QR-bill 2.3, Annex B, Figure 21
  */

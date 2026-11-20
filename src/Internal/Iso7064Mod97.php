@@ -7,13 +7,13 @@ namespace MSSTC4PHP\ValueObject\Financial\Internal;
 use LogicException;
 
 /**
- * @internal
- *
  * The ISO/IEC 7064 MOD 97-10 check character system as ISO 17442 and ISO 11649 apply it: letters become two digits
  * (`A` = 10 ... `Z` = 35); a value is valid when the number mod 97 is 1, and the check pair of a body is `98` minus
  * the remainder of the body followed by `00`, written with two digits. The caller arranges the characters (an LEI is
  * checked as written; an RF creditor reference has its first four characters moved to the end first). The remainder is
  * built digit by digit, so no big-number extension is needed.
+ *
+ * @internal
  *
  * @see https://www.iso.org/standard/59771.html ISO 17442:2012, clause 5 and Annex A
  * @see https://www.iso.org/standard/50649.html ISO 11649:2009, clause 6 and Annex B

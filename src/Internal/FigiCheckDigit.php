@@ -7,12 +7,12 @@ namespace MSSTC4PHP\ValueObject\Financial\Internal;
 use LogicException;
 
 /**
- * @internal
- *
  * The FIGI check digit over the first eleven characters: letters are `B` = 11 ... `Z` = 35 without vowels; from the
  * right, the last value is taken as it is and every second one before it is doubled; the digits of all results are
  * added and the check digit is the amount that brings the sum up to a multiple of ten. It differs from the ISIN's, which
  * works on the expanded digit string.
+ *
+ * @internal
  *
  * @see https://www.omg.org/spec/FIGI/1.0 OMG Financial Instrument Global Identifier 1.0 (formal/2015-12-01), section 6.1
  */

@@ -100,10 +100,11 @@ as the complement to ten:
 | `TH0268010Z1` | `2 9 1 7 0 2 6 8 0 1 0 3 5 1` | 49 | 1 |
 
 These are the ISINs `TH0013057B05`, `TH0646010007` and `TH0268010Z11`, and they are the test vectors of
-`Internal\IsinCheckDigit` and (as digit strings) `Internal\Luhn`. The letter table `A` = 10 ... `Z` = 35 is printed by ISO
-17442:2012 clause 5.2.1 and ISO 11649:2009 clause 6.2.3 and agrees with SET's T, H, B, Z. OMG FIGI 1.0 section 6.1 says the ISIN's formula is a "familiar instantiation" of the Luhn modulus 10 algorithm,
-differing from the FIGI's in which character is doubled first. **Outcome:** `Isin` enforces the check digit.
-Wikipedia and open-source libraries (which also give `US0378331005`, `AU0000XVGZA3`) are not used as vectors.
+`Internal\IsinCheckDigit` and (as digit strings) `Internal\Luhn`. The letter table `A` = 10 ... `Z` = 35 is printed by
+ISO 17442:2012 clause 5.2.1 and ISO 11649:2009 clause 6.2.3 and agrees with SET's T, H, B, Z. OMG FIGI 1.0 section 6.1
+says the ISIN's formula is a "familiar instantiation" of the Luhn modulus 10 algorithm, differing from the FIGI's in
+which character is doubled first. **Outcome:** `Isin` enforces the check digit. Wikipedia and open-source libraries
+(which also give `US0378331005`, `AU0000XVGZA3`) are not used as vectors.
 
 ## LEI, ISO 17442
 
@@ -114,15 +115,18 @@ ISO 17442:2012 preview,
 > shall be the check digit or digits"
 
 Clause 5: "The check digits shall be calculated based on the scheme defined in ISO/IEC 7064 (MOD 97-10)."; checking:
-convert letters (`A` = 10 ... `Z` = 35), "Apply the check character system, MOD 97-10"; "If the remainder is 1 (one), the
-number is valid."; generating: "Add "00" to the right-hand end of the LEI", convert, apply MOD 97-10. Annex A.1: `A123456702`;
-Annex A.2: `F50EOCWSQFAUVO9Q8Z97`, both valid.
+convert letters (`A` = 10 ... `Z` = 35), "Apply the check character system, MOD 97-10"; "If the remainder is 1 (one),
+the number is valid."; generating: "Add "00" to the right-hand end of the LEI", convert, apply MOD 97-10. Annex A.1:
+`A123456702`; Annex A.2: `F50EOCWSQFAUVO9Q8Z97`, both valid.
 
-The 2012 edition is superseded by ISO 17442-1:2020, whose text is **not reached** (the iteh page for the 2020 edition served no preview; the 2012 rules, 20 characters with a MOD 97-10 check pair, are the ones the ISO 10383 factsheet's LEI pattern `[A-Z0-9]{18,18}[0-9]{2,2}` and the SIX/GLEIF material still match, but the unchanged-ness of clause 5 is an inference); GLEIF publishes `506700GE1G29325QX363`
-as its own LEI at <https://www.gleif.org/en/about-lei/iso-17442-the-lei-code-structure> and says it "adheres to four
-necessary principles of ISO 17442". The LOU prefix (characters 1 to 4) is not defined in the 2012 text. The GLEIF
-structure page does not state it; the ISO 10383 factsheet's LEI pattern `[A-Z0-9]{18,18}[0-9]{2,2}` agrees with 18!an2!n.
-`louPrefix()` (Task 3) therefore rests on GLEIF's LEI Code Structure documentation, **not confirmed** at Task 2.
+The 2012 edition is superseded by ISO 17442-1:2020, whose text is **not reached** (the iteh page for the 2020 edition
+served no preview; the 2012 rules, 20 characters with a MOD 97-10 check pair, are the ones the ISO 10383 factsheet's LEI
+pattern `[A-Z0-9]{18,18}[0-9]{2,2}` and the SIX/GLEIF material still match, but the unchanged-ness of clause 5 is an
+inference); GLEIF publishes `506700GE1G29325QX363` as its own LEI at
+<https://www.gleif.org/en/about-lei/iso-17442-the-lei-code-structure> and says it "adheres to four necessary principles
+of ISO 17442". The LOU prefix (characters 1 to 4) is not defined in the 2012 text. The GLEIF structure page does not
+state it; the ISO 10383 factsheet's LEI pattern `[A-Z0-9]{18,18}[0-9]{2,2}` agrees with 18!an2!n. `louPrefix()` (Task 3)
+therefore rests on GLEIF's LEI Code Structure documentation, **not confirmed** at Task 2.
 
 ## UPI, ISO 4914
 
@@ -281,11 +285,11 @@ ends before clause 4.4 and Annex B:
 > card issuer and the cardholder"; "the IIN, 8 numeric digits in length"; "the individual account number"; "a check digit
 > (see 4.4)". Contents: "Annex B (normative) Luhn formula for computing modulus-10 “double-add-double” check digits".
 
-So the PAN is 10 to 19 digits; the earlier proposal of a 14-digit floor is withdrawn (the standard's own minimum is 10). Pay.UK, which "acts as agent for the British Standards Institute in assigning
-UK national and international IINs",
-<https://www.wearepay.uk/what-we-do/standards-authority/obtaining-a-standard-or-identifier-number/iin/>, agrees: "an IIN is
-the first eight digits of the long account number"; "up to a maximum of 19 digits"; "an accompanying check digit (1 digit),
-calculated by the Luhn formula".
+So the PAN is 10 to 19 digits; the earlier proposal of a 14-digit floor is withdrawn (the standard's own minimum is 10).
+Pay.UK, which "acts as agent for the British Standards Institute in assigning UK national and international IINs",
+<https://www.wearepay.uk/what-we-do/standards-authority/obtaining-a-standard-or-identifier-number/iin/>, agrees: "an IIN
+is the first eight digits of the long account number"; "up to a maximum of 19 digits"; "an accompanying check digit (1
+digit), calculated by the Luhn formula".
 
 ## Luhn
 

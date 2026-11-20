@@ -7,11 +7,11 @@ namespace MSSTC4PHP\ValueObject\Financial\Internal;
 use LogicException;
 
 /**
- * @internal
- *
  * The SEDOL check digit: each of the first six characters is multiplied by the weights 1, 3, 1, 7, 3, 9; digits are
  * themselves, letters `B`-`Z` without vowels are `B` = 11 ... `Z` = 35; the check digit is the amount that brings the
  * sum up to a multiple of ten.
+ *
+ * @internal
  *
  * @see https://www.lseg.com/content/dam/lseg/en_us/documents/sedol/sedol-masterfile-service-and-technical-guide-v8.8.pdf SEDOL Masterfile Service and Technical Guide v8.8, sections 8.2 to 8.4
  */

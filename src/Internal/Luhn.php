@@ -7,11 +7,11 @@ namespace MSSTC4PHP\ValueObject\Financial\Internal;
 use LogicException;
 
 /**
- * @internal
- *
  * The Luhn modulus 10 check digit: from the right of the body, every second digit, starting with the rightmost, is
  * doubled and a two-digit product is cross-added; the check digit is the tens complement of the sum. A body that is not
  * ASCII digits throws \LogicException.
+ *
+ * @internal
  *
  * @see https://patents.google.com/patent/US2950048A/en US 2,950,048, "Computer for verifying numbers" (Luhn, IBM, 1960)
  * @see https://www.omg.org/spec/FIGI/1.0 OMG FIGI 1.0, section 6.1, which names the patent as the origin of the modulus 10 algorithm
