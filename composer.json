@@ -1,0 +1,83 @@
+{
+    "name": "msstc4php/vo-finance",
+    "description": "Value objects for securities identifiers (ISIN, LEI, FIGI, CUSIP, SEDOL and others), payment card numbers and payment QR payloads (EMVCo merchant-presented QR and national profiles, EPC QR, Swiss QR-bill, GOST R 56042, SBP, UPI).",
+    "type": "library",
+    "license": "MIT",
+    "keywords": [
+        "value-object",
+        "finance",
+        "isin",
+        "lei",
+        "upi",
+        "cfi",
+        "fisn",
+        "mic",
+        "figi",
+        "cusip",
+        "sedol",
+        "wkn",
+        "valor",
+        "payment-card",
+        "iin",
+        "luhn",
+        "emvco",
+        "qr-code",
+        "epc-qr",
+        "qr-bill",
+        "pix",
+        "promptpay",
+        "sbp",
+        "upi-payment",
+        "ddd"
+    ],
+    "minimum-stability": "stable",
+    "prefer-stable": true,
+    "repositories": [
+        {
+            "type": "vcs",
+            "url": "https://github.com/msstc4php/vo-base"
+        }
+    ],
+    "require": {
+        "msstc4php/vo-base": "^1.2",
+        "php": ">=8.4"
+    },
+    "require-dev": {
+        "friendsofphp/php-cs-fixer": "^3.76",
+        "phpstan/extension-installer": "^1.4",
+        "phpstan/phpstan": "^2.1",
+        "phpstan/phpstan-phpunit": "^2.0",
+        "phpstan/phpstan-strict-rules": "^2.0",
+        "phpunit/phpunit": ">=11.0",
+        "rector/rector": "^2.1",
+        "roave/security-advisories": "dev-latest"
+    },
+    "autoload": {
+        "psr-4": {
+            "MSSTC4PHP\\ValueObject\\Financial\\": "src/"
+        }
+    },
+    "autoload-dev": {
+        "psr-4": {
+            "MSSTC4PHP\\ValueObject\\Financial\\Tests\\": "tests/"
+        }
+    },
+    "config": {
+        "allow-plugins": {
+            "phpstan/extension-installer": true
+        },
+        "sort-packages": true
+    },
+    "authors": [
+        {
+            "name": "Maxim Shamaev",
+            "email": "maxim.shamaev@gmail.com"
+        }
+    ],
+    "extra": {
+        "bundle-standard": {
+            "kind": "library",
+            "runtime": "php84"
+        }
+    }
+}
