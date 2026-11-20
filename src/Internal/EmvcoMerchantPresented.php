@@ -41,8 +41,8 @@ final class EmvcoMerchantPresented
      */
     public static function validate(string $payload, bool $bounded): array
     {
-        if ($bounded && (\strlen($payload) > EmvcoTlv::MAX_PAYLOAD_LENGTH * 4 || EmvcoTlv::length($payload) > EmvcoTlv::MAX_PAYLOAD_LENGTH)) {
-            throw new InvalidPaymentQrException(\sprintf('%s must not exceed %d characters.', self::TYPE, EmvcoTlv::MAX_PAYLOAD_LENGTH));
+        if ($bounded) {
+            PayloadBound::ensure($payload, self::TYPE);
         }
 
         $objects = EmvcoTlv::parse($payload);
@@ -105,7 +105,7 @@ final class EmvcoMerchantPresented
                 continue;
             }
 
-            if ((int) $object->id < 26) {
+            if ($object->id < '26') {
                 $accounts[] = new MerchantAccount($object->id, $object->value);
 
                 continue;
@@ -198,7 +198,7 @@ final class EmvcoMerchantPresented
             }
 
             $hasAccount = true;
-            if ((int) $object->id >= 26) {
+            if ($object->id >= '26') {
                 self::assertTemplate($object->value);
             }
         }

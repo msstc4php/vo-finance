@@ -17,7 +17,7 @@ use PHPUnit\Framework\TestCase;
 #[CoversClass(Cfi::class)]
 #[CoversClass(CfiCategory::class)]
 #[UsesClass(SecurityRules::class)]
-#[UsesClass(CfiGroups::class)]
+#[CoversClass(CfiGroups::class)]
 final class CfiTest extends TestCase
 {
     public function testDecodes(): void

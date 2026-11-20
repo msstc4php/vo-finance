@@ -14,6 +14,7 @@ use MSSTC4PHP\ValueObject\Financial\Internal\Iso7064Mod97;
 use MSSTC4PHP\ValueObject\Financial\Internal\Iso8859;
 use MSSTC4PHP\ValueObject\Financial\Internal\Mask;
 use MSSTC4PHP\ValueObject\Financial\Internal\Mod10Recursive;
+use MSSTC4PHP\ValueObject\Financial\Internal\PayloadBound;
 use MSSTC4PHP\ValueObject\Financial\Internal\ProfilePayload;
 use MSSTC4PHP\ValueObject\Financial\Internal\ProfileRule;
 use MSSTC4PHP\ValueObject\Financial\Internal\QueryString;
@@ -74,6 +75,7 @@ use PHPUnit\Framework\TestCase;
 #[UsesClass(CreditorReference::class)]
 #[UsesClass(Mod10Recursive::class)]
 #[UsesClass(Iso7064Mod97::class)]
+#[UsesClass(PayloadBound::class)]
 final class PaymentQrFactoryTest extends TestCase
 {
     use BuildsPayloads;
@@ -241,6 +243,138 @@ final class PaymentQrFactoryTest extends TestCase
             self::assertSame([PixBrCode::class, PromptPayQr::class], $e->candidates());
             self::assertStringNotContainsString('fulano', $e->getMessage());
         }
+    }
+
+    public function testAPixPayloadThatBreaksAPixRuleThrowsThePixRefusal(): void
+    {
+        // BCB Pix manual example with a merchant name of 30 characters (BR Code manual: at most 25).
+        $payload = \str_replace('5913Fulano de Tal', '5930' . \str_repeat('A', 30), \substr(self::PIX, 0, -4));
+        $payload .= Crc16CcittFalse::compute($payload);
+        self::assertInstanceOf(MerchantPresentedQr::class, MerchantPresentedQr::tryFrom($payload));
+
+        $this->expectException(InvalidPaymentQrException::class);
+        $this->expectExceptionMessage('PixBrCode requires a merchant name of at most 25 characters.');
+
+        PaymentQrFactory::fromString($payload);
+    }
+
+    public function testADuitNowPayloadThatBreaksADuitNowRuleThrowsTheDuitNowRefusal(): void
+    {
+        // PayNet example 1 with currency 840 instead of 458.
+        $payload = \str_replace('5303458', '5303840', \substr(self::DUITNOW, 0, -4));
+        $payload .= Crc16CcittFalse::compute($payload);
+
+        $this->expectException(InvalidPaymentQrException::class);
+        $this->expectExceptionMessage('DuitNowQr requires currency 458.');
+
+        PaymentQrFactory::fromString($payload);
+    }
+
+    /**
+     * @return iterable<string, array{string, non-empty-string}>
+     */
+    public static function identifiedButRefused(): iterable
+    {
+        $base = [self::tlv('00', '01'), self::tlv('52', '5999'), self::tlv('59', 'Shop'), self::tlv('60', 'City')];
+
+        yield 'Pix GUI in uppercase, template 51' => [self::sealed(...$base, ...[self::tlv('51', self::tlv('00', 'BR.GOV.BCB.PIX') . self::tlv('01', 'k')), self::tlv('53', '840'), self::tlv('58', 'US')]), 'PixBrCode'];
+        yield 'PromptPay credit transfer AID in lowercase' => [self::sealed(...$base, ...[self::tlv('29', self::tlv('00', 'a000000677010111') . self::tlv('01', '1')), self::tlv('53', '764'), self::tlv('58', 'TH')]), 'PromptPayQr'];
+        yield 'PromptPay bill payment AID' => [self::sealed(...$base, ...[self::tlv('30', self::tlv('00', 'A000000677012006') . self::tlv('01', '1')), self::tlv('53', '764'), self::tlv('58', 'TH')]), 'PromptPayQr'];
+        yield 'DuitNow AID in lowercase' => [self::sealed(...$base, ...[self::tlv('26', self::tlv('00', 'a0000006150001') . self::tlv('01', '1')), self::tlv('53', '458'), self::tlv('58', 'MY')]), 'DuitNowQr'];
+        yield 'Bakong template 30 with country KH' => [self::sealed(...$base, ...[self::tlv('30', self::tlv('00', 'shop@bank')), self::tlv('53', '116'), self::tlv('58', 'KH'), self::tlv('54', '0')]), 'KhqrCode'];
+        yield 'JPQR GUI in uppercase' => [self::sealed(...$base, ...[self::tlv('26', self::tlv('00', 'JP.OR.PAYMENTSJAPAN') . self::tlv('01', '1')), self::tlv('53', '392'), self::tlv('58', 'JP')]), 'JpqrCode'];
+    }
+
+    /**
+     * @param non-empty-string $profile
+     */
+    #[DataProvider('identifiedButRefused')]
+    public function testAnIdentifiedProfileThatRefusesThrowsItsRefusal(string $payload, string $profile): void
+    {
+        $this->expectException(InvalidPaymentQrException::class);
+        $this->expectExceptionMessageMatches('/^' . $profile . ' /');
+
+        PaymentQrFactory::fromString($payload);
+    }
+
+    /**
+     * @return iterable<string, array{string}>
+     */
+    public static function identifyingNoProfile(): iterable
+    {
+        $base = [self::tlv('00', '01'), self::tlv('52', '5999'), self::tlv('53', '840'), self::tlv('59', 'Shop'), self::tlv('60', 'City')];
+
+        yield 'Pix GUI in a primitive account' => [self::sealed(...$base, ...[self::tlv('25', '0014br.gov.bcb.pix'), self::tlv('58', 'US')])];
+        yield 'Pix GUI in a sub-field other than 00' => [self::sealed(...$base, ...[self::tlv('26', self::tlv('00', 'other') . self::tlv('01', 'br.gov.bcb.pix')), self::tlv('58', 'US')])];
+        yield 'PromptPay credit transfer AID in template 30' => [self::sealed(...$base, ...[self::tlv('30', self::tlv('00', 'A000000677010111')), self::tlv('58', 'US')])];
+        yield 'PromptPay AID in template 31' => [self::sealed(...$base, ...[self::tlv('31', self::tlv('00', 'A000000677010112')), self::tlv('58', 'US')])];
+        yield 'DuitNow AID in template 27' => [self::sealed(...$base, ...[self::tlv('27', self::tlv('00', 'A0000006150001')), self::tlv('58', 'US')])];
+        yield 'template 29 outside Cambodia' => [self::sealed(...$base, ...[self::tlv('29', self::tlv('00', 'shop@bank')), self::tlv('58', 'US')])];
+        yield 'template 31 in Cambodia' => [self::sealed(...$base, ...[self::tlv('31', self::tlv('00', 'shop@bank')), self::tlv('58', 'KH')])];
+        yield 'template 52 is no account' => [self::sealed(self::tlv('00', '01'), self::tlv('26', self::tlv('00', 'x')), self::tlv('52', '5999'), self::tlv('53', '840'), self::tlv('58', 'US'), self::tlv('59', 'Shop'), self::tlv('60', 'City'))];
+    }
+
+    #[DataProvider('identifyingNoProfile')]
+    public function testAPayloadIdentifyingNoProfileGivesTheGenericPayload(string $payload): void
+    {
+        self::assertInstanceOf(MerchantPresentedQr::class, PaymentQrFactory::fromString($payload));
+    }
+
+    public function testATemplateThatIsNotTlvIdentifiesNoProfile(): void
+    {
+        $payload = self::sealed(self::tlv('00', '01'), self::tlv('26', '00'), self::tlv('52', '5999'), self::tlv('53', '840'), self::tlv('58', 'US'), self::tlv('59', 'Shop'), self::tlv('60', 'City'));
+
+        $this->expectException(InvalidPaymentQrException::class);
+        $this->expectExceptionMessage('MerchantPresentedQr');
+
+        PaymentQrFactory::fromString($payload);
+    }
+
+    public function testAnOversizedPayloadIsRefusedByTheGenericFormat(): void
+    {
+        $this->expectException(InvalidPaymentQrException::class);
+        $this->expectExceptionMessage('MerchantPresentedQr must not exceed 7089 characters.');
+
+        PaymentQrFactory::fromString('000201' . \str_repeat('26180014br.gov.bcb.pix', 400));
+    }
+
+    public function testAProfileThatAcceptsWinsOverAnIdentifiedProfileThatRefuses(): void
+    {
+        // Synthetic: a valid Pix code that also carries a PromptPay bill payment template PromptPay refuses (no biller).
+        $payload = self::sealed(
+            self::tlv('00', '01'),
+            self::tlv('26', self::tlv('00', 'br.gov.bcb.pix') . self::tlv('01', 'fulano@example.com')),
+            self::tlv('30', self::tlv('00', 'A000000677010112')),
+            self::tlv('52', '0000'),
+            self::tlv('53', '986'),
+            self::tlv('58', 'BR'),
+            self::tlv('59', 'Shop'),
+            self::tlv('60', 'BRASILIA'),
+            self::tlv('62', self::tlv('05', '***')),
+        );
+        self::assertNull(PromptPayQr::tryFrom($payload));
+
+        self::assertInstanceOf(PixBrCode::class, PaymentQrFactory::fromString($payload));
+    }
+
+    public function testTheFirstIdentifiedProfileRefusalIsThrown(): void
+    {
+        // Synthetic: Pix and JPQR templates, country US, which both refuse.
+        $payload = self::sealed(
+            self::tlv('00', '01'),
+            self::tlv('26', self::tlv('00', 'jp.or.paymentsjapan') . self::tlv('01', '1')),
+            self::tlv('27', self::tlv('00', 'br.gov.bcb.pix') . self::tlv('01', 'k')),
+            self::tlv('52', '0000'),
+            self::tlv('53', '840'),
+            self::tlv('58', 'US'),
+            self::tlv('59', 'Shop'),
+            self::tlv('60', 'City'),
+        );
+
+        $this->expectException(InvalidPaymentQrException::class);
+        $this->expectExceptionMessageMatches('/^PixBrCode /');
+
+        PaymentQrFactory::fromString($payload);
     }
 
     public function testAValueThatIsNoPaymentQrIsRefused(): void

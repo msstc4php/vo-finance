@@ -21,9 +21,10 @@ final readonly class MerchantPresentedQrBuilder
     private const int MAX_GUI_LENGTH = 32;
 
     /**
-     * @param list<DataObject> $objects
+     * Usually started empty. Objects given here skip the checks of {@see with()}; {@see build()} validates the whole
+     * payload either way.
      *
-     * @internal start from `new MerchantPresentedQrBuilder()`
+     * @param list<DataObject> $objects the objects to start from, in payload order
      */
     public function __construct(private array $objects = [])
     {

@@ -36,7 +36,14 @@
 - Payment references: `Reference\QrReference` (27 digits, recursive modulo 10) and `Reference\CreditorReference`
   (ISO 11649 `RF`, MOD 97-10), with `InvalidPaymentReferenceException`.
 - `PaymentQrFactory::fromString()` and `fromBytes()`: routing by leading marker (`BCD`, `SPC`, `ST0001`,
-  `https://qr.nspk.ru/`, `upi://`), otherwise the profile that accepts an EMVCo payload, otherwise `MerchantPresentedQr`;
-  several accepting profiles throw `AmbiguousValueException`.
+  `https://qr.nspk.ru/`, `upi://`), otherwise the EMVCo profiles the payload identifies by GUI or AID, of which the one
+  that accepts it is built; several accepting profiles throw `AmbiguousValueException`, identified profiles that all
+  refuse throw the first one's refusal, and only a payload that identifies no built profile gives `MerchantPresentedQr`.
 - Every payment card and payment QR value object implements vo-base `Maskable`; `__toString()` and `jsonSerialize()`
-  give the full value. Securities and entity identifiers have no `masked()`.
+  give the full value. Securities and entity identifiers have no `masked()`. Account identifiers are masked to at most
+  about a third of their characters; EMVCo `masked()` also hides the mobile number and customer label of template 62,
+  and GOST `masked()` the payer's `PayerINN`.
+- Payment QR value objects serialize as their payload alone and validate it again on `unserialize()`.
+- GOST, SBP and UPI payloads share the EMVCo classes' 7089-character abuse bound.
+- Requires `ext-bcmath`: vo-base 1.2.0's `Iban`, used by `EpcQr` and `QrBill`, calls `bcmod()`. The release switches
+  to `msstc4php/vo-base ^1.3`, whose `Iban` needs no bcmath, and drops the requirement.

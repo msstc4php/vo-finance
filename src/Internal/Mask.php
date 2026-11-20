@@ -5,8 +5,9 @@ declare(strict_types=1);
 namespace MSSTC4PHP\ValueObject\Financial\Internal;
 
 /**
- * Masks an account identifier the way vo-base `Iban` does in its messages: the first two and the last four characters
- * stay, every other character becomes an asterisk. A value of six characters or fewer is masked whole.
+ * Masks an account identifier so that at most about a third of it stays visible: six characters or fewer are masked
+ * whole, 7 to 11 keep the last two, 12 to 17 the last four, and 18 or more the first two and the last four (an IBAN's
+ * country code and its end). Every other character becomes an asterisk, so the length is kept.
  *
  * @internal
  */
@@ -23,10 +24,18 @@ final class Mask
         }
 
         $count = \count($characters);
-        if ($count <= 6) {
-            return \str_repeat('*', $count);
-        }
+        [$head, $tail] = match (true) {
+            $count <= 6 => [0, 0],
+            $count <= 11 => [0, 2],
+            $count <= 17 => [0, 4],
+            default => [2, 4],
+        };
 
-        return $characters[0] . $characters[1] . \str_repeat('*', $count - 6) . \implode('', \array_slice($characters, -4));
+        $masked = \implode('', \array_slice($characters, 0, $head))
+            . \str_repeat('*', $count - $head - $tail)
+            . \implode('', \array_slice($characters, $count - $tail));
+        \assert($masked !== '');
+
+        return $masked;
     }
 }

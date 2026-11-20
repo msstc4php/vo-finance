@@ -35,6 +35,14 @@ final class MerchantAccountTest extends TestCase
         self::assertSame('bb', $account->subField('01'));
     }
 
+    public function testTheGuiMayFollowOtherSubFieldsAndOnlyTheFirstSubId00IsTheGui(): void
+    {
+        $account = new MerchantAccount('26', '0102bb0001A0001B', 'A', [new DataObject('01', 'bb'), new DataObject('00', 'B')]);
+
+        self::assertSame('A', $account->globallyUniqueIdentifier);
+        self::assertSame('bb', $account->subField('01'));
+    }
+
     public function testAGuiOfThirtyTwoCharactersIsAccepted(): void
     {
         $guid = str_repeat('G', 32);
@@ -78,5 +86,31 @@ final class MerchantAccountTest extends TestCase
         $this->expectException(InvalidPaymentQrException::class);
 
         new MerchantAccount($id, $value, $guid, $subFields);
+    }
+
+    public function testSubFieldsWithTheSameValuesUnderOtherIdsDoNotMatch(): void
+    {
+        $this->expectException(InvalidPaymentQrException::class);
+
+        new MerchantAccount('26', '0001A0102bb', 'A', [new DataObject('02', 'bb')]);
+    }
+
+    /**
+     * @return iterable<string, array{string}>
+     */
+    public static function idsWithJunk(): iterable
+    {
+        yield 'leading digit' => ['102'];
+        yield 'trailing digit' => ['026'];
+        yield 'trailing newline' => ["02\n"];
+    }
+
+    #[DataProvider('idsWithJunk')]
+    public function testAnIdWithJunkIsRefused(string $id): void
+    {
+        $this->expectException(InvalidPaymentQrException::class);
+        $this->expectExceptionMessage('MerchantAccount ID must be 02 to 51.');
+
+        new MerchantAccount($id, 'VISA');
     }
 }

@@ -4,12 +4,14 @@ declare(strict_types=1);
 
 namespace MSSTC4PHP\ValueObject\Financial\Internal;
 
+use MSSTC4PHP\ValueObject\Financial\Exception\InvalidPaymentQrException;
 use MSSTC4PHP\ValueObject\Financial\PaymentQr\Emvco\DataObject;
 
 /**
  * Writes root data objects with the values of the account-bearing IDs replaced by asterisks of the same character
- * count: merchant accounts 02 to 51, unreserved templates 80 to 99 and the CRC. Headers and all other objects stay
- * visible; the result is no valid payload.
+ * count: merchant accounts 02 to 51, unreserved templates 80 to 99 and the CRC. In the Additional Data Field Template
+ * (62) the mobile number (62-02) and the customer label (62-06), personal data in a person-to-person code, are masked
+ * the same way. Headers and all other objects stay visible; the result is no valid payload.
  *
  * @internal
  *
@@ -18,6 +20,11 @@ use MSSTC4PHP\ValueObject\Financial\PaymentQr\Emvco\DataObject;
  */
 final class EmvcoMask
 {
+    private const string ADDITIONAL_DATA = '62';
+
+    /** @var non-empty-list<non-empty-string> */
+    private const array PERSONAL_ADDITIONAL_DATA = ['02', '06'];
+
     /**
      * @param list<DataObject> $objects the root data objects of a payload
      *
@@ -27,7 +34,11 @@ final class EmvcoMask
     {
         $masked = '';
         foreach ($objects as $object) {
-            $masked .= EmvcoTlv::encode(self::isSecret($object->id) ? self::asterisks($object) : $object);
+            $masked .= EmvcoTlv::encode(match (true) {
+                self::isSecret($object->id) => self::asterisks($object),
+                $object->id === self::ADDITIONAL_DATA => self::additionalData($object),
+                default => $object,
+            });
         }
 
         \assert($masked !== '');
@@ -41,6 +52,28 @@ final class EmvcoMask
         \assert($mask !== '');
 
         return new DataObject($object->id, $mask);
+    }
+
+    /**
+     * A template that is not TLV is masked whole.
+     */
+    private static function additionalData(DataObject $template): DataObject
+    {
+        try {
+            $subFields = EmvcoTlv::parse($template->value);
+        } catch (InvalidPaymentQrException) {
+            return self::asterisks($template);
+        }
+
+        $value = '';
+        foreach ($subFields as $subField) {
+            $isPersonal = \in_array($subField->id, self::PERSONAL_ADDITIONAL_DATA, true);
+            $value .= EmvcoTlv::encode($isPersonal ? self::asterisks($subField) : $subField);
+        }
+
+        \assert($value !== '');
+
+        return new DataObject($template->id, $value);
     }
 
     private static function isSecret(string $id): bool

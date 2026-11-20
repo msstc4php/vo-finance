@@ -9,8 +9,10 @@ use MSSTC4PHP\ValueObject\Finance\Decimal;
 use MSSTC4PHP\ValueObject\Financial\Exception\AmbiguousPaymentQrFieldException;
 use MSSTC4PHP\ValueObject\Financial\Exception\InvalidPaymentQrException;
 use MSSTC4PHP\ValueObject\Financial\Internal\Mask;
+use MSSTC4PHP\ValueObject\Financial\Internal\PayloadBound;
 use MSSTC4PHP\ValueObject\Financial\Internal\ProfileRule;
 use MSSTC4PHP\ValueObject\Financial\Internal\QueryString;
+use MSSTC4PHP\ValueObject\Financial\Internal\ReparsesOnUnserialize;
 use MSSTC4PHP\ValueObject\Support\AbstractStringValueObject;
 use Override;
 
@@ -20,13 +22,16 @@ use Override;
  * reference `tr` has 1 to 35 characters. The scheme is the plan's; the NPCI linking specification itself was not
  * reached, so no other parameter, the VPA shape or the amount format is checked. Values are kept as written: NPCI
  * writes a space as a bare `%`, so nothing is percent-decoded. A repeated parameter makes its single-value accessor
- * throw. {@see masked()} hides the payee address.
+ * throw. {@see masked()} hides the payee address. At most 7089 characters, the largest QR content: a bound against
+ * abusive input.
  *
  * @see https://www.npci.org.in/PDF/npci/upi/circular/2017/Circular18_BankCompliances_to_enbaleUPIMerchantecosystem_0.pdf NPCI, UPI OC No. 18/2016-17, Annexure A Table 1 and D.7
  * @see docs/sources/FINANCE.md "NPCI UPI linking specification"
  */
 final class UpiPaymentUri extends AbstractStringValueObject implements Maskable
 {
+    use ReparsesOnUnserialize;
+
     private const string TYPE = 'UpiPaymentUri';
 
     private QueryString $query;
@@ -123,6 +128,7 @@ final class UpiPaymentUri extends AbstractStringValueObject implements Maskable
     #[Override]
     protected function parse(string $value): string
     {
+        PayloadBound::ensure($value, self::TYPE);
         if (\preg_match('//u', $value) !== 1 || \preg_match('/^upi:\/\/pay\?([^\s#]*)$/Di', $value, $match) !== 1) {
             throw new InvalidPaymentQrException(\sprintf('%s requires upi://pay? and a query without spaces or fragment.', self::TYPE));
         }

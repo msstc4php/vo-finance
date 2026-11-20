@@ -4,12 +4,14 @@ declare(strict_types=1);
 
 namespace MSSTC4PHP\ValueObject\Financial\Tests\Unit\PaymentQr\Emvco;
 
+use LogicException;
 use MSSTC4PHP\ValueObject\Finance\Decimal;
 use MSSTC4PHP\ValueObject\Financial\Exception\InvalidPaymentQrException;
 use MSSTC4PHP\ValueObject\Financial\Internal\Crc16CcittFalse;
 use MSSTC4PHP\ValueObject\Financial\Internal\EmvcoMask;
 use MSSTC4PHP\ValueObject\Financial\Internal\EmvcoMerchantPresented;
 use MSSTC4PHP\ValueObject\Financial\Internal\EmvcoTlv;
+use MSSTC4PHP\ValueObject\Financial\Internal\PayloadBound;
 use MSSTC4PHP\ValueObject\Financial\PaymentQr\Emvco\DataObject;
 use MSSTC4PHP\ValueObject\Financial\PaymentQr\Emvco\MerchantAccount;
 use MSSTC4PHP\ValueObject\Financial\PaymentQr\Emvco\MerchantPresentedQr;
@@ -27,9 +29,10 @@ use PHPUnit\Framework\TestCase;
 #[CoversClass(PointOfInitiation::class)]
 #[CoversClass(InvalidPaymentQrException::class)]
 #[UsesClass(EmvcoMask::class)]
-#[UsesClass(EmvcoMerchantPresented::class)]
+#[CoversClass(EmvcoMerchantPresented::class)]
 #[UsesClass(EmvcoTlv::class)]
 #[UsesClass(Crc16CcittFalse::class)]
+#[UsesClass(PayloadBound::class)]
 final class MerchantPresentedQrTest extends TestCase
 {
     // Banco Central do Brasil, Manual do BR Code 2.0.1, section 2.2: the complete dynamic payload (270 characters).
@@ -151,6 +154,14 @@ final class MerchantPresentedQrTest extends TestCase
         self::assertStringContainsString('最佳运输', $masked);
         self::assertStringContainsString('9132' . str_repeat('*', 32), $masked);
         self::assertStringEndsWith('6304****', $masked);
+    }
+
+    public function testMaskedHidesTheMobileNumberAndTheCustomerLabelOfTheAdditionalData(): void
+    {
+        $qr = new MerchantPresentedQr(self::sealed(self::MINIMAL_BODY . '62440105BILL10212+601234567890503REF0608Jane Doe'));
+
+        self::assertSame('+60123456789', $qr->additionalData()['02']);
+        self::assertStringContainsString('62440105BILL10212' . \str_repeat('*', 12) . '0503REF0608' . \str_repeat('*', 8) . '6304', $qr->masked());
     }
 
     public function testStringFormatObjectsMayHoldUtf8AndAreCountedInCharacters(): void
@@ -388,6 +399,88 @@ final class MerchantPresentedQrTest extends TestCase
             self::assertStringNotContainsString('NOME', $exception->getMessage());
             self::assertStringNotContainsString('AD39', $exception->getMessage());
         }
+    }
+
+    public function testOneCharacterOverTheBoundIsRefusedForTheBound(): void
+    {
+        $this->expectException(InvalidPaymentQrException::class);
+        $this->expectExceptionMessage('MerchantPresentedQr must not exceed 7089 characters.');
+
+        new MerchantPresentedQr($this->padded(7090));
+    }
+
+    public function testACrcObjectOfFiveCharactersIsRefusedEvenWhenItsLastFourMatch(): void
+    {
+        $body = self::MINIMAL_BODY . '6305Z';
+
+        $this->expectException(InvalidPaymentQrException::class);
+        $this->expectExceptionMessage('MerchantPresentedQr must end with a correct CRC.');
+
+        new MerchantPresentedQr($body . Crc16CcittFalse::compute($body));
+    }
+
+    public function testAGuiAfterAnotherSubFieldIsTheGui(): void
+    {
+        $account = new MerchantPresentedQr(self::sealed(self::MINIMAL_BODY . '26140103xyz0003A.B'))->merchantAccounts()[1];
+
+        self::assertSame('A.B', $account->globallyUniqueIdentifier);
+        self::assertSame('xyz', $account->subField('01'));
+    }
+
+    /**
+     * @return iterable<string, array{string}>
+     */
+    public static function characterSetBoundaries(): iterable
+    {
+        $body = self::MINIMAL_BODY;
+
+        yield 'multi-byte account 02' => [self::sealed($body . '0204Café')];
+        yield 'multi-byte account 25' => [self::sealed($body . '2504Café')];
+        yield 'multi-byte bill number 62-01' => [self::sealed($body . '62080104Café')];
+        yield 'multi-byte purpose 62-11' => [self::sealed($body . '62081104Café')];
+        yield 'trailing newline in the category code' => [self::sealed(str_replace('52045411', '5204541
+', $body))];
+        yield 'trailing newline in the merchant name' => [self::sealed(str_replace('5904Shop', '5904Sho
+', $body))];
+    }
+
+    #[DataProvider('characterSetBoundaries')]
+    public function testCharacterSetBoundariesAreRefused(string $payload): void
+    {
+        $this->assertRefused($payload);
+    }
+
+    public function testMultiByteTextIsAcceptedInAccount26And62SubId12(): void
+    {
+        $qr = new MerchantPresentedQr(self::sealed(self::MINIMAL_BODY . '26130001G0104Café62081204Café'));
+
+        self::assertSame('Café', $qr->additionalData()['12']);
+    }
+
+    /**
+     * @return iterable<string, array{non-empty-string}>
+     */
+    public static function amountsThatAreNoDecimal(): iterable
+    {
+        yield 'leading junk' => ['x1.5'];
+        yield 'trailing junk' => ['1.5x'];
+        yield 'trailing newline' => ["1.5\n"];
+    }
+
+    /**
+     * @param non-empty-string $amount
+     */
+    #[DataProvider('amountsThatAreNoDecimal')]
+    public function testAnAmountThatIsNoDecimalGivesNull(string $amount): void
+    {
+        self::assertNull(EmvcoMerchantPresented::amount([new DataObject('54', $amount)]));
+    }
+
+    public function testRequiredOnAnUnvalidatedListThrows(): void
+    {
+        $this->expectException(LogicException::class);
+
+        EmvcoMerchantPresented::required([], '59');
     }
 
     public function testTryFromAndIsValid(): void

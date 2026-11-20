@@ -26,19 +26,25 @@ final class PaymentCardNumber extends AbstractStringValueObject implements Maska
     private const string TYPE = 'PaymentCardNumber';
 
     /**
-     * @return string eight digits
+     * @return numeric-string eight digits
      */
     public function iin(): string
     {
-        return \substr($this->value, 0, 8);
+        $iin = \substr($this->value, 0, 8);
+        \assert(\is_numeric($iin));
+
+        return $iin;
     }
 
     /**
-     * @return string four digits
+     * @return numeric-string four digits
      */
     public function last4(): string
     {
-        return \substr($this->value, -4);
+        $last4 = \substr($this->value, -4);
+        \assert(\is_numeric($last4));
+
+        return $last4;
     }
 
     /**

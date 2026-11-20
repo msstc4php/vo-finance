@@ -12,6 +12,7 @@ use MSSTC4PHP\ValueObject\Financial\Internal\QueryString;
 use MSSTC4PHP\ValueObject\Financial\Internal\TextLines;
 use MSSTC4PHP\ValueObject\Financial\Internal\Transcoder;
 use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\UsesClass;
 use PHPUnit\Framework\TestCase;
 
@@ -22,13 +23,26 @@ use PHPUnit\Framework\TestCase;
 #[UsesClass(AmbiguousPaymentQrFieldException::class)]
 final class TextHelpersTest extends TestCase
 {
-    public function testMaskKeepsTwoAndFourCharacters(): void
+    /**
+     * @return iterable<string, array{string, string}>
+     */
+    public static function masks(): iterable
     {
-        self::assertSame('DE****************6789', Mask::keepEnds('DE71110220330123456789'));
-        self::assertSame('ab*ghij', Mask::keepEnds('abcghij'));
-        self::assertSame('ии*нннн', Mask::keepEnds('иивнннн'));
-        self::assertSame('******', Mask::keepEnds('abcdef'));
-        self::assertSame('*', Mask::keepEnds(''));
+        yield 'empty' => ['', '*'];
+        yield '6 characters' => ['abcdef', '******'];
+        yield '7 characters' => ['abcdefg', '*****fg'];
+        yield '7 multibyte characters' => ['иивнннн', '*****нн'];
+        yield '11 digits (SNILS)' => ['12345678901', '*********01'];
+        yield '12 characters' => ['abcdefghijkl', '********ijkl'];
+        yield '17 characters' => ['abcdefghijklmnopq', '*************nopq'];
+        yield '18 characters' => ['abcdefghijklmnopqr', 'ab************opqr'];
+        yield 'IBAN' => ['DE71110220330123456789', 'DE****************6789'];
+    }
+
+    #[DataProvider('masks')]
+    public function testMaskShowsAtMostAboutAThird(string $value, string $expected): void
+    {
+        self::assertSame($expected, Mask::keepEnds($value));
     }
 
     public function testLinesKeepEverySeparator(): void

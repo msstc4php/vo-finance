@@ -10,6 +10,7 @@ use MSSTC4PHP\ValueObject\Financial\Exception\AmbiguousPaymentQrFieldException;
 use MSSTC4PHP\ValueObject\Financial\Internal\ExposesRootFields;
 use MSSTC4PHP\ValueObject\Financial\Internal\ProfilePayload;
 use MSSTC4PHP\ValueObject\Financial\Internal\ProfileRule;
+use MSSTC4PHP\ValueObject\Financial\Internal\ReparsesOnUnserialize;
 use MSSTC4PHP\ValueObject\Financial\PaymentQr\Emvco\MerchantAccount;
 use MSSTC4PHP\ValueObject\Support\AbstractStringValueObject;
 use Override;
@@ -34,6 +35,7 @@ use Override;
 final class KhqrCode extends AbstractStringValueObject implements Maskable
 {
     use ExposesRootFields;
+    use ReparsesOnUnserialize;
 
     private const string TYPE = 'KhqrCode';
 
@@ -42,7 +44,7 @@ final class KhqrCode extends AbstractStringValueObject implements Maskable
     private const string CORPORATE = '30';
 
     /** @var list<MerchantAccount> */
-    private array $bakong = [];
+    private array $bakong;
 
     /**
      * @return list<non-empty-string> the distinct Bakong account IDs of tags 29 and 30, in payload order

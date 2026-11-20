@@ -8,7 +8,9 @@ use LogicException;
 use MSSTC4PHP\ValueObject\Contract\Maskable;
 use MSSTC4PHP\ValueObject\Financial\Exception\InvalidPaymentQrException;
 use MSSTC4PHP\ValueObject\Financial\Internal\Mask;
+use MSSTC4PHP\ValueObject\Financial\Internal\PayloadBound;
 use MSSTC4PHP\ValueObject\Financial\Internal\ProfileRule;
+use MSSTC4PHP\ValueObject\Financial\Internal\ReparsesOnUnserialize;
 use MSSTC4PHP\ValueObject\Financial\Internal\RussianAccountKey;
 use MSSTC4PHP\ValueObject\Financial\Internal\Transcoder;
 use MSSTC4PHP\ValueObject\Support\AbstractStringValueObject;
@@ -23,13 +25,14 @@ use Override;
  * says, and every occurrence of a mandatory alias must have its format. A 20-digit account carries the Bank of Russia
  * control key against the BIC within the scope of Bank of Russia Order 515 (not a treasury account starting with 0),
  * checked on every occurrence of `PersonalAcc` and `CorrespAcc` against the BIC that counts (the last). The separator
- * must be one ASCII graphic character (the block is eight bytes in UTF-8 too).
+ * must be one ASCII graphic character (the block is eight bytes in UTF-8 too). At most 7089 characters, the largest
+ * QR content: a bound against abusive input.
  *
  * {@see __construct()} takes UTF-8 text: a declared set `1` or `3` is accepted only for ASCII text; other text goes
  * through {@see fromBytes()}, which transcodes it and rewrites the character set to `2`. {@see masked()} hides the
  * accounts and identifiers of Annex V: the payee's account (`PersonalAcc`), the payer's account with the provider
- * (`PersAcc`), the budget recipient's personal account (`PersonalAccount`), the SNILS (`PensAcc`) and the payer's
- * identity document number (`PayerIdNum`).
+ * (`PersAcc`), the budget recipient's personal account (`PersonalAccount`), and the identifiers of the payer as a
+ * person: the SNILS (`PensAcc`), the identity document number (`PayerIdNum`) and the taxpayer number (`PayerINN`).
  *
  * @see https://files.stroyinf.ru/Data2/1/4293771/4293771168.htm GOST R 56042-2014 (as quoted), sections 5.2 to 5.5, Annexes V and D
  * @see https://pravo.ppt.ru/poryadok/98817 Bank of Russia, Order 515 of 08.09.1997 (as quoted)
@@ -37,6 +40,8 @@ use Override;
  */
 final class Gost56042Payload extends AbstractStringValueObject implements Maskable
 {
+    use ReparsesOnUnserialize;
+
     private const string TYPE = 'Gost56042Payload';
 
     private const array ENCODINGS = ['1' => 'Windows-1251', '3' => 'KOI8-R'];
@@ -50,7 +55,7 @@ final class Gost56042Payload extends AbstractStringValueObject implements Maskab
         'correspacc' => '/^\d{1,20}$/D',
     ];
 
-    private const array MASKED = ['personalacc', 'persacc', 'personalaccount', 'pensacc', 'payeridnum'];
+    private const array MASKED = ['personalacc', 'persacc', 'personalaccount', 'pensacc', 'payeridnum', 'payerinn'];
 
     /** @var non-empty-list<array{non-empty-string, string}> */
     private array $pairs;
@@ -71,6 +76,8 @@ final class Gost56042Payload extends AbstractStringValueObject implements Maskab
         if ($match[1] === '2') {
             return new self($bytes);
         }
+
+        PayloadBound::ensure($bytes, self::TYPE);
 
         return new self(\substr_replace(Transcoder::toUtf8($bytes, self::ENCODINGS[$match[1]], self::TYPE), '2', 6, 1));
     }
@@ -136,6 +143,8 @@ final class Gost56042Payload extends AbstractStringValueObject implements Maskab
 
     /**
      * The value of the last pair with this alias, compared case-insensitively; null when absent.
+     *
+     * @return string|null empty when the pair is written `Alias=`
      */
     public function get(string $alias): ?string
     {
@@ -163,6 +172,7 @@ final class Gost56042Payload extends AbstractStringValueObject implements Maskab
     #[Override]
     protected function parse(string $value): string
     {
+        PayloadBound::ensure($value, self::TYPE);
         if (\preg_match('//u', $value) !== 1) {
             throw new InvalidPaymentQrException(\sprintf('%s must be valid UTF-8.', self::TYPE));
         }

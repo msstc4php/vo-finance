@@ -29,5 +29,7 @@ all-digit value only), `Sedol`, `Wkn`, `Valor` (format only). No `masked()`.
 - GOST: last occurrence of an alias wins (standard); every occurrence of a mandatory alias must have its format;
   20-digit accounts in Order 515's scope (first digit 1-9; treasury `0...` exempt), every occurrence, must pass the key
   with either the RKC (`0`+BIC[5..6]) or credit-institution (BIC[7..9]) number.
-- `masked()`: EPC/QR-bill IBAN line, GOST `PersonalAcc`/`PersAcc`/`PersonalAccount`/`PensAcc`/`PayerIdNum`, SBP
-  identifier, UPI `pa` (rest of the URI as written); first 2 + last 4 kept; references stay visible.
+- `masked()`: EPC/QR-bill IBAN line, GOST `PersonalAcc`/`PersAcc`/`PersonalAccount`/`PensAcc`/`PayerIdNum`/`PayerINN`,
+  SBP identifier, UPI `pa` (rest of the URI as written); `Mask::keepEnds` keeps nothing at <= 6 characters, the last 2
+  at 7-11, the last 4 at 12-17, first 2 + last 4 from 18; references stay visible. EMVCo `masked()` also hides 62-02
+  (mobile number) and 62-06 (customer label).

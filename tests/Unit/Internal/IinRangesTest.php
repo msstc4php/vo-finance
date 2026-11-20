@@ -99,7 +99,7 @@ final class IinRangesTest extends TestCase
      * Each default range: first and last IIN inside, the neighbours outside. The bounds are the rows of the Discover
      * summary (JCB "a", UnionPay "b") and the Amex page.
      *
-     * @return iterable<string, array{string, string, CardScheme}>
+     * @return iterable<string, array{numeric-string, numeric-string, CardScheme}>
      */
     public static function defaultRanges(): iterable
     {
@@ -118,6 +118,10 @@ final class IinRangesTest extends TestCase
         yield 'UnionPay 8100-8171' => ['81000000', '81719999', CardScheme::UnionPay];
     }
 
+    /**
+     * @param numeric-string $start
+     * @param numeric-string $end
+     */
     #[DataProvider('defaultRanges')]
     public function testDefaultTableRangeEdges(string $start, string $end, CardScheme $scheme): void
     {

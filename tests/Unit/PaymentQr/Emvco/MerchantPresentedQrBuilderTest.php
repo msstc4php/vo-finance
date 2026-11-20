@@ -8,6 +8,7 @@ use MSSTC4PHP\ValueObject\Financial\Exception\InvalidPaymentQrException;
 use MSSTC4PHP\ValueObject\Financial\Internal\Crc16CcittFalse;
 use MSSTC4PHP\ValueObject\Financial\Internal\EmvcoMerchantPresented;
 use MSSTC4PHP\ValueObject\Financial\Internal\EmvcoTlv;
+use MSSTC4PHP\ValueObject\Financial\Internal\PayloadBound;
 use MSSTC4PHP\ValueObject\Financial\PaymentQr\Emvco\DataObject;
 use MSSTC4PHP\ValueObject\Financial\PaymentQr\Emvco\MerchantAccount;
 use MSSTC4PHP\ValueObject\Financial\PaymentQr\Emvco\MerchantPresentedQr;
@@ -27,6 +28,7 @@ use PHPUnit\Framework\TestCase;
 #[UsesClass(EmvcoMerchantPresented::class)]
 #[UsesClass(EmvcoTlv::class)]
 #[UsesClass(Crc16CcittFalse::class)]
+#[UsesClass(PayloadBound::class)]
 final class MerchantPresentedQrBuilderTest extends TestCase
 {
     public function testReproducesTheBcbPayloadByteExact(): void

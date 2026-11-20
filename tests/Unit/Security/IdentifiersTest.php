@@ -33,7 +33,7 @@ use PHPUnit\Framework\TestCase;
 #[CoversClass(Sedol::class)]
 #[CoversClass(Wkn::class)]
 #[CoversClass(Valor::class)]
-#[UsesClass(SecurityRules::class)]
+#[CoversClass(SecurityRules::class)]
 #[UsesClass(Iso7064Mod97::class)]
 #[UsesClass(FigiCheckDigit::class)]
 #[UsesClass(CusipCheckDigit::class)]
@@ -184,5 +184,13 @@ final class IdentifiersTest extends TestCase
     public function testLouPrefix(): void
     {
         self::assertSame('F50E', new Lei('F50EOCWSQFAUVO9Q8Z97')->louPrefix());
+    }
+
+    public function testAWrongLengthIsReportedAsTheLengthRule(): void
+    {
+        $this->expectException(InvalidSecurityIdentifierException::class);
+        $this->expectExceptionMessage('MIC must have 4 characters, got 5.');
+
+        new Mic('XNASA');
     }
 }

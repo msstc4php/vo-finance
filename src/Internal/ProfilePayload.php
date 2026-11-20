@@ -30,6 +30,9 @@ final readonly class ProfilePayload
 {
     private const string PLACEHOLDER_CITY = 'NA';
 
+    /** @var list<MerchantAccount> */
+    private array $accounts;
+
     /**
      * @param list<DataObject> $objects the root data objects as written
      * @param list<DataObject> $copyObjects the objects of the validated modified copy
@@ -38,6 +41,7 @@ final readonly class ProfilePayload
         private array $objects,
         private array $copyObjects,
     ) {
+        $this->accounts = EmvcoMerchantPresented::accounts($copyObjects);
     }
 
     /**
@@ -49,9 +53,7 @@ final readonly class ProfilePayload
      */
     public static function parse(string $payload, string $profile, string $formatIndicator = '01', bool $categoryOptional = false, bool $cityOptional = false): self
     {
-        if (\strlen($payload) > EmvcoTlv::MAX_PAYLOAD_LENGTH * 4 || EmvcoTlv::length($payload) > EmvcoTlv::MAX_PAYLOAD_LENGTH) {
-            throw new InvalidPaymentQrException(\sprintf('%s must not exceed %d characters.', $profile, EmvcoTlv::MAX_PAYLOAD_LENGTH));
-        }
+        PayloadBound::ensure($payload, $profile);
 
         $objects = self::objectsOf($payload, $profile);
         $last = $objects[\count($objects) - 1] ?? null;
@@ -98,7 +100,7 @@ final readonly class ProfilePayload
      */
     public function accounts(): array
     {
-        return EmvcoMerchantPresented::accounts($this->copyObjects);
+        return $this->accounts;
     }
 
     /**

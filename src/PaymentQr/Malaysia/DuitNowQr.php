@@ -10,6 +10,7 @@ use MSSTC4PHP\ValueObject\Financial\Exception\InvalidPaymentQrException;
 use MSSTC4PHP\ValueObject\Financial\Internal\ExposesRootFields;
 use MSSTC4PHP\ValueObject\Financial\Internal\ProfilePayload;
 use MSSTC4PHP\ValueObject\Financial\Internal\ProfileRule;
+use MSSTC4PHP\ValueObject\Financial\Internal\ReparsesOnUnserialize;
 use MSSTC4PHP\ValueObject\Financial\PaymentQr\Emvco\MerchantAccount;
 use MSSTC4PHP\ValueObject\Support\AbstractStringValueObject;
 use Override;
@@ -31,6 +32,7 @@ use Override;
 final class DuitNowQr extends AbstractStringValueObject implements Maskable
 {
     use ExposesRootFields;
+    use ReparsesOnUnserialize;
 
     private const string TYPE = 'DuitNowQr';
 
@@ -38,7 +40,7 @@ final class DuitNowQr extends AbstractStringValueObject implements Maskable
 
     private const string JOMPAY_ACQUIRER_ID = '898989';
 
-    private ?MerchantAccount $account = null;
+    private MerchantAccount $account;
 
     /**
      * @return non-empty-string
@@ -63,7 +65,7 @@ final class DuitNowQr extends AbstractStringValueObject implements Maskable
      */
     public function merchantDescriptor(): ?string
     {
-        return $this->account?->subField('03');
+        return $this->account->subField('03');
     }
 
     /**
@@ -71,7 +73,7 @@ final class DuitNowQr extends AbstractStringValueObject implements Maskable
      */
     public function mobileNumber(): ?string
     {
-        return $this->account?->subField('04');
+        return $this->account->subField('04');
     }
 
     /**
@@ -154,6 +156,6 @@ final class DuitNowQr extends AbstractStringValueObject implements Maskable
      */
     private function required(string $subId): string
     {
-        return $this->account?->subField($subId) ?? throw new LogicException('A validated payload lacks a mandatory sub-field.');
+        return $this->account->subField($subId) ?? throw new LogicException('A validated payload lacks a mandatory sub-field.');
     }
 }

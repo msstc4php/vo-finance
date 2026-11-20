@@ -7,6 +7,7 @@ namespace MSSTC4PHP\ValueObject\Financial\Tests\Unit\PaymentQr\Ru;
 use MSSTC4PHP\ValueObject\Financial\Exception\AmbiguousPaymentQrFieldException;
 use MSSTC4PHP\ValueObject\Financial\Exception\InvalidPaymentQrException;
 use MSSTC4PHP\ValueObject\Financial\Internal\Mask;
+use MSSTC4PHP\ValueObject\Financial\Internal\PayloadBound;
 use MSSTC4PHP\ValueObject\Financial\Internal\QueryString;
 use MSSTC4PHP\ValueObject\Financial\PaymentQr\Ru\SbpPaymentLink;
 use PHPUnit\Framework\Attributes\CoversClass;
@@ -18,6 +19,7 @@ use PHPUnit\Framework\TestCase;
 #[UsesClass(QueryString::class)]
 #[UsesClass(Mask::class)]
 #[UsesClass(AmbiguousPaymentQrFieldException::class)]
+#[UsesClass(PayloadBound::class)]
 final class SbpPaymentLinkTest extends TestCase
 {
     // Synthetic: NSPK publishes no link layout (see FINANCE.md "NSPK SBP"); the shape follows the plan's format-only rule.
@@ -102,5 +104,16 @@ final class SbpPaymentLinkTest extends TestCase
         } catch (InvalidPaymentQrException $exception) {
             self::assertStringNotContainsString('SECRETID', $exception->getMessage());
         }
+    }
+
+    public function testTheLinkIsBoundedAtTheLargestQrContent(): void
+    {
+        $link = 'https://qr.nspk.ru/' . \str_repeat('A', 7089 - 19);
+        self::assertSame($link, (string) SbpPaymentLink::from($link));
+
+        $this->expectException(InvalidPaymentQrException::class);
+        $this->expectExceptionMessage('SbpPaymentLink must not exceed 7089 characters.');
+
+        SbpPaymentLink::from($link . 'A');
     }
 }

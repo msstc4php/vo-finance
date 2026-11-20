@@ -45,19 +45,25 @@ final class Isin extends AbstractStringValueObject
     }
 
     /**
-     * @return string two letters
+     * @return non-empty-string two letters
      */
     public function prefix(): string
     {
-        return \substr($this->value, 0, 2);
+        $prefix = \substr($this->value, 0, 2);
+        \assert($prefix !== '');
+
+        return $prefix;
     }
 
     /**
-     * @return string nine characters
+     * @return non-empty-string nine characters
      */
     public function nsin(): string
     {
-        return \substr($this->value, 2, 9);
+        $nsin = \substr($this->value, 2, 9);
+        \assert($nsin !== '');
+
+        return $nsin;
     }
 
     public function countryCode(): ?CountryCode

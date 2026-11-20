@@ -8,6 +8,7 @@ use MSSTC4PHP\ValueObject\Contract\Maskable;
 use MSSTC4PHP\ValueObject\Finance\Decimal;
 use MSSTC4PHP\ValueObject\Financial\Internal\EmvcoMask;
 use MSSTC4PHP\ValueObject\Financial\Internal\EmvcoMerchantPresented;
+use MSSTC4PHP\ValueObject\Financial\Internal\ReparsesOnUnserialize;
 use MSSTC4PHP\ValueObject\I18n\CountryCode;
 use MSSTC4PHP\ValueObject\I18n\CurrencyCode;
 use MSSTC4PHP\ValueObject\Support\AbstractStringValueObject;
@@ -39,8 +40,13 @@ use Override;
  */
 final class MerchantPresentedQr extends AbstractStringValueObject implements Maskable
 {
+    use ReparsesOnUnserialize;
+
     /** @var list<DataObject> */
-    private array $objects = [];
+    private array $objects;
+
+    /** @var list<MerchantAccount> */
+    private array $accounts;
 
     public function pointOfInitiation(): ?PointOfInitiation
     {
@@ -52,7 +58,7 @@ final class MerchantPresentedQr extends AbstractStringValueObject implements Mas
      */
     public function merchantAccounts(): array
     {
-        return EmvcoMerchantPresented::accounts($this->objects);
+        return $this->accounts;
     }
 
     /**
@@ -142,6 +148,7 @@ final class MerchantPresentedQr extends AbstractStringValueObject implements Mas
     protected function parse(string $value): string
     {
         $this->objects = EmvcoMerchantPresented::validate($value, true);
+        $this->accounts = EmvcoMerchantPresented::accounts($this->objects);
 
         return $value;
     }

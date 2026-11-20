@@ -36,7 +36,7 @@ final readonly class IinRanges
     }
 
     /**
-     * @param string $iin eight digits
+     * @param numeric-string $iin eight digits
      *
      * @return list<CardScheme>
      */

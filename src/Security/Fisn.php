@@ -31,14 +31,26 @@ final class Fisn extends AbstractStringValueObject
 
     private const string CHARACTER = '[ -.0-`{-~\x{C0}-\x{D6}\x{D8}-\x{DE}]';
 
+    /**
+     * @return non-empty-string
+     */
     public function issuerName(): string
     {
-        return \explode('/', $this->value, 2)[0];
+        $name = \explode('/', $this->value, 2)[0];
+        \assert($name !== '');
+
+        return $name;
     }
 
+    /**
+     * @return non-empty-string
+     */
     public function description(): string
     {
-        return \explode('/', $this->value, 2)[1];
+        $description = \explode('/', $this->value, 2)[1] ?? '';
+        \assert($description !== '');
+
+        return $description;
     }
 
     #[Override]
@@ -48,15 +60,22 @@ final class Fisn extends AbstractStringValueObject
         $length = \preg_match_all('/./su', $value);
 
         if ($length > self::MAX_LENGTH) {
-            throw SecurityRules::fail(self::TYPE, \sprintf('must have at most %d characters, got %d', self::MAX_LENGTH, $length));
+            $rule = \sprintf('must have at most %d characters, got %d', self::MAX_LENGTH, $length);
+
+            throw SecurityRules::fail(self::TYPE, $rule);
         }
 
-        if (\preg_match('/^' . self::CHARACTER . '+\/' . self::CHARACTER . '+$/Du', $value) !== 1 || \str_contains($value, '  ')) {
-            throw SecurityRules::fail(self::TYPE, 'must be an issuer name, "/" and a description in uppercase with single blanks');
+        $shape = '/^' . self::CHARACTER . '+\/' . self::CHARACTER . '+$/Du';
+        if (\preg_match($shape, $value) !== 1 || \str_contains($value, '  ')) {
+            $rule = 'must be an issuer name, "/" and a description in uppercase with single blanks';
+
+            throw SecurityRules::fail(self::TYPE, $rule);
         }
 
         if (\preg_match_all('/./su', \explode('/', $value, 2)[1]) > self::MAX_DESCRIPTION) {
-            throw SecurityRules::fail(self::TYPE, \sprintf('description must have at most %d characters', self::MAX_DESCRIPTION));
+            $rule = \sprintf('description must have at most %d characters', self::MAX_DESCRIPTION);
+
+            throw SecurityRules::fail(self::TYPE, $rule);
         }
 
         return $value;

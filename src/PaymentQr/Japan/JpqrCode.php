@@ -10,6 +10,7 @@ use MSSTC4PHP\ValueObject\Financial\Exception\AmbiguousPaymentQrFieldException;
 use MSSTC4PHP\ValueObject\Financial\Internal\ExposesRootFields;
 use MSSTC4PHP\ValueObject\Financial\Internal\ProfilePayload;
 use MSSTC4PHP\ValueObject\Financial\Internal\ProfileRule;
+use MSSTC4PHP\ValueObject\Financial\Internal\ReparsesOnUnserialize;
 use MSSTC4PHP\ValueObject\Financial\PaymentQr\Emvco\MerchantAccount;
 use MSSTC4PHP\ValueObject\Support\AbstractStringValueObject;
 use Override;
@@ -31,6 +32,7 @@ use Override;
 final class JpqrCode extends AbstractStringValueObject implements Maskable
 {
     use ExposesRootFields;
+    use ReparsesOnUnserialize;
 
     private const string TYPE = 'JpqrCode';
 
@@ -42,7 +44,7 @@ final class JpqrCode extends AbstractStringValueObject implements Maskable
     private const array LEVELS = ['01' => 13, '02' => 4, '03' => 6, '04' => 6];
 
     /** @var list<MerchantAccount> */
-    private array $accounts = [];
+    private array $accounts;
 
     /**
      * @return list<non-empty-string> the distinct unified store IDs (29 digits, levels 1 to 4 joined), in payload order

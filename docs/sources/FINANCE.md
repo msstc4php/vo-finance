@@ -401,10 +401,10 @@ The document says an IIN is "the first six (6) or eight (8) digits" and that "To
 use the latest IIN range table publication", which is under NDA: the summary does not name the scheme of every range
 (only the `a`/`b` footnotes). The text says "all IIN ranges supported by the Discover® Network, Diners Club
 International®, and PULSE®" without assigning any row to one of them, so the unmarked rows name no single scheme.
-Footnote positions were read from the PDF's text coordinates: the `a`/`b` marker sits on the row it labels,
-so 3337 0000 - 3349 9999 is JCB (the block above omitted that marker). Unmarked rows: 3000-3059, 3095, 3600-3699,
-3800-3999, 6011, 6440-6589 (scheme not named). The IIN table assigns a range to a scheme only where this summary or another
-publication names it, and decodes the rest as an empty list.
+Footnote positions were read from the PDF's text coordinates: the `a`/`b` marker sits on the row it labels, so
+3337 0000 - 3349 9999 is JCB (the block above omitted that marker). Unmarked rows: 3000-3059, 3095, 3600-3699,
+3800-3999, 6011, 6440-6589 (scheme not named). The IIN table assigns a range to a scheme only where this summary or
+another publication names it, and decodes the rest as an empty list.
 
 **No-Luhn ranges: none found.** No publication reached (Discover's summary, the Amex page, Visa's public rules and FAQ,
 NPCI's circular) states that a scheme's numbers carry no Luhn digit. Baymard (an aggregator) says some China UnionPay
@@ -516,6 +516,15 @@ For `PaymentQrFactory`.
 | SBP link | `https://qr.nspk.ru/` | NSPK documentation | **unreachable**: NSPK Rules P.235 v4.0 put the QR standards on the closed portal; format only |
 | UPI | `upi://pay?` | NPCI UPI Linking Specification; a third-party copy of version 1.6 and NPCI circulars OC 18 and OC 37 were found | **not confirmed** (the NPCI document itself was not read; OC 18 gives the parameters, not the scheme) |
 
+An EMVCo payload with no marker of its own goes to the national profiles it identifies: the Pix GUI `br.gov.bcb.pix`
+in a template 26-51, a PromptPay AID in template 29 (credit transfer) or 30 (bill payment), the DuitNow AID
+`A0000006150001` in template 26, a template 29 or 30 with country `KH` (KHQR) and the JPQR GUI `jp.or.paymentsjapan`,
+each the identifier the profile's own section quotes. A payload that identifies a profile its class refuses throws
+that refusal; only a payload that identifies none falls back to the generic class.
+
+Every payload class refuses more than 7089 characters, the largest QR content (numeric mode, version 40-L). No source
+sets it; it bounds abusive input only.
+
 ## Payment payload sections
 
 ### EMVCo QRCPS merchant-presented mode
@@ -564,7 +573,9 @@ CRC-16/CCITT-FALSE over the UTF-8 bytes is `A13A`, which also confirms the CRC c
 tests is marked synthetic.
 
 Masking: the BCB manual and Annex B.6 treat the templates `80`-`99` as payment-system data like the accounts, so
-`masked()` hides the values of IDs 02-51 and 80-99 and the CRC (`6304****`, not recomputed).
+`masked()` hides the values of IDs 02-51 and 80-99 and the CRC (`6304****`, not recomputed). It also hides the mobile
+number (62-02) and the customer label (62-06) of template 62, which in a person-to-person code identify a person; the
+other sub-fields of 62 stay visible.
 
 **Format only (not enforced):** the "var. up to" maxima of IDs 54-57, 59, 60, 61 and the sub-IDs of 62 (the BCB manual
 sets the postal code to 99 where EMVCo and HKMA say 10, so national profiles differ); the content of IDs 02-25; the
@@ -772,7 +783,7 @@ and `002` of the payload are both defined by it.
 | BIC | 2.2: "V1: M ... V2: O/M", "8/11an" | enforced (vo-base `Bic`, ISO 9362 shape); empty only in `002` |
 | Name | 2.2: "1..70an", "AT-21 The name of the Beneficiary", M | enforced (characters) |
 | IBAN | 2.2: "1..34an", "Only IBAN is allowed." | enforced (vo-base `Iban`) |
-| Amount | 2.2: "3..3an, 1..12n", max. 12, "Amount must be larger than or equal to 0.01, and cannot be larger than 999999999.99"; example `EUR12.3` | enforced: `EUR`, at most 12 digits and decimal point, the bounds |
+| Amount | 2.2: "3..3an, 1..12n", max. 12, "Amount must be larger than or equal to 0.01, and cannot be larger than 999999999.99"; example `EUR12.3` | enforced: `EUR`, at most 12 digits and decimal point, the bounds; the quoted text gives no number of decimals, so more than two (`EUR1.999`) are accepted |
 | Purpose | 2.2: "1..4an" | enforced (length) |
 | Reference / text | 2.2: "{Or 1..35an" structured, "Or} 1..140an" unstructured, "{Or}: Only one of the elements may be populated."; "Creditor Reference (ISO 11649 RF Creditor Reference may be used)" | enforced; `creditorReference()` decodes an RF reference, never refuses another |
 | Information | 2.2: "1..70an Beneficiary to Originator information" | enforced (length) |
@@ -853,7 +864,7 @@ published); read **as quoted** by the database mirror <https://files.stroyinf.ru
 | Mandatory block | 5.2.3: "Обязательные реквизиты располагаются в строго определенном порядке ... Не допускается отсутствие значений"; Table 2: Name "от 1 до 160 знаков", PersonalAcc "Строка цифр строго 20 знаков", BankName "от 1 до 45 знаков", BIC "Строка цифр строго 9 знаков", CorrespAcc "Строка цифр до 20 знаков. При отсутствии ... корр. счета поле заполнять значением "0"" | enforced |
 | Last separator | 5.2.4: "Знак-разделитель после последнего значения последнего элемента этого блока не используется." | enforced (an empty pair has no `=`) |
 | Repeated aliases | 5.2.4: "При включении двух и более реквизитов с одинаковыми псевдонимами при разборе учитываться будет только последнее вхождение"; Table 4 step 6 "без учета регистра" | `get()` gives the last; a repeated mandatory alias must also have its format |
-| Additional aliases | Annex V (Sum "Макс. 18", Purpose "Макс. 210", PayeeINN, PersAcc "Номер лицевого счета плательщика в организации", ...) | decoded only; `masked()` hides `PersonalAcc` and `PersAcc` |
+| Additional aliases | Annex V (Sum "Макс. 18", Purpose "Макс. 210", PayeeINN, PersAcc "Номер лицевого счета плательщика в организации", ...) | decoded only; `masked()` hides `PersonalAcc`, `PersAcc`, `PersonalAccount`, `PensAcc`, `PayerIdNum` and `PayerINN` |
 | Binary string | 5.4.2: "В двумерный символ штрихового кода кодируется строка двоичного типа ... программное обеспечение принимающей организации будет получать информацию об используемом наборе кодируемых знаков из элемента N 3" | `fromBytes()` transcodes 1 and 3 and rewrites the digit to 2 |
 
 Annex D example (declared `1`, WIN1251), the test vector in UTF-8, through `fromBytes()` from WIN1251 and KOI8-R (one
@@ -875,10 +886,9 @@ PayerAddress=г.Рязань ул.Ленина д.10 кв.15|
 Sum=100000
 ```
 
-The mirror prints the payee INN alias as
-`PayeelNN` (a lowercase L, an OCR or typesetting slip for Annex V's `PayeeINN`) and splits the line with stray hyphens;
-the test uses Annex V's alias. Table 3 step 6 of the mirror has Cyrillic letters in "РауегАddress", which the alias rule
-forbids; the Annex D text `PayerAddress` is used.
+The mirror prints the payee INN alias as `PayeelNN` (a lowercase L, an OCR or typesetting slip for Annex V's
+`PayeeINN`) and splits the line with stray hyphens; the test uses Annex V's alias. Table 3 step 6 of the mirror has
+Cyrillic letters in "РауегАddress", which the alias rule forbids; the Annex D text `PayerAddress` is used.
 
 **Control key.** Bank of Russia, "Порядок расчета контрольного ключа в номере лицевого счета", 8 September 1997 No. 515
 (in force from 1 January 1998). Not found on cbr.ru (see the log); read **as quoted** by
@@ -908,8 +918,8 @@ key; it is accepted. The boundary "first digit 0" is an inference: no Federal Tr
 (nalog.gov.ru memo 403, its archive copy 503, legalacts.ru TLS failure, 2026-11-20 12:58 UTC). The single treasury
 account `40102810545370000003` passes the key and stays checked. Every occurrence of `PersonalAcc` and `CorrespAcc` is
 checked against the BIC that counts (the last). `masked()` hides `PersonalAcc`, `PersAcc`, `PersonalAccount` (Annex V
-"Лицевой счет бюджетного получателя"), `PensAcc` (SNILS) and `PayerIdNum` (identity document number); structured
-references stay visible.
+"Лицевой счет бюджетного получателя"), `PensAcc` (SNILS), `PayerIdNum` (identity document number) and `PayerINN` (the
+payer's taxpayer number, which identifies a person as well as the SNILS does); structured references stay visible.
 
 ### NSPK SBP
 

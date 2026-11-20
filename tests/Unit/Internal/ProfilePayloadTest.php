@@ -9,6 +9,7 @@ use MSSTC4PHP\ValueObject\Financial\Internal\Crc16CcittFalse;
 use MSSTC4PHP\ValueObject\Financial\Internal\EmvcoMask;
 use MSSTC4PHP\ValueObject\Financial\Internal\EmvcoMerchantPresented;
 use MSSTC4PHP\ValueObject\Financial\Internal\EmvcoTlv;
+use MSSTC4PHP\ValueObject\Financial\Internal\PayloadBound;
 use MSSTC4PHP\ValueObject\Financial\Internal\ProfilePayload;
 use MSSTC4PHP\ValueObject\Financial\Internal\ProfileRule;
 use MSSTC4PHP\ValueObject\Financial\PaymentQr\Emvco\DataObject;
@@ -23,13 +24,14 @@ use PHPUnit\Framework\TestCase;
 #[CoversClass(ProfilePayload::class)]
 #[CoversClass(ProfileRule::class)]
 #[CoversClass(EmvcoMask::class)]
-#[UsesClass(EmvcoMerchantPresented::class)]
+#[CoversClass(EmvcoMerchantPresented::class)]
 #[UsesClass(EmvcoTlv::class)]
 #[UsesClass(Crc16CcittFalse::class)]
 #[UsesClass(MerchantPresentedQr::class)]
 #[UsesClass(MerchantAccount::class)]
 #[UsesClass(DataObject::class)]
 #[UsesClass(InvalidPaymentQrException::class)]
+#[UsesClass(PayloadBound::class)]
 final class ProfilePayloadTest extends TestCase
 {
     use BuildsPayloads;
@@ -176,14 +178,15 @@ final class ProfilePayloadTest extends TestCase
             new DataObject('26', 'abc'),
             new DataObject('51', 'x'),
             new DataObject('52', '0000'),
-            new DataObject('62', 'keep'),
+            new DataObject('62', '0503REF0202+1'),
             new DataObject('79', 'rfu'),
             new DataObject('80', 'tmpl'),
             new DataObject('99', 'last'),
             new DataObject('63', 'ABCD'),
         ]);
 
-        self::assertSame('0002010102120204****2603***5101*520400006204keep7903rfu8004****9904****6304****', $masked);
+        self::assertSame('0002010102120204****2603***5101*5204000062130503REF0202**7903rfu8004****9904****6304****', $masked);
+        self::assertSame('6204****', EmvcoMask::apply([new DataObject('62', 'keep')]));
     }
 
     public function testEnsureNamesTheProfileAndTheRuleOnly(): void

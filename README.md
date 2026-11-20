@@ -70,7 +70,7 @@ throws vo-base `AmbiguousValueException` with the candidates; the factories neve
 | `Security\Sedol` | SEDOL, check digit enforced |
 | `Security\Wkn` | German WKN (format only) |
 | `Security\Valor` | Swiss valor number (format only) |
-| `Security\SecurityIdentifierFactory` | `fromString()` builds the one type that accepts the value; several types accepting it (a 12-character value can be an ISIN and a FIGI, and a `Valor` accepts any one to nine letters or digits) throw `AmbiguousValueException`; none throws `InvalidSecurityIdentifierException` |
+| `Security\SecurityIdentifierFactory` | `fromString()` builds the one type that accepts the value; several types accepting it (a 12-character value can be an ISIN and a FIGI, and a `Valor` accepts any one to nine letters or digits) throw `AmbiguousValueException`; none throws `InvalidSecurityIdentifierException`. Every `Mic`, `Wkn`, `Cfi`, `Sedol` and `Cusip` is also a valid `Valor`, so the factory never returns one of them: construct those types directly |
 
 Securities and entity identifiers carry no `masked()`.
 
@@ -92,8 +92,13 @@ publication states it (see "Format only" for what is missing today).
 ### Payment QR payloads
 
 All implement `Maskable`. On the EMVCo classes `masked()` replaces the values of the merchant accounts (IDs 02 to 51),
-the templates 80 to 99 and the CRC with asterisks; on the others it hides the IBAN, account, identifier or VPA, keeping
-its first two and last four characters. A masked string is not a valid payload.
+the templates 80 to 99, the mobile number (62-02), the customer label (62-06) and the CRC with asterisks; on the others
+it hides the IBAN, account, identifier or VPA, keeping at most about a third of it: nothing at six characters or fewer,
+the last two at 7 to 11, the last four at 12 to 17, the first two and the last four from 18. A masked string is not a
+valid payload.
+
+`serialize()` stores only the payload, and `unserialize()` validates it again, so the parsed fields are never restored
+apart from the value they came from; a serialized form that holds anything else throws `InvalidPaymentQrException`.
 
 | Class | Payload |
 |---|---|
@@ -108,7 +113,7 @@ its first two and last four characters. A masked string is not a valid payload.
 | `PaymentQr\Ru\Gost56042Payload` | GOST R 56042-2014: `name()`, `personalAccount()`, `bankName()`, `bic()`, `correspondentAccount()`, `get()` by alias; `fromBytes()` for WIN1251 and KOI8-R |
 | `PaymentQr\Ru\SbpPaymentLink` | SBP link `https://qr.nspk.ru/<id>` (format only): `id()`, `get()`, `parameterNames()` |
 | `PaymentQr\India\UpiPaymentUri` | UPI `upi://pay?` URI: `payeeAddress()`, `payeeName()`, `transactionReference()`, `amount()`, `get()`, `parameterNames()` |
-| `PaymentQr\PaymentQrFactory` | by leading marker `BCD`, `SPC`, `ST0001`, `https://qr.nspk.ru/`, `upi://` the class above; otherwise the profile that accepts an EMVCo payload; several profiles throw `AmbiguousValueException`; none gives `MerchantPresentedQr` |
+| `PaymentQr\PaymentQrFactory` | by leading marker `BCD`, `SPC`, `ST0001`, `https://qr.nspk.ru/`, `upi://` the class above; otherwise the EMVCo profiles the payload identifies (Pix GUI, PromptPay AID in 29/30, DuitNow AID in 26, template 29/30 with country KH, JPQR GUI) and the one of them that accepts it; several accepting throw `AmbiguousValueException`; identified profiles that all refuse throw the first one's `InvalidPaymentQrException`; a payload that identifies no built profile gives `MerchantPresentedQr` |
 
 Payment references, typed parts of the QR-bill: `Reference\QrReference` (27 digits, recursive modulo 10) and
 `Reference\CreditorReference` (ISO 11649 `RF`, MOD 97-10; lowercase is folded to capitals). Both throw
@@ -169,7 +174,8 @@ Checked for length and character set, never for a check digit or a range no offi
   section 2.1, which is held to 331 characters (the transcoded form of `fromBytes()` input must still parse; the sets
   are checked without any extension, from the Unicode Consortium's mapping tables). Residual gap: such a payload given
   directly as UTF-8 may exceed 331 bytes in UTF-8. The content of the purpose code and of a non-RF reference is not
-  checked.
+  checked. The amount is held to EPC069-12's bounds only (0.01 to 999999999.99, 12 characters): the guidelines quoted
+  give no number of decimals, so `EUR1.999` is accepted and `amount()` may carry more than two decimals.
 - `QrBill`: the postal code "without a country", the billing-information syntax (`//` and an agreed code) and the
   alternative-procedure syntax are not checked; amount 0.00 is accepted (the "DO NOT USE FOR PAYMENT" notification).
   SIX IG 2.3's own Annex A example 4 (`RF72 0191 ...`) fails the ISO 11649 check and is refused.
@@ -178,8 +184,10 @@ Checked for length and character set, never for a check digit or a range no offi
   legal database); since the payload does not say whether an account is opened at an RKC or a credit institution, either
   conditional number gives a valid key. Treasury accounts of the Federal Treasury (first digit 0, e.g. `03100...`) are
   outside the order's scope (accounts of credit institutions and RKCs) and are never refused for their key. `masked()`
-  hides `PersonalAcc`, `PersAcc`, `PersonalAccount`, `PensAcc` and `PayerIdNum`. The separator must be an ASCII
-  graphic character (inferred from the eight-byte service block).
+  hides `PersonalAcc`, `PersAcc`, `PersonalAccount`, `PensAcc`, `PayerIdNum` and `PayerINN`. The separator must be an
+  ASCII graphic character (inferred from the eight-byte service block).
+- `Gost56042Payload`, `SbpPaymentLink`, `UpiPaymentUri`: at most 7089 characters, the largest QR content and, as on the
+  EMVCo classes, only a bound against abusive input.
 - `SbpPaymentLink`: format only. NSPK keeps the link layout in its SBP OPKTs standards on a closed portal, so neither
   the identifier length nor any query field (`type`, `bank`, `sum`, `cur`, `crc`) is checked.
 - `UpiPaymentUri`: the NPCI linking specification was not reached; NPCI's circular OC 18 gives `pa` and `pn` as

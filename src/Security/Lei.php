@@ -22,11 +22,14 @@ final class Lei extends AbstractStringValueObject
     private const string TYPE = 'LEI';
 
     /**
-     * @return string four characters
+     * @return non-empty-string four characters
      */
     public function louPrefix(): string
     {
-        return \substr($this->value, 0, 4);
+        $prefix = \substr($this->value, 0, 4);
+        \assert($prefix !== '');
+
+        return $prefix;
     }
 
     #[Override]

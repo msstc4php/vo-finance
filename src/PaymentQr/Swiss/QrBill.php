@@ -10,6 +10,7 @@ use MSSTC4PHP\ValueObject\Finance\Iban;
 use MSSTC4PHP\ValueObject\Financial\Exception\InvalidPaymentQrException;
 use MSSTC4PHP\ValueObject\Financial\Internal\Mask;
 use MSSTC4PHP\ValueObject\Financial\Internal\ProfileRule;
+use MSSTC4PHP\ValueObject\Financial\Internal\ReparsesOnUnserialize;
 use MSSTC4PHP\ValueObject\Financial\Internal\TextLines;
 use MSSTC4PHP\ValueObject\Financial\Reference\CreditorReference;
 use MSSTC4PHP\ValueObject\Financial\Reference\QrReference;
@@ -37,6 +38,8 @@ use Override;
  */
 final class QrBill extends AbstractStringValueObject implements Maskable
 {
+    use ReparsesOnUnserialize;
+
     private const string TYPE = 'QrBill';
 
     /** Section 4.1.1: Basic Latin, Latin-1 Supplement, Latin Extended-A, Ș ș Ț ț and €. */

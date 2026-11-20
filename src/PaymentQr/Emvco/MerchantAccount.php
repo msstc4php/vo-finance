@@ -35,7 +35,7 @@ final readonly class MerchantAccount
             throw new InvalidPaymentQrException('MerchantAccount ID must be 02 to 51.');
         }
 
-        $isTemplate = (int) $id >= 26;
+        $isTemplate = $id >= '26';
         if ($isTemplate !== ($globallyUniqueIdentifier !== null) || (!$isTemplate && $subFields !== [])) {
             throw new InvalidPaymentQrException('MerchantAccount has a GUI only for templates 26 to 51, and sub-fields only with it.');
         }
@@ -49,7 +49,17 @@ final readonly class MerchantAccount
             throw new InvalidPaymentQrException('MerchantAccount GUI must be 1 to 32 characters.');
         }
 
-        if ($this->describe(EmvcoTlv::parse($value)) !== $this->describe([new DataObject('00', $globallyUniqueIdentifier), ...$subFields])) {
+        $gui = null;
+        $others = [];
+        foreach (EmvcoTlv::parse($value) as $object) {
+            if ($object->id === '00' && $gui === null) {
+                $gui = $object->value;
+            } else {
+                $others[] = $object;
+            }
+        }
+
+        if ($gui !== $globallyUniqueIdentifier || $this->describe($others) !== $this->describe($subFields)) {
             throw new InvalidPaymentQrException('MerchantAccount value does not match its GUI and sub-fields.');
         }
     }

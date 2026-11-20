@@ -9,6 +9,7 @@ use MSSTC4PHP\ValueObject\Financial\Internal\Crc16CcittFalse;
 use MSSTC4PHP\ValueObject\Financial\Internal\EmvcoMask;
 use MSSTC4PHP\ValueObject\Financial\Internal\EmvcoMerchantPresented;
 use MSSTC4PHP\ValueObject\Financial\Internal\EmvcoTlv;
+use MSSTC4PHP\ValueObject\Financial\Internal\PayloadBound;
 use MSSTC4PHP\ValueObject\Financial\Internal\ProfilePayload;
 use MSSTC4PHP\ValueObject\Financial\Internal\ProfileRule;
 use MSSTC4PHP\ValueObject\Financial\PaymentQr\Emvco\DataObject;
@@ -35,6 +36,7 @@ use PHPUnit\Framework\TestCase;
 #[UsesClass(MerchantAccount::class)]
 #[UsesClass(DataObject::class)]
 #[UsesClass(InvalidPaymentQrException::class)]
+#[UsesClass(PayloadBound::class)]
 final class DuitNowQrTest extends TestCase
 {
     use BuildsPayloads;

@@ -8,6 +8,7 @@ use MSSTC4PHP\ValueObject\Financial\Exception\AmbiguousPaymentQrFieldException;
 use MSSTC4PHP\ValueObject\Financial\Exception\InvalidPaymentQrException;
 use MSSTC4PHP\ValueObject\Financial\Internal\EmvcoTlv;
 use MSSTC4PHP\ValueObject\Financial\Internal\Mask;
+use MSSTC4PHP\ValueObject\Financial\Internal\PayloadBound;
 use MSSTC4PHP\ValueObject\Financial\Internal\ProfileRule;
 use MSSTC4PHP\ValueObject\Financial\Internal\QueryString;
 use MSSTC4PHP\ValueObject\Financial\PaymentQr\India\UpiPaymentUri;
@@ -22,6 +23,7 @@ use PHPUnit\Framework\TestCase;
 #[UsesClass(EmvcoTlv::class)]
 #[UsesClass(Mask::class)]
 #[UsesClass(AmbiguousPaymentQrFieldException::class)]
+#[UsesClass(PayloadBound::class)]
 final class UpiPaymentUriTest extends TestCase
 {
     // Synthetic, with the parameters of NPCI UPI OC 18 (2017), Table 1, and its "tn=test%transaction" spacing example.
@@ -107,7 +109,7 @@ final class UpiPaymentUriTest extends TestCase
     {
         $masked = UpiPaymentUri::from(self::URI)->masked();
 
-        self::assertSame('upi://pay?pa=me*******bank&pn=Test%Merchant&tr=ORDER123&am=10.50&mam=5&cu=INR&tn=test%transaction', $masked);
+        self::assertSame('upi://pay?pa=*********bank&pn=Test%Merchant&tr=ORDER123&am=10.50&mam=5&cu=INR&tn=test%transaction', $masked);
         self::assertStringNotContainsString('merchant@bank', $masked);
     }
 
@@ -144,6 +146,18 @@ final class UpiPaymentUriTest extends TestCase
 
     public function testMaskedKeepsTheUriAsWritten(): void
     {
-        self::assertSame('UPI://PAY?pa=me*******bank&&flag&pn=A', UpiPaymentUri::from('UPI://PAY?pa=merchant@bank&&flag&pn=A')->masked());
+        self::assertSame('UPI://PAY?pa=*********bank&&flag&pn=A', UpiPaymentUri::from('UPI://PAY?pa=merchant@bank&&flag&pn=A')->masked());
+    }
+
+    public function testTheUriIsBoundedAtTheLargestQrContent(): void
+    {
+        $head = 'upi://pay?pa=merchant@bank&pn=Merchant&tn=';
+        $uri = $head . \str_repeat('a', 7089 - \strlen($head));
+        self::assertSame($uri, (string) UpiPaymentUri::from($uri));
+
+        $this->expectException(InvalidPaymentQrException::class);
+        $this->expectExceptionMessage('UpiPaymentUri must not exceed 7089 characters.');
+
+        UpiPaymentUri::from($uri . 'a');
     }
 }
