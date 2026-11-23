@@ -10,6 +10,7 @@ use MSSTC4PHP\ValueObject\Financial\Internal\Crc16CcittFalse;
 use MSSTC4PHP\ValueObject\Financial\Internal\EmvcoMask;
 use MSSTC4PHP\ValueObject\Financial\Internal\EmvcoMerchantPresented;
 use MSSTC4PHP\ValueObject\Financial\Internal\EmvcoTlv;
+use MSSTC4PHP\ValueObject\Financial\Internal\Mask;
 use MSSTC4PHP\ValueObject\Financial\Internal\PayloadBound;
 use MSSTC4PHP\ValueObject\Financial\Internal\ProfilePayload;
 use MSSTC4PHP\ValueObject\Financial\Internal\ProfileRule;
@@ -34,6 +35,7 @@ use PHPUnit\Framework\TestCase;
 #[UsesClass(ProfilePayload::class)]
 #[UsesClass(ProfileRule::class)]
 #[UsesClass(EmvcoMask::class)]
+#[UsesClass(Mask::class)]
 #[UsesClass(EmvcoMerchantPresented::class)]
 #[UsesClass(EmvcoTlv::class)]
 #[UsesClass(Crc16CcittFalse::class)]
@@ -115,7 +117,8 @@ final class JpqrCodeTest extends TestCase
         self::assertStringNotContainsString('paymentsjapan', $masked);
         self::assertStringContainsString('2668' . \str_repeat('*', 68), $masked);
         self::assertStringEndsWith('6304****', $masked);
-        self::assertStringContainsString('CASHLESS CAFE', $masked);
+        self::assertStringNotContainsString('CASHLESS CAFE', $masked);
+        self::assertStringContainsString('5904C***6003***6103***', $masked);
     }
 
     /**

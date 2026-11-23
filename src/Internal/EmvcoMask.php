@@ -11,7 +11,10 @@ use MSSTC4PHP\ValueObject\Financial\PaymentQr\Emvco\DataObject;
  * Writes root data objects with the values of the account-bearing IDs replaced by asterisks of the same character
  * count: merchant accounts 02 to 51, unreserved templates 80 to 99 and the CRC. In the Additional Data Field Template
  * (62) the mobile number (62-02) and the customer label (62-06), personal data in a person-to-person code, are masked
- * the same way. Headers and all other objects stay visible; the result is no valid payload.
+ * the same way. The merchant name (59), on a person-to-person code a person's name, keeps its first character; the
+ * city (60) and the postal code (61) become `***`, and so do, in the language template (64), the alternate name
+ * (64-01, first character kept) and city (64-02). Headers and all other objects stay visible; the result is no valid
+ * payload.
  *
  * @internal
  *
@@ -21,6 +24,13 @@ use MSSTC4PHP\ValueObject\Financial\PaymentQr\Emvco\DataObject;
 final class EmvcoMask
 {
     private const string ADDITIONAL_DATA = '62';
+
+    private const string LANGUAGE_TEMPLATE = '64';
+
+    private const string NAME = '59';
+
+    /** @var non-empty-list<non-empty-string> */
+    private const array ADDRESS = ['60', '61'];
 
     /** @var non-empty-list<non-empty-string> */
     private const array PERSONAL_ADDITIONAL_DATA = ['02', '06'];
@@ -36,7 +46,10 @@ final class EmvcoMask
         foreach ($objects as $object) {
             $masked .= EmvcoTlv::encode(match (true) {
                 self::isSecret($object->id) => self::asterisks($object),
+                $object->id === self::NAME => new DataObject($object->id, Mask::name($object->value)),
+                \in_array($object->id, self::ADDRESS, true) => new DataObject($object->id, Mask::ADDRESS),
                 $object->id === self::ADDITIONAL_DATA => self::additionalData($object),
+                $object->id === self::LANGUAGE_TEMPLATE => self::languageTemplate($object),
                 default => $object,
             });
         }
@@ -69,6 +82,31 @@ final class EmvcoMask
         foreach ($subFields as $subField) {
             $isPersonal = \in_array($subField->id, self::PERSONAL_ADDITIONAL_DATA, true);
             $value .= EmvcoTlv::encode($isPersonal ? self::asterisks($subField) : $subField);
+        }
+
+        \assert($value !== '');
+
+        return new DataObject($template->id, $value);
+    }
+
+    /**
+     * A template that is not TLV is masked whole.
+     */
+    private static function languageTemplate(DataObject $template): DataObject
+    {
+        try {
+            $subFields = EmvcoTlv::parse($template->value);
+        } catch (InvalidPaymentQrException) {
+            return new DataObject($template->id, Mask::ADDRESS);
+        }
+
+        $value = '';
+        foreach ($subFields as $subField) {
+            $value .= EmvcoTlv::encode(match ($subField->id) {
+                '01' => new DataObject($subField->id, Mask::name($subField->value)),
+                '02' => new DataObject($subField->id, Mask::ADDRESS),
+                default => $subField,
+            });
         }
 
         \assert($value !== '');

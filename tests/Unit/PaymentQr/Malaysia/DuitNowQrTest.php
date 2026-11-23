@@ -9,6 +9,7 @@ use MSSTC4PHP\ValueObject\Financial\Internal\Crc16CcittFalse;
 use MSSTC4PHP\ValueObject\Financial\Internal\EmvcoMask;
 use MSSTC4PHP\ValueObject\Financial\Internal\EmvcoMerchantPresented;
 use MSSTC4PHP\ValueObject\Financial\Internal\EmvcoTlv;
+use MSSTC4PHP\ValueObject\Financial\Internal\Mask;
 use MSSTC4PHP\ValueObject\Financial\Internal\PayloadBound;
 use MSSTC4PHP\ValueObject\Financial\Internal\ProfilePayload;
 use MSSTC4PHP\ValueObject\Financial\Internal\ProfileRule;
@@ -29,6 +30,7 @@ use PHPUnit\Framework\TestCase;
 #[UsesClass(ProfilePayload::class)]
 #[UsesClass(ProfileRule::class)]
 #[UsesClass(EmvcoMask::class)]
+#[UsesClass(Mask::class)]
 #[UsesClass(EmvcoMerchantPresented::class)]
 #[UsesClass(EmvcoTlv::class)]
 #[UsesClass(Crc16CcittFalse::class)]
@@ -138,7 +140,8 @@ final class DuitNowQrTest extends TestCase
         self::assertStringContainsString('2641' . \str_repeat('*', 41), $masked);
         self::assertStringEndsWith('6304****', $masked);
         self::assertStringNotContainsString('343F', $masked);
-        self::assertStringContainsString('QRCSDNBHD', $masked);
+        self::assertStringNotContainsString('QRCSDNBHD', $masked);
+        self::assertStringContainsString('5904Q***6003***', $masked);
     }
 
     public function testMaskingHidesTheDataIntegrityCheck(): void

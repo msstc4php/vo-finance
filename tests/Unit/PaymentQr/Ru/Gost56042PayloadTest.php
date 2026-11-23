@@ -198,6 +198,16 @@ final class Gost56042PayloadTest extends TestCase
         new Gost56042Payload($payload);
     }
 
+    public function testMaskedHidesNamesAndTheAddress(): void
+    {
+        $masked = Gost56042Payload::from('ST00012|' . self::MANDATORY . '|LastName=Иванов|FirstName=Иван|MiddleName=Иванович|childFio=Петров Петр|PayerAddress=г.Рязань ул.Ленина д.10 кв.15|Purpose=Взнос')->masked();
+
+        self::assertStringEndsWith('|LastName=И***|FirstName=И***|MiddleName=И***|childFio=П***|PayerAddress=***|Purpose=Взнос', $masked);
+        self::assertStringNotContainsString('Рязань', $masked);
+        self::assertStringEndsWith('|LastName=|PersAcc=', Gost56042Payload::from('ST00012|' . self::MANDATORY . '|LastName=|PersAcc=')->masked());
+        self::assertStringNotContainsString('Три кита', $masked);
+    }
+
     public function testMaskedHidesThePayeeAndPayerAccounts(): void
     {
         $gost = Gost56042Payload::from('ST00012|' . self::MANDATORY . '|PersAcc=1234567890|PersonalAccount=04123456789|PensAcc=11223344595|payerIdNum=4510123456|PayerINN=500100732259|Sum=100');
@@ -205,7 +215,7 @@ final class Gost56042PayloadTest extends TestCase
         $masked = $gost->masked();
 
         self::assertSame(
-            'ST00012|Name=ООО "Три кита"|PersonalAcc=40**************3017|BankName=ОАО "БАНК"|BIC=044525225|CorrespAcc=30101810400000000225'
+            'ST00012|Name=О***|PersonalAcc=40**************3017|BankName=ОАО "БАНК"|BIC=044525225|CorrespAcc=30101810400000000225'
             . '|PersAcc=********90|PersonalAccount=*********89|PensAcc=*********95|payerIdNum=********56|PayerINN=********2259|Sum=100',
             $masked,
         );

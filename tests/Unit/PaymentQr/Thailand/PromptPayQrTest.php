@@ -10,6 +10,7 @@ use MSSTC4PHP\ValueObject\Financial\Internal\Crc16CcittFalse;
 use MSSTC4PHP\ValueObject\Financial\Internal\EmvcoMask;
 use MSSTC4PHP\ValueObject\Financial\Internal\EmvcoMerchantPresented;
 use MSSTC4PHP\ValueObject\Financial\Internal\EmvcoTlv;
+use MSSTC4PHP\ValueObject\Financial\Internal\Mask;
 use MSSTC4PHP\ValueObject\Financial\Internal\PayloadBound;
 use MSSTC4PHP\ValueObject\Financial\Internal\ProfilePayload;
 use MSSTC4PHP\ValueObject\Financial\Internal\ProfileRule;
@@ -33,6 +34,7 @@ use PHPUnit\Framework\TestCase;
 #[UsesClass(ProfilePayload::class)]
 #[UsesClass(ProfileRule::class)]
 #[UsesClass(EmvcoMask::class)]
+#[UsesClass(Mask::class)]
 #[UsesClass(EmvcoMerchantPresented::class)]
 #[UsesClass(EmvcoTlv::class)]
 #[UsesClass(Crc16CcittFalse::class)]
@@ -203,7 +205,7 @@ final class PromptPayQrTest extends TestCase
         self::assertStringNotContainsString('A000000677010111', $masked);
         self::assertStringContainsString('2937' . \str_repeat('*', 37), $masked);
         self::assertStringEndsWith('6304****', $masked);
-        self::assertStringContainsString('Shop', $masked);
+        self::assertStringContainsString('5904S***', $masked);
     }
 
     public function testMaskingHidesTheBillerId(): void

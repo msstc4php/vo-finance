@@ -11,6 +11,7 @@ use MSSTC4PHP\ValueObject\Financial\Internal\Crc16CcittFalse;
 use MSSTC4PHP\ValueObject\Financial\Internal\EmvcoMask;
 use MSSTC4PHP\ValueObject\Financial\Internal\EmvcoMerchantPresented;
 use MSSTC4PHP\ValueObject\Financial\Internal\EmvcoTlv;
+use MSSTC4PHP\ValueObject\Financial\Internal\Mask;
 use MSSTC4PHP\ValueObject\Financial\Internal\PayloadBound;
 use MSSTC4PHP\ValueObject\Financial\PaymentQr\Emvco\DataObject;
 use MSSTC4PHP\ValueObject\Financial\PaymentQr\Emvco\MerchantAccount;
@@ -29,6 +30,7 @@ use PHPUnit\Framework\TestCase;
 #[CoversClass(PointOfInitiation::class)]
 #[CoversClass(InvalidPaymentQrException::class)]
 #[UsesClass(EmvcoMask::class)]
+#[UsesClass(Mask::class)]
 #[CoversClass(EmvcoMerchantPresented::class)]
 #[UsesClass(EmvcoTlv::class)]
 #[UsesClass(Crc16CcittFalse::class)]
@@ -150,10 +152,25 @@ final class MerchantPresentedQrTest extends TestCase
             self::assertStringNotContainsString($secret, $masked);
         }
 
-        self::assertStringContainsString('BEST TRANSPORT', $masked);
-        self::assertStringContainsString('最佳运输', $masked);
         self::assertStringContainsString('9132' . str_repeat('*', 32), $masked);
         self::assertStringEndsWith('6304****', $masked);
+    }
+
+    public function testMaskedHidesTheMerchantNameCityPostalCodeAndTheirAlternatesInTheLanguageTemplate(): void
+    {
+        $masked = new MerchantPresentedQr(self::EMVCO_ANNEX_B7)->masked();
+
+        foreach (['BEST TRANSPORT', 'BEIJING', '最佳运输', '北京'] as $personal) {
+            self::assertStringNotContainsString($personal, $masked);
+        }
+
+        self::assertStringContainsString('5904B***6003***64210002ZH0104最***0203***', $masked);
+        self::assertStringContainsString('6103***', new MerchantPresentedQr(self::sealed(self::MINIMAL_BODY . '610512345'))->masked());
+    }
+
+    public function testALanguageTemplateThatIsNotTlvIsMaskedWhole(): void
+    {
+        self::assertStringContainsString('6403***', new MerchantPresentedQr(self::sealed(self::MINIMAL_BODY . '6404ABCD'))->masked());
     }
 
     public function testMaskedHidesTheMobileNumberAndTheCustomerLabelOfTheAdditionalData(): void
@@ -253,13 +270,13 @@ final class MerchantPresentedQrTest extends TestCase
         $qr = new MerchantPresentedQr(self::BCB_PAYLOAD);
         $masked = $qr->masked();
 
-        self::assertSame(\strlen(self::BCB_PAYLOAD), \strlen($masked));
         self::assertStringNotContainsString('12345678901234', $masked);
         self::assertStringNotContainsString('BR.GOV.BCB.PIX', $masked);
         self::assertStringNotContainsString('123e4567', $masked);
         self::assertStringNotContainsString('0123456789', $masked);
-        self::assertStringContainsString('NOME DO RECEBEDOR', $masked);
-        self::assertStringContainsString('BRASILIA', $masked);
+        self::assertStringNotContainsString('NOME DO RECEBEDOR', $masked);
+        self::assertStringNotContainsString('BRASILIA', $masked);
+        self::assertStringNotContainsString('70074900', $masked);
         self::assertStringContainsString('RP12345678-2019', $masked);
         self::assertStringStartsWith('0002010414**************2658' . str_repeat('*', 58) . '2730', $masked);
         self::assertSame(self::BCB_PAYLOAD, $qr->value);

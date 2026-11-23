@@ -9,6 +9,7 @@ use MSSTC4PHP\ValueObject\Financial\Internal\Crc16CcittFalse;
 use MSSTC4PHP\ValueObject\Financial\Internal\EmvcoMask;
 use MSSTC4PHP\ValueObject\Financial\Internal\EmvcoMerchantPresented;
 use MSSTC4PHP\ValueObject\Financial\Internal\EmvcoTlv;
+use MSSTC4PHP\ValueObject\Financial\Internal\Mask;
 use MSSTC4PHP\ValueObject\Financial\Internal\PayloadBound;
 use MSSTC4PHP\ValueObject\Financial\Internal\ProfilePayload;
 use MSSTC4PHP\ValueObject\Financial\Internal\ProfileRule;
@@ -26,6 +27,7 @@ use PHPUnit\Framework\TestCase;
 #[CoversClass(EmvcoMask::class)]
 #[CoversClass(EmvcoMerchantPresented::class)]
 #[UsesClass(EmvcoTlv::class)]
+#[UsesClass(Mask::class)]
 #[UsesClass(Crc16CcittFalse::class)]
 #[UsesClass(MerchantPresentedQr::class)]
 #[UsesClass(MerchantAccount::class)]
@@ -187,6 +189,19 @@ final class ProfilePayloadTest extends TestCase
 
         self::assertSame('0002010102120204****2603***5101*5204000062130503REF0202**7903rfu8004****9904****6304****', $masked);
         self::assertSame('6204****', EmvcoMask::apply([new DataObject('62', 'keep')]));
+    }
+
+    public function testMaskHidesTheNameAndTheAddressOfTheMerchant(): void
+    {
+        $masked = EmvcoMask::apply([
+            new DataObject('59', 'Jane Doe'),
+            new DataObject('60', 'Town'),
+            new DataObject('61', '12345'),
+            new DataObject('64', '0002EN0108Jane Doe0204Town0302xy'),
+        ]);
+
+        self::assertSame('5904J***6003***6103***64270002EN0104J***0203***0302xy', $masked);
+        self::assertSame('6403***', EmvcoMask::apply([new DataObject('64', 'ABCD')]));
     }
 
     public function testEnsureNamesTheProfileAndTheRuleOnly(): void

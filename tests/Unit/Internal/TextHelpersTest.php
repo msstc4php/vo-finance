@@ -45,13 +45,20 @@ final class TextHelpersTest extends TestCase
         self::assertSame($expected, Mask::keepEnds($value));
     }
 
+    public function testANameKeepsItsFirstCharacterOnly(): void
+    {
+        self::assertSame('И***', Mask::name('Иванов'));
+        self::assertSame("\n***", Mask::name("\nx"));
+        self::assertSame('***', Mask::name(''));
+    }
+
     public function testLinesKeepEverySeparator(): void
     {
         $lines = TextLines::parse("a\r\nb\nc\n", 'Test');
 
         self::assertSame(['a', 'b', 'c', ''], $lines->lines);
         self::assertFalse($lines->isUniform());
-        self::assertSame("a\r\nX\nc\n", $lines->withLine(1, 'X'));
+        self::assertSame("a\r\nX\nc\n", $lines->withLines([1 => 'X']));
         self::assertSame('', $lines->line(4));
     }
 
@@ -88,7 +95,7 @@ final class TextHelpersTest extends TestCase
         self::assertSame('', $query->single('b', 'Test'));
         self::assertSame('x=y', $query->single('c', 'Test'));
         self::assertNull($query->single('d', 'Test'));
-        self::assertSame('a=*&&b&a=*&c=x=y', $query->withMasked('a', static fn (string $value): string => '*'));
+        self::assertSame('a=*&&b&a=*&c=x=y', $query->withMasked(['a' => static fn (string $value): string => '*']));
     }
 
     public function testQueryStringAmbiguityNamesOnlyAPlainParameter(): void

@@ -10,6 +10,7 @@ use MSSTC4PHP\ValueObject\Financial\Internal\Crc16CcittFalse;
 use MSSTC4PHP\ValueObject\Financial\Internal\EmvcoMask;
 use MSSTC4PHP\ValueObject\Financial\Internal\EmvcoMerchantPresented;
 use MSSTC4PHP\ValueObject\Financial\Internal\EmvcoTlv;
+use MSSTC4PHP\ValueObject\Financial\Internal\Mask;
 use MSSTC4PHP\ValueObject\Financial\Internal\PayloadBound;
 use MSSTC4PHP\ValueObject\Financial\Internal\ProfilePayload;
 use MSSTC4PHP\ValueObject\Financial\Internal\ProfileRule;
@@ -30,6 +31,7 @@ use PHPUnit\Framework\TestCase;
 #[UsesClass(ProfilePayload::class)]
 #[UsesClass(ProfileRule::class)]
 #[UsesClass(EmvcoMask::class)]
+#[UsesClass(Mask::class)]
 #[UsesClass(EmvcoMerchantPresented::class)]
 #[UsesClass(EmvcoTlv::class)]
 #[UsesClass(Crc16CcittFalse::class)]
@@ -215,7 +217,9 @@ final class KhqrCodeTest extends TestCase
         self::assertStringNotContainsString('1234567812345678901234', $masked);
         self::assertStringContainsString('2946' . \str_repeat('*', 46), $masked);
         self::assertStringEndsWith('6304****', $masked);
-        self::assertStringContainsString('John Smith', $masked);
+        self::assertStringNotContainsString('John Smith', $masked);
+        self::assertStringNotContainsString('Phnom Penh', $masked);
+        self::assertStringContainsString('5904J***6003***', $masked);
     }
 
     /**

@@ -68,12 +68,13 @@ final readonly class TextLines
     }
 
     /**
-     * The payload with one line replaced and every separator as given.
+     * The payload with the given lines replaced and every separator as given.
+     *
+     * @param array<int, string> $replacements the new lines by index
      */
-    public function withLine(int $index, string $line): string
+    public function withLines(array $replacements): string
     {
-        $lines = $this->lines;
-        $lines[$index] = $line;
+        $lines = \array_replace($this->lines, $replacements);
 
         $text = '';
         foreach ($lines as $position => $current) {

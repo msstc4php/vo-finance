@@ -94,19 +94,33 @@ final readonly class QueryString
     }
 
     /**
-     * The query as written with every value of `$name` replaced by the result of `$mask`; other pairs, pairs without
-     * `=` and empty pairs stay as they are.
+     * The query as written with every value of a named parameter replaced by the result of its mask; other pairs,
+     * pairs without `=` and empty pairs stay as they are.
      *
-     * @param Closure(string): string $mask
+     * @param array<string, Closure(string): string> $masks by parameter name
      */
-    public function withMasked(string $name, Closure $mask): string
+    public function withMasked(array $masks): string
     {
-        $prefix = $name . '=';
         $parts = [];
         foreach (\explode('&', $this->query) as $pair) {
-            $parts[] = \str_starts_with($pair, $prefix) ? $prefix . $mask(\substr($pair, \strlen($prefix))) : $pair;
+            $parts[] = $this->maskPair($pair, $masks);
         }
 
         return \implode('&', $parts);
+    }
+
+    /**
+     * @param array<string, Closure(string): string> $masks
+     */
+    private function maskPair(string $pair, array $masks): string
+    {
+        foreach ($masks as $name => $mask) {
+            $prefix = $name . '=';
+            if (\str_starts_with($pair, $prefix)) {
+                return $prefix . $mask(\substr($pair, \strlen($prefix)));
+            }
+        }
+
+        return $pair;
     }
 }

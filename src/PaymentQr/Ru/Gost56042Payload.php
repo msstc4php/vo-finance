@@ -32,6 +32,8 @@ use Override;
  * accounts and identifiers of Annex V: the payee's account (`PersonalAcc`), the payer's account with the provider
  * (`PersAcc`), the budget recipient's personal account (`PersonalAccount`), and the identifiers of the payer as a
  * person: the SNILS (`PensAcc`), the identity document number (`PayerIdNum`) and the taxpayer number (`PayerINN`).
+ * Of the names (`Name`, `LastName`, `FirstName`, `MiddleName`, `ChildFio`) it keeps the first character, and it
+ * replaces the payer's address (`PayerAddress`) with `***`.
  *
  * @see https://files.stroyinf.ru/Data2/1/4293771/4293771168.htm GOST R 56042-2014 (as quoted), sections 5.2 to 5.5, Annexes V and D
  * @see https://pravo.ppt.ru/poryadok/98817 Bank of Russia, Order 515 of 08.09.1997 (as quoted)
@@ -56,6 +58,10 @@ final class Gost56042Payload extends AbstractStringValueObject implements Paymen
     ];
 
     private const array MASKED = ['personalacc', 'persacc', 'personalaccount', 'pensacc', 'payeridnum', 'payerinn'];
+
+    private const array NAMES = ['name', 'lastname', 'firstname', 'middlename', 'childfio'];
+
+    private const array ADDRESSES = ['payeraddress'];
 
     /** @var non-empty-list<array{non-empty-string, string}> */
     private array $pairs;
@@ -165,7 +171,7 @@ final class Gost56042Payload extends AbstractStringValueObject implements Paymen
     {
         $parts = [];
         foreach ($this->pairs as [$alias, $value]) {
-            $parts[] = $alias . '=' . (\in_array(\strtolower($alias), self::MASKED, true) ? Mask::keepEnds($value) : $value);
+            $parts[] = $alias . '=' . $this->maskValue(\strtolower($alias), $value);
         }
 
         return \substr($this->value, 0, 8) . \implode($this->separator(), $parts);
@@ -213,6 +219,17 @@ final class Gost56042Payload extends AbstractStringValueObject implements Paymen
         }
 
         return $value;
+    }
+
+    private function maskValue(string $alias, string $value): string
+    {
+        return match (true) {
+            $value === '' => '',
+            \in_array($alias, self::MASKED, true) => Mask::keepEnds($value),
+            \in_array($alias, self::NAMES, true) => Mask::name($value),
+            \in_array($alias, self::ADDRESSES, true) => Mask::ADDRESS,
+            default => $value,
+        };
     }
 
     /**

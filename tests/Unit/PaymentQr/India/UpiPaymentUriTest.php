@@ -119,7 +119,7 @@ final class UpiPaymentUriTest extends TestCase
     {
         $masked = UpiPaymentUri::from(self::URI)->masked();
 
-        self::assertSame('upi://pay?pa=*********bank&pn=Test%Merchant&tr=ORDER123&am=10.50&mam=5&cu=INR&tn=test%transaction', $masked);
+        self::assertSame('upi://pay?pa=*********bank&pn=T***&tr=ORDER123&am=10.50&mam=5&cu=INR&tn=test%transaction', $masked);
         self::assertStringNotContainsString('merchant@bank', $masked);
     }
 
@@ -156,7 +156,7 @@ final class UpiPaymentUriTest extends TestCase
 
     public function testMaskedKeepsTheUriAsWritten(): void
     {
-        self::assertSame('UPI://PAY?pa=*********bank&&flag&pn=A', UpiPaymentUri::from('UPI://PAY?pa=merchant@bank&&flag&pn=A')->masked());
+        self::assertSame('UPI://PAY?pa=*********bank&&flag&pn=A***', UpiPaymentUri::from('UPI://PAY?pa=merchant@bank&&flag&pn=A')->masked());
     }
 
     public function testTheUriIsBoundedAtTheLargestQrContent(): void

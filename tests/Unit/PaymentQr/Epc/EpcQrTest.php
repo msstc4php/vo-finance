@@ -385,8 +385,10 @@ final class EpcQrTest extends TestCase
         $lines = self::V1;
         $masked = EpcQr::from(\implode("\r\n", $lines))->masked();
 
+        $lines[5] = 'F***';
         $lines[6] = 'DE****************6789';
         self::assertSame(\implode("\r\n", $lines), $masked);
+        self::assertStringNotContainsString('Mustermänn', $masked);
         self::assertStringNotContainsString('DE71110220330123456789', $masked);
         self::assertFalse(EpcQr::isValid($masked));
     }

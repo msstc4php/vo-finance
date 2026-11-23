@@ -393,7 +393,19 @@ final class QrBillTest extends TestCase
         $masked = QrBill::from(\implode("\r\n", $lines))->masked();
 
         $lines[3] = 'CH***************1557';
+        [$lines[5], $lines[6], $lines[7], $lines[8], $lines[9]] = ['M***', '***', '***', '***', '***'];
+        [$lines[21], $lines[22], $lines[23], $lines[24], $lines[25]] = ['S***', '***', '***', '***', '***'];
         self::assertSame(\implode("\r\n", $lines), $masked);
+        self::assertStringNotContainsString('Muster', $masked);
+        self::assertStringNotContainsString('Seldwyla', $masked);
+    }
+
+    public function testMaskedLeavesAnEmptyAddressElementEmpty(): void
+    {
+        $lines = $this->exampleThree();
+        $masked = QrBill::from(\implode("\n", $lines))->masked();
+
+        self::assertSame(['S', 'M***', '***', '', '***', '***', 'CH'], \array_slice(\explode("\n", $masked), 4, 7));
         self::assertFalse(QrBill::isValid($masked));
     }
 

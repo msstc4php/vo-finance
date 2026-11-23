@@ -10,6 +10,7 @@ use MSSTC4PHP\ValueObject\Financial\Internal\Crc16CcittFalse;
 use MSSTC4PHP\ValueObject\Financial\Internal\EmvcoMask;
 use MSSTC4PHP\ValueObject\Financial\Internal\EmvcoMerchantPresented;
 use MSSTC4PHP\ValueObject\Financial\Internal\EmvcoTlv;
+use MSSTC4PHP\ValueObject\Financial\Internal\Mask;
 use MSSTC4PHP\ValueObject\Financial\Internal\PayloadBound;
 use MSSTC4PHP\ValueObject\Financial\Internal\ProfilePayload;
 use MSSTC4PHP\ValueObject\Financial\Internal\ProfileRule;
@@ -31,6 +32,7 @@ use PHPUnit\Framework\TestCase;
 #[UsesClass(ProfilePayload::class)]
 #[UsesClass(ProfileRule::class)]
 #[UsesClass(EmvcoMask::class)]
+#[UsesClass(Mask::class)]
 #[UsesClass(EmvcoMerchantPresented::class)]
 #[UsesClass(EmvcoTlv::class)]
 #[UsesClass(Crc16CcittFalse::class)]
@@ -325,7 +327,8 @@ final class PixBrCodeTest extends TestCase
         self::assertStringNotContainsString('1D3D', $masked);
         self::assertStringContainsString('2658' . \str_repeat('*', 58), $masked);
         self::assertStringEndsWith('6304****', $masked);
-        self::assertStringContainsString('Fulano de Tal', $masked);
+        self::assertStringNotContainsString('Fulano de Tal', $masked);
+        self::assertStringContainsString('5904F***6003***', $masked);
     }
 
     public function testMaskingHidesThePaymentUrlAndTheRecurrenceUrl(): void
