@@ -50,7 +50,7 @@ final class SbpPaymentLink extends AbstractStringValueObject implements PaymentP
      *
      * @return non-empty-string|null
      *
-     * @throws AmbiguousPaymentQrFieldException when the parameter repeats with distinct values
+     * @throws AmbiguousPaymentQrFieldException when the parameter repeats with distinct non-empty values
      */
     public function get(string $name): ?string
     {

@@ -393,6 +393,21 @@ final class EpcQrTest extends TestCase
         self::assertFalse(EpcQr::isValid($masked));
     }
 
+    public function testMaskedHidesTheRemittanceTextAndTheBeneficiaryToOriginatorInformation(): void
+    {
+        $lines = [...self::V2, 'Thanks, Marie'];
+        $lines[2] = '1';
+        $masked = EpcQr::from(\implode("\n", $lines))->masked();
+
+        self::assertSame(['F***', 'FR*********************2606', 'EUR12.3', '', '', '***', '***'], \array_slice(\explode("\n", $masked), 5));
+        self::assertStringNotContainsString('Marie', $masked);
+    }
+
+    public function testMaskedKeepsTheStructuredReference(): void
+    {
+        self::assertStringEndsWith("\nRF18539007547034", EpcQr::from(\implode("\n", self::V1))->masked());
+    }
+
     public function testMessagesCarryNoPartOfThePayload(): void
     {
         $lines = self::V1;

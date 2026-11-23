@@ -202,10 +202,19 @@ final class Gost56042PayloadTest extends TestCase
     {
         $masked = Gost56042Payload::from('ST00012|' . self::MANDATORY . '|LastName=Иванов|FirstName=Иван|MiddleName=Иванович|childFio=Петров Петр|PayerAddress=г.Рязань ул.Ленина д.10 кв.15|Purpose=Взнос')->masked();
 
-        self::assertStringEndsWith('|LastName=И***|FirstName=И***|MiddleName=И***|childFio=П***|PayerAddress=***|Purpose=Взнос', $masked);
+        self::assertStringEndsWith('|LastName=И***|FirstName=И***|MiddleName=И***|childFio=П***|PayerAddress=***|Purpose=***', $masked);
+        self::assertStringNotContainsString('Взнос', $masked);
         self::assertStringNotContainsString('Рязань', $masked);
         self::assertStringEndsWith('|LastName=|PersAcc=', Gost56042Payload::from('ST00012|' . self::MANDATORY . '|LastName=|PersAcc=')->masked());
         self::assertStringNotContainsString('Три кита', $masked);
+    }
+
+    public function testMaskedHidesThePhoneFlatBirthDateAndSpecialistButKeepsTheReferences(): void
+    {
+        $masked = Gost56042Payload::from('ST00012|' . self::MANDATORY . '|Phone=79101234567|Flat=15|BirthDate=01.02.2010|SpecFio=Сидорова Анна|Contract=Д-17|UIN=18810177220110012345|Sum=100000')->masked();
+
+        self::assertStringEndsWith('|Phone=*********67|Flat=***|BirthDate=***|SpecFio=С***|Contract=Д-17|UIN=18810177220110012345|Sum=100000', $masked);
+        self::assertStringEndsWith('|Purpose=|Phone=', Gost56042Payload::from('ST00012|' . self::MANDATORY . '|Purpose=|Phone=')->masked());
     }
 
     public function testMaskedHidesThePayeeAndPayerAccounts(): void

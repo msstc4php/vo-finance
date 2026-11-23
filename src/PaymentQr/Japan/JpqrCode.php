@@ -81,6 +81,15 @@ final class JpqrCode extends AbstractStringValueObject implements EmvcoPayload
     }
 
     /**
+     * @return non-empty-string
+     */
+    #[Override]
+    public function postalCode(): string
+    {
+        return $this->payload->get('61') ?? throw new LogicException('A validated payload lacks the postal code.');
+    }
+
+    /**
      * The merchant name in the language of the language template (64-01), in Japanese as a rule.
      *
      * @return non-empty-string

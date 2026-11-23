@@ -32,7 +32,9 @@ use Override;
  * separator ends an element, so a final separator counts as one more (empty) element within the 34; the payload is
  * kept byte for byte. {@see masked()} hides the IBAN, keeps the first character of the creditor's and the ultimate
  * debtor's name and replaces their street, building number, postal code and town with `***`; the address type and
- * the country stay.
+ * the country stay. The free text of a filled unstructured message (`Ustrd`) and of both alternative procedures
+ * (`AltPmt`) becomes `***` too; the reference and the billing information (`StrdBkgInf`, structured Swico `//S1/`
+ * codes) stay.
  *
  * @see https://www.six-group.com/dam/download/banking-services/standardization/qr-bill/ig-qr-bill-v2.3-en.pdf SIX Swiss Implementation Guidelines for the QR-bill 2.3, sections 2.8, 4.1 to 4.4 and Annex A
  * @see https://github.com/msstc4php/vo-finance/blob/main/docs/sources/FINANCE.md "SIX QR-bill layout"
@@ -152,6 +154,12 @@ final class QrBill extends AbstractStringValueObject implements PaymentPayload
     public function masked(): string
     {
         $replacements = [3 => Mask::keepEnds($this->iban->value)];
+        foreach ([29, 32, 33] as $index) {
+            if ($this->optional($index) !== null) {
+                $replacements[$index] = Mask::TEXT;
+            }
+        }
+
         foreach ([4, 20] as $start) {
             foreach ($this->maskedAddress($start) as $index => $line) {
                 $replacements[$index] = $line;

@@ -31,11 +31,17 @@ references.
 - GOST: last occurrence of an alias wins (standard); every occurrence of a mandatory alias must have its format;
   20-digit accounts in Order 515's scope (first digit 1-9; treasury `0...` exempt), every occurrence, must pass the key
   with either the RKC (`0`+BIC[5..6]) or credit-institution (BIC[7..9]) number.
-- `masked()`: EPC/QR-bill IBAN line, GOST `PersonalAcc`/`PersAcc`/`PersonalAccount`/`PensAcc`/`PayerIdNum`/`PayerINN`,
+- `masked()`: EPC/QR-bill IBAN line, GOST `PersonalAcc`/`PersAcc`/`PersonalAccount`/`PensAcc`/`PayerIdNum`/`PayerINN`/`Phone`,
   SBP identifier, UPI `pa` (rest of the URI as written); `Mask::keepEnds` keeps nothing at <= 6 characters, the last 2
   at 7-11, the last 4 at 12-17, first 2 + last 4 from 18; references stay visible. EMVCo `masked()` also hides 62-02
   (mobile number) and 62-06 (customer label).
 - Personal data in `masked()` (owner ruling O4): `Mask::name()` keeps the first character + `***` (length not kept),
   `Mask::ADDRESS` is `***`. EPC line 5; QR-bill name/street/building/postal/town of creditor and ultimate debtor (empty
   elements stay empty, type and country stay); EMVCo 59, 60, 61, 64-01, 64-02 (64 not TLV: `***` whole); UPI `pn`;
-  GOST `name`, `lastname`, `firstname`, `middlename`, `childfio`, `payeraddress` (empty values stay empty).
+  GOST `name`, `lastname`, `firstname`, `middlename`, `childfio`, `specfio` (names), `payeraddress`, `flat`,
+  `birthdate` (`***`) (empty values stay empty).
+- Free text in `masked()` (1.0 masking principle, fix10 CR-001/CR-007): `Mask::TEXT` / `Mask::text()` is `***` for a
+  filled value, empty stays empty. QR-bill lines 29 (`Ustrd`), 32, 33 (`AltPmt`), 0-based; line 31 (`StrdBkgInf`, Swico
+  `//S1/`) stays. EPC lines 10, 11 (0-based). EMVCo 62-08. UPI `tn`. GOST `purpose`. SBP query: unknown fields, visible.
+  Rule of thumb: hide what names/locates a person or is free text; keep machine codes (amounts, currency, RF/QRR, MCC,
+  country).

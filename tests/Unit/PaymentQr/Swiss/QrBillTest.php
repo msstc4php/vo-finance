@@ -395,9 +395,28 @@ final class QrBillTest extends TestCase
         $lines[3] = 'CH***************1557';
         [$lines[5], $lines[6], $lines[7], $lines[8], $lines[9]] = ['M***', '***', '***', '***', '***'];
         [$lines[21], $lines[22], $lines[23], $lines[24], $lines[25]] = ['S***', '***', '***', '***', '***'];
+        $lines[29] = '***';
         self::assertSame(\implode("\r\n", $lines), $masked);
         self::assertStringNotContainsString('Muster', $masked);
         self::assertStringNotContainsString('Seldwyla', $masked);
+        self::assertStringNotContainsString('Payment of travel', $masked);
+    }
+
+    public function testMaskedHidesTheMessageAndBothAlternativeProceduresButKeepsTheBillingInformation(): void
+    {
+        $lines = [...$this->exampleTwo(), 'twint/light/simon.muster@example.com'];
+        $masked = \explode("\n", QrBill::from(\implode("\n", $lines))->masked());
+
+        self::assertSame(['210000000003139471430009017', '***', 'EPD', '//S1/10/1234/11/201021/30/102673386/32/7.7/40/0:30', '***', '***'], \array_slice($masked, 28));
+        self::assertStringNotContainsString('Order from 15.10.2020', \implode("\n", $masked));
+        self::assertStringNotContainsString('simon.muster@example.com', \implode("\n", $masked));
+    }
+
+    public function testMaskedLeavesAnEmptyMessageAndAbsentAlternativeProceduresEmpty(): void
+    {
+        $masked = QrBill::from(\implode("\n", $this->exampleThree()))->masked();
+
+        self::assertSame(['', 'EPD', '', '', ''], \array_slice(\explode("\n", $masked), 29));
     }
 
     public function testMaskedLeavesAnEmptyAddressElementEmpty(): void

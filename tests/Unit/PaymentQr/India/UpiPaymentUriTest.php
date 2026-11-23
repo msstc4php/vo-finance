@@ -71,6 +71,23 @@ final class UpiPaymentUriTest extends TestCase
         self::assertNull($uri->get('tn'));
     }
 
+    public function testAnEmptyRepeatBesideOneFilledValueGivesThatValue(): void
+    {
+        $uri = UpiPaymentUri::from('upi://pay?pa=merchant@bank&pn=Shop&am=&am=10&am=10&tn');
+
+        self::assertSame('10', $uri->writtenAmount());
+        self::assertSame('10', $uri->get('am'));
+    }
+
+    public function testTwoDistinctFilledValuesBesideAnEmptyOneStayAmbiguous(): void
+    {
+        $uri = UpiPaymentUri::from('upi://pay?pa=merchant@bank&pn=Shop&am=&am=10&am=11');
+
+        $this->expectException(AmbiguousPaymentQrFieldException::class);
+
+        $uri->writtenAmount();
+    }
+
     public function testSchemeIsCaseInsensitive(): void
     {
         self::assertTrue(UpiPaymentUri::isValid('UPI://PAY?pa=a@b&pn=A'));
@@ -119,7 +136,7 @@ final class UpiPaymentUriTest extends TestCase
     {
         $masked = UpiPaymentUri::from(self::URI)->masked();
 
-        self::assertSame('upi://pay?pa=*********bank&pn=T***&tr=ORDER123&am=10.50&mam=5&cu=INR&tn=test%transaction', $masked);
+        self::assertSame('upi://pay?pa=*********bank&pn=T***&tr=ORDER123&am=10.50&mam=5&cu=INR&tn=***', $masked);
         self::assertStringNotContainsString('merchant@bank', $masked);
     }
 
@@ -157,6 +174,7 @@ final class UpiPaymentUriTest extends TestCase
     public function testMaskedKeepsTheUriAsWritten(): void
     {
         self::assertSame('UPI://PAY?pa=*********bank&&flag&pn=A***', UpiPaymentUri::from('UPI://PAY?pa=merchant@bank&&flag&pn=A')->masked());
+        self::assertSame('upi://pay?pa=*********bank&pn=A***&tn=&tn=***&tn', UpiPaymentUri::from('upi://pay?pa=merchant@bank&pn=A&tn=&tn=Rent%for%Anna&tn')->masked());
     }
 
     public function testTheUriIsBoundedAtTheLargestQrContent(): void

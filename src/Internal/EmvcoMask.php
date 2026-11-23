@@ -11,7 +11,7 @@ use MSSTC4PHP\ValueObject\Financial\PaymentQr\Emvco\DataObject;
  * Writes root data objects with the values of the account-bearing IDs replaced by asterisks of the same character
  * count: merchant accounts 02 to 51, unreserved templates 80 to 99 and the CRC. In the Additional Data Field Template
  * (62) the mobile number (62-02) and the customer label (62-06), personal data in a person-to-person code, are masked
- * the same way. The merchant name (59), on a person-to-person code a person's name, keeps its first character; the
+ * the same way, and the free-text purpose of transaction (62-08) becomes `***`. The merchant name (59), on a person-to-person code a person's name, keeps its first character; the
  * city (60) and the postal code (61) become `***`, and so do, in the language template (64), the alternate name
  * (64-01, first character kept) and city (64-02). Headers and all other objects stay visible; the result is no valid
  * payload.
@@ -34,6 +34,8 @@ final class EmvcoMask
 
     /** @var non-empty-list<non-empty-string> */
     private const array PERSONAL_ADDITIONAL_DATA = ['02', '06'];
+
+    private const string PURPOSE_OF_TRANSACTION = '08';
 
     /**
      * @param list<DataObject> $objects the root data objects of a payload
@@ -80,8 +82,11 @@ final class EmvcoMask
 
         $value = '';
         foreach ($subFields as $subField) {
-            $isPersonal = \in_array($subField->id, self::PERSONAL_ADDITIONAL_DATA, true);
-            $value .= EmvcoTlv::encode($isPersonal ? self::asterisks($subField) : $subField);
+            $value .= EmvcoTlv::encode(match (true) {
+                \in_array($subField->id, self::PERSONAL_ADDITIONAL_DATA, true) => self::asterisks($subField),
+                $subField->id === self::PURPOSE_OF_TRANSACTION => new DataObject($subField->id, Mask::TEXT),
+                default => $subField,
+            });
         }
 
         \assert($value !== '');

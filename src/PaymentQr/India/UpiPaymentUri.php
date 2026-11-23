@@ -21,7 +21,8 @@ use Override;
  * reference `tr` has 1 to 35 characters. The scheme is the plan's; the NPCI linking specification itself was not
  * reached, so no other parameter, the VPA shape or the amount format is checked. Values are kept as written: NPCI
  * writes a space as a bare `%`, so nothing is percent-decoded. A repeated parameter makes its single-value accessor
- * throw. {@see masked()} hides the payee address and keeps the first character of the payee name. At most 7089 characters, the largest QR content: a bound against
+ * throw. {@see masked()} hides the payee address, keeps the first character of the payee name and replaces a filled
+ * transaction note `tn` (free text) with `***`. At most 7089 characters, the largest QR content: a bound against
  * abusive input.
  *
  * @see https://www.npci.org.in/PDF/npci/upi/circular/2017/Circular18_BankCompliances_to_enbaleUPIMerchantecosystem_0.pdf NPCI, UPI OC No. 18/2016-17, Annexure A Table 1 and D.7
@@ -67,7 +68,7 @@ final class UpiPaymentUri extends AbstractStringValueObject implements PaymentPa
     /**
      * @return non-empty-string|null
      *
-     * @throws AmbiguousPaymentQrFieldException when `tr` repeats with distinct values
+     * @throws AmbiguousPaymentQrFieldException when `tr` repeats with distinct non-empty values
      */
     public function transactionReference(): ?string
     {
@@ -79,7 +80,7 @@ final class UpiPaymentUri extends AbstractStringValueObject implements PaymentPa
      *
      * @return non-empty-string|null
      *
-     * @throws AmbiguousPaymentQrFieldException when `am` repeats with distinct values
+     * @throws AmbiguousPaymentQrFieldException when `am` repeats with distinct non-empty values
      */
     public function writtenAmount(): ?string
     {
@@ -89,7 +90,7 @@ final class UpiPaymentUri extends AbstractStringValueObject implements PaymentPa
     /**
      * Null when `am` is absent or not digits with one optional decimal point.
      *
-     * @throws AmbiguousPaymentQrFieldException when `am` repeats with distinct values
+     * @throws AmbiguousPaymentQrFieldException when `am` repeats with distinct non-empty values
      */
     public function amount(): ?Decimal
     {
@@ -103,7 +104,7 @@ final class UpiPaymentUri extends AbstractStringValueObject implements PaymentPa
      *
      * @return non-empty-string|null
      *
-     * @throws AmbiguousPaymentQrFieldException when the parameter repeats with distinct values
+     * @throws AmbiguousPaymentQrFieldException when the parameter repeats with distinct non-empty values
      */
     public function get(string $name): ?string
     {
@@ -124,7 +125,7 @@ final class UpiPaymentUri extends AbstractStringValueObject implements PaymentPa
         $scheme = \substr($this->value, 0, 10);
         \assert($scheme !== '');
 
-        return $scheme . $this->query->withMasked(['pa' => Mask::keepEnds(...), 'pn' => Mask::name(...)]);
+        return $scheme . $this->query->withMasked(['pa' => Mask::keepEnds(...), 'pn' => Mask::name(...), 'tn' => Mask::text(...)]);
     }
 
     #[Override]

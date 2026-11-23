@@ -181,6 +181,14 @@ final class MerchantPresentedQrTest extends TestCase
         self::assertStringContainsString('62440105BILL10212' . \str_repeat('*', 12) . '0503REF0608' . \str_repeat('*', 8) . '6304', $qr->masked());
     }
 
+    public function testMaskedHidesThePurposeOfTransactionOfTheAdditionalData(): void
+    {
+        $qr = new MerchantPresentedQr(self::sealed(self::MINIMAL_BODY . '62280105BILL10815Rent for Anna B'));
+
+        self::assertStringEndsWith('62160105BILL10803***6304****', $qr->masked());
+        self::assertStringNotContainsString('Anna', $qr->masked());
+    }
+
     public function testStringFormatObjectsMayHoldUtf8AndAreCountedInCharacters(): void
     {
         $qr = new MerchantPresentedQr(self::sealed(self::MINIMAL_BODY . '64140002ZH0104Café26190001A0110Ünïcödé-ok62171213ÄÖÜäöüßéèàùç!'));

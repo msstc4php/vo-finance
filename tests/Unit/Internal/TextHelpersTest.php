@@ -52,6 +52,13 @@ final class TextHelpersTest extends TestCase
         self::assertSame('***', Mask::name(''));
     }
 
+    public function testFreeTextKeepsNothingAndAnEmptyTextStaysEmpty(): void
+    {
+        self::assertSame('***', Mask::text('Rent for Anna, anna@example.com'));
+        self::assertSame('***', Mask::text('x'));
+        self::assertSame('', Mask::text(''));
+    }
+
     public function testLinesKeepEverySeparator(): void
     {
         $lines = TextLines::parse("a\r\nb\nc\n", 'Test');
@@ -103,6 +110,33 @@ final class TextHelpersTest extends TestCase
         self::assertSame('x=y', $query->single('c', 'Test'));
         self::assertNull($query->single('d', 'Test'));
         self::assertSame('a=*&&b&a=*&c=x=y', $query->withMasked(['a' => static fn (string $value): string => '*']));
+    }
+
+    public function testQueryStringFilledReadsAnEmptyValueAsAbsent(): void
+    {
+        $query = QueryString::parse('a=&a=10&a=10&b=&b&c=&c=1&c=2');
+
+        self::assertSame('10', $query->filled('a', 'Test'));
+        self::assertNull($query->filled('b', 'Test'));
+        self::assertNull($query->filled('d', 'Test'));
+
+        $this->expectException(AmbiguousPaymentQrFieldException::class);
+
+        $query->filled('c', 'Test');
+    }
+
+    public function testQueryStringSingleCountsAnEmptyValueAsDistinct(): void
+    {
+        $this->expectException(AmbiguousPaymentQrFieldException::class);
+
+        QueryString::parse('a=&a=10')->single('a', 'Test');
+    }
+
+    public function testQueryStringAmbiguityDoesNotNameAParameterWithATrailingNewline(): void
+    {
+        $this->expectExceptionMessage('Test cannot give a single value for the requested parameter: several distinct values.');
+
+        QueryString::parse("a\n=1&a\n=2")->single("a\n", 'Test');
     }
 
     public function testQueryStringAmbiguityNamesOnlyAPlainParameter(): void

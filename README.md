@@ -27,10 +27,10 @@ Not on Packagist yet; register the GitHub repositories:
 }
 ```
 
-Runtime requirement: `msstc4php/vo-base ^1.4`. No framework. Suggested: `ext-mbstring`, which `EpcQr::fromBytes()`,
+Runtime requirements: `msstc4php/vo-base ^1.4` and `ext-bcmath`, which vo-base `Decimal::compareTo()` calls on the
+amounts the payloads return. No framework. Suggested: `ext-mbstring`, which `EpcQr::fromBytes()`,
 `Gost56042Payload::fromBytes()` and `PaymentQrFactory::fromBytes()` need for payloads in a single-byte character set
-(they throw `LogicException` without it), and `ext-bcmath`, which vo-base `Decimal::compareTo()` calls on the amounts
-the payloads return.
+(they throw `LogicException` without it).
 
 ## Usage
 
@@ -49,7 +49,7 @@ $card->masked();                                 // 378282*****0005
 $card->schemes();                                // [CardScheme::Amex]
 
 $qr = PaymentQrFactory::fromString($payload);    // a PaymentPayload: the class that fits, or AmbiguousValueException
-$qr->masked();                                   // for logs: accounts hidden, names cut to their first character
+$qr->masked();                                   // for logs: accounts, addresses and free text hidden, names cut to X***
 ```
 
 ## Classes
@@ -108,16 +108,27 @@ All implement `PaymentQr\PaymentPayload` (vo-base `ValueObject`, `StringConverti
 factory methods return; the EMVCo classes implement `PaymentQr\Emvco\EmvcoPayload` too. Both interfaces are implemented
 by this package only, and methods may be added to them in minor releases.
 
-`masked()` is for logs and screens; `__toString()` and the JSON form still give the full payload. On the EMVCo classes
-it replaces the values of the merchant accounts (IDs 02 to 51), the templates 80 to 99, the mobile number (62-02), the
-customer label (62-06) and the CRC with asterisks of the same length. On the others it hides the IBAN, account,
-identifier or VPA, keeping at most about a third of it: nothing at six characters or fewer, the last two at 7 to 11,
-the last four at 12 to 17, the first two and the last four from 18. Personal data is hidden as well: a name keeps its
-first character and becomes `X***`, an address line becomes `***` (the EPC beneficiary name; the QR-bill creditor's and
-ultimate debtor's name, street, building number, postal code and town, the address type and country staying; EMVCo 59
-and 64-01, the city 60 and 64-02 and the postal code 61; the UPI payee name `pn`; the GOST `Name`, `LastName`,
-`FirstName`, `MiddleName`, `ChildFio` and `PayerAddress`). A masked string is not a valid payload. A minor release may
-hide more, never less.
+`masked()` is for logs and screens; `__toString()` and the JSON form still give the full payload. It hides every field
+that names or locates a person, and all free text, which can carry names, e-mail addresses or phone numbers.
+Machine-structured codes stay visible: amounts, currency, structured references (RF, QRR), the Swiss billing
+information (`//S1/` codes), MCC and country codes.
+
+- Accounts and identifiers. On the EMVCo classes the values of the merchant accounts (IDs 02 to 51), the templates 80
+  to 99, the mobile number (62-02), the customer label (62-06) and the CRC become asterisks of the same length. On the
+  others the IBAN, account, identifier, phone number or VPA keeps at most about a third: nothing at six characters or
+  fewer, the last two at 7 to 11, the last four at 12 to 17, the first two and the last four from 18 (EPC and QR-bill
+  IBAN; GOST `PersonalAcc`, `PersAcc`, `PersonalAccount`, `PensAcc`, `PayerIdNum`, `PayerINN`, `Phone`; SBP
+  identifier; UPI `pa`).
+- Names keep their first character and become `X***`: the EPC beneficiary; the QR-bill creditor and ultimate debtor;
+  EMVCo 59 and 64-01; UPI `pn`; GOST `Name`, `LastName`, `FirstName`, `MiddleName`, `ChildFio`, `SpecFio`.
+- Addresses become `***`: the QR-bill street, building number, postal code and town of both parties (address type and
+  country stay); EMVCo city 60 and 64-02 and postal code 61; GOST `PayerAddress`, `Flat` and `BirthDate`.
+- Free text becomes `***`: the QR-bill unstructured message and both alternative procedures; the EPC remittance text and
+  beneficiary to originator information; EMVCo purpose of transaction (62-08); UPI note `tn`; GOST `Purpose`.
+
+An empty field stays empty. A masked string is not a valid payload. A minor release may hide more, never less. SBP
+query fields are published only on NSPK's closed portal, so none of them is known to be free text and they stay
+visible.
 
 `serialize()` stores only the payload, and `unserialize()` validates it again, so the parsed fields are never restored
 apart from the value they came from (vo-base 1.3 runs `parse()` again). A forged payload throws the class's

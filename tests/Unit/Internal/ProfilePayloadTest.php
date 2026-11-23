@@ -189,6 +189,7 @@ final class ProfilePayloadTest extends TestCase
 
         self::assertSame('0002010102120204****2603***5101*5204000062130503REF0202**7903rfu8004****9904****6304****', $masked);
         self::assertSame('6204****', EmvcoMask::apply([new DataObject('62', 'keep')]));
+        self::assertSame('62280105BILL10803***0202**0702T1', EmvcoMask::apply([new DataObject('62', '0105BILL10804Rent0202+10702T1')]));
     }
 
     public function testMaskHidesTheNameAndTheAddressOfTheMerchant(): void

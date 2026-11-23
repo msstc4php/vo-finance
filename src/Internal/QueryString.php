@@ -67,30 +67,23 @@ final readonly class QueryString
      */
     public function single(string $name, string $type): ?string
     {
-        $distinct = \array_values(\array_unique($this->all($name)));
-        if (\count($distinct) > 1) {
-            $field = \preg_match('/^[A-Za-z0-9_]{1,20}$/D', $name) === 1 ? 'the parameter ' . $name : 'the requested parameter';
-
-            throw new AmbiguousPaymentQrFieldException($type, $field, 'several distinct values');
-        }
-
-        return $distinct[0] ?? null;
+        return $this->distinct($this->all($name), $name, $type);
     }
 
     /**
-     * As {@see single()}, with an empty value read as absent.
+     * As {@see single()}, with an empty value read as absent: `am=&am=10` gives `10`.
      *
      * @param non-empty-string $type
      *
      * @return non-empty-string|null
      *
-     * @throws AmbiguousPaymentQrFieldException when the parameter repeats with distinct values
+     * @throws AmbiguousPaymentQrFieldException when the parameter repeats with distinct non-empty values
      */
     public function filled(string $name, string $type): ?string
     {
-        $value = $this->single($name, $type);
+        $values = \array_filter($this->all($name), static fn (string $value): bool => $value !== '');
 
-        return $value === '' ? null : $value;
+        return $this->distinct($values, $name, $type);
     }
 
     /**
@@ -107,6 +100,28 @@ final readonly class QueryString
         }
 
         return \implode('&', $parts);
+    }
+
+    /**
+     * @template TValue of string
+     *
+     * @param array<int, TValue> $values
+     * @param non-empty-string $type
+     *
+     * @return TValue|null
+     *
+     * @throws AmbiguousPaymentQrFieldException
+     */
+    private function distinct(array $values, string $name, string $type): ?string
+    {
+        $distinct = \array_values(\array_unique($values));
+        if (\count($distinct) > 1) {
+            $field = \preg_match('/^[A-Za-z0-9_]{1,20}$/D', $name) === 1 ? 'the parameter ' . $name : 'the requested parameter';
+
+            throw new AmbiguousPaymentQrFieldException($type, $field, 'several distinct values');
+        }
+
+        return $distinct[0] ?? null;
     }
 
     /**

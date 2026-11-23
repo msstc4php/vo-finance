@@ -186,6 +186,14 @@ final class IdentifiersTest extends TestCase
         self::assertSame('F50E', new Lei('F50EOCWSQFAUVO9Q8Z97')->louPrefix());
     }
 
+    public function testAFigiOfTheWrongShapeIsReportedWithItsFullRule(): void
+    {
+        $this->expectException(InvalidSecurityIdentifierException::class);
+        $this->expectExceptionMessage('FIGI has an invalid format (two consonants outside the excluded prefixes, G, eight consonants or digits, a digit).');
+
+        new Figi('BSG000BLNQ19');
+    }
+
     public function testAWrongLengthIsReportedAsTheLengthRule(): void
     {
         $this->expectException(InvalidSecurityIdentifierException::class);

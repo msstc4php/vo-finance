@@ -25,16 +25,21 @@ final class Figi extends AbstractStringValueObject implements SecurityIdentifier
 
     private const string TYPE = 'FIGI';
 
+    private const string BODY = '(?!BS|BM|GG|GB|GH|KY|VG)[BCDFGHJKLMNPQRSTVWXYZ]{2}G[BCDFGHJKLMNPQRSTVWXYZ0-9]{8}';
+
+    private const string BODY_RULE = 'two consonants outside the excluded prefixes, G, eight consonants or digits';
+
     /**
      * Builds the FIGI from its first 11 characters, computing the check digit.
      *
-     * @throws InvalidSecurityIdentifierException when the body is not 11 consonants or digits, or has an excluded prefix
+     * @throws InvalidSecurityIdentifierException when the body is not two consonants outside the excluded prefixes, `G`
+     *                                            and eight consonants or digits
      */
     public static function fromParts(string $body): self
     {
         $body = \strtoupper($body);
-        if (\preg_match('/^[BCDFGHJKLMNPQRSTVWXYZ0-9]{11}$/D', $body) !== 1) {
-            throw SecurityRules::fail(self::TYPE, 'body must be 11 consonants or digits');
+        if (\preg_match('/^' . self::BODY . '$/D', $body) !== 1) {
+            throw SecurityRules::fail(self::TYPE, \sprintf('body must be %s', self::BODY_RULE));
         }
 
         return new self($body . FigiCheckDigit::compute($body));
@@ -49,8 +54,8 @@ final class Figi extends AbstractStringValueObject implements SecurityIdentifier
             $value,
             self::TYPE,
             self::MAX_LENGTH,
-            '/^(?!BS|BM|GG|GB|GH|KY|VG)[BCDFGHJKLMNPQRSTVWXYZ]{2}G[BCDFGHJKLMNPQRSTVWXYZ0-9]{8}[0-9]$/D',
-            'two consonants outside the excluded prefixes, G, eight consonants or digits, a digit',
+            '/^' . self::BODY . '[0-9]$/D',
+            self::BODY_RULE . ', a digit',
         );
 
         if (!FigiCheckDigit::isValid($value)) {

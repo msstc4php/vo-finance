@@ -29,8 +29,8 @@ package only; methods may be added to them in minors. Not covered: exception mes
 
 ### Changed
 
-- Requires `msstc4php/vo-base ^1.4` (was `^1.3`). `ext-bcmath` is no longer required (nothing here calls it; the 0.1.0
-  entry wrongly said it was dropped then); it is suggested for vo-base `Decimal::compareTo()`.
+- Requires `msstc4php/vo-base ^1.4` (was `^1.3`). `ext-bcmath` stays required: vo-base `Decimal::compareTo()`, on the
+  amounts the payloads return, calls `bccomp()`.
 - Exception messages hold no part of the input, not even its length: "ISIN must have 12 characters." (was "..., got
   13."), "FISN must have at most 35 characters.".
 - The exception classes are `final`.
@@ -41,15 +41,23 @@ package only; methods may be added to them in minors. Not covered: exception mes
   `AmbiguousValueException` with `Valor`; a value only a `Valor` accepts is refused. Build a `Valor` directly.
 - `additionalData()` returns `list<DataObject>` in payload order, repeats included (was an array keyed by sub-ID, whose
   keys "10" to "99" PHP turned into integers).
-- `EmvcoPayload` types: `merchantName()` is non-null on the profiles; `merchantCategoryCode()` and `merchantCity()` are
-  nullable on `MerchantPresentedQr` too (always present there); `JpqrCode::postalCode()` is nullable (always present).
+- `EmvcoPayload` types: `merchantName()` is non-null on the profiles. `EmvcoPayload` declares
+  `merchantCategoryCode()`, `merchantCity()` and `postalCode()` nullable (Thai QR makes 52 and 60 optional);
+  `MerchantPresentedQr` keeps `string` for the first two, and `JpqrCode::postalCode()` keeps `string`.
 - `PixBrCode::pixKeys()`, `paymentUrls()` and `recurrenceUrls()` give distinct values in payload order.
 - `get()` returns a non-empty string or null everywhere: `Gost56042Payload::get()`, `SbpPaymentLink::get()`,
-  `UpiPaymentUri::get()` and `writtenAmount()` read an empty value as absent.
-- `masked()` also hides names (first character kept, `X***`) and address lines (`***`): EPC beneficiary name, QR-bill
-  creditor and ultimate debtor, EMVCo 59, 60, 61, 64-01 and 64-02, UPI `pn`, GOST names and `PayerAddress`.
+  `UpiPaymentUri::get()` and `writtenAmount()` read an empty value as absent. On SBP and UPI an empty repeat is no
+  second value: `am=&am=10` gives `10` (it threw `AmbiguousPaymentQrFieldException`); two distinct filled values still
+  throw.
+- `masked()` hides every field that names or locates a person, and all free text: names keep their first character
+  (`X***`), addresses and free text become `***`. EPC beneficiary name, remittance text and beneficiary to originator
+  information; QR-bill creditor and ultimate debtor, unstructured message and both alternative procedures (the billing
+  information stays); EMVCo 59, 60, 61, 64-01, 64-02 and the purpose of transaction 62-08; UPI `pn` and note `tn`; GOST
+  `Name`, `LastName`, `FirstName`, `MiddleName`, `ChildFio`, `SpecFio`, `PayerAddress`, `Flat`, `BirthDate` and
+  `Purpose`, and `Phone` like an account (last two digits kept).
 - `QrBillAddress` throws `InvalidPaymentQrException` (a subclass of the `InvalidArgumentException` it threw).
 - `MerchantPresentedQrBuilder` has an argument-less constructor; the `MerchantAccount` constructor is `@internal`.
+- `PaymentQrFactory` and `SecurityIdentifierFactory` have a private constructor; they are static only.
 - Every enum documents that cases may be added in a minor; backed values are unchanged and pinned by a test.
 
 ### Removed
@@ -69,8 +77,22 @@ package only; methods may be added to them in minors. Not covered: exception mes
   is the 1.x form. Subclasses of the exceptions are no longer possible.
 - Code relying on `AmbiguousValueException` with `Valor` from `SecurityIdentifierFactory` now gets the other type, or
   `InvalidSecurityIdentifierException` for a value only a `Valor` takes.
-- Log pipelines that read names or addresses from `masked()` get `X***` and `***` instead.
-- Stored data: no canonical string, serialized key or enum backed value changed, so 0.x rows keep loading.
+- Code that used `PaymentQrFactory` as a validator of a profile (Pix, PromptPay, ...) checks the class: a payload that
+  identifies a profile but fails its rules comes back as `MerchantPresentedQr` when that accepts it, instead of
+  throwing. Test `instanceof PixBrCode` (or build `PixBrCode` directly, which still throws).
+- `get()` on `Gost56042Payload`, `SbpPaymentLink` and `UpiPaymentUri`, and `UpiPaymentUri::writtenAmount()`, return
+  `null` for `Alias=` / `am=` (was `''`): replace `=== ''` checks with `=== null`. On SBP and UPI, `am=&am=10` gives
+  `10` instead of throwing `AmbiguousPaymentQrFieldException`.
+- `PixBrCode::pixKeys()`, `paymentUrls()` and `recurrenceUrls()` drop repeated values, so counts and indexes can differ;
+  an `array_unique()` around them is no longer needed.
+- `PaymentQrFactory` and `SecurityIdentifierFactory` have a private constructor: call them statically, never with `new`.
+- Log pipelines that read names, addresses or free text (QR-bill message and alternative procedures, EPC remittance
+  text, UPI `tn`, GOST `Purpose`, EMVCo 62-08) from `masked()` get `X***` and `***` instead; GOST `Phone` keeps its last
+  two digits.
+- `ext-bcmath` is still required (vo-base `Decimal::compareTo()` on `amount()`); keep it installed.
+- No value object accepts or refuses differently (only the factory results change, as above): `tryFrom()` and
+  `isValid()` of every value object accept exactly what 0.2.0 accepted, so 0.x rows need no data check before the
+  upgrade. Stored data: no canonical string, serialized key or enum backed value changed, so 0.x rows keep loading.
 
 ### Upgrading from vo-base `Finance\CreditCardNumber` (deprecated since vo-base 1.3)
 
@@ -144,4 +166,4 @@ package only; methods may be added to them in minors. Not covered: exception mes
 - Payment QR value objects serialize as their payload alone and validate it again on `unserialize()`.
 - GOST, SBP and UPI payloads share the EMVCo classes' 7089-character abuse bound.
 - Requires `ext-bcmath`: vo-base 1.2.0's `Iban`, used by `EpcQr` and `QrBill`, calls `bcmod()`. (The requirement was
-  in fact kept until 1.0.0, which drops it.)
+  in fact kept, and stays in 1.0.0 for vo-base `Decimal::compareTo()`.)

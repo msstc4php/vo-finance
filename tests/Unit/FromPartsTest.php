@@ -76,9 +76,11 @@ final class FromPartsTest extends TestCase
     {
         yield 'LEI body of 17' => [static fn (): Lei => Lei::fromParts('F50EOCWSQFAUVO9Q8'), InvalidSecurityIdentifierException::class, 'LEI body must be 18 letters or digits.'];
         yield 'LEI body with a hyphen' => [static fn (): Lei => Lei::fromParts('F50EOCWSQFAUVO9Q8-'), InvalidSecurityIdentifierException::class, 'LEI body must be 18 letters or digits.'];
-        yield 'FIGI body of 12' => [static fn (): Figi => Figi::fromParts('BBG000BLNQ16'), InvalidSecurityIdentifierException::class, 'FIGI body must be 11 consonants or digits.'];
-        yield 'FIGI body with a vowel' => [static fn (): Figi => Figi::fromParts('BBG000BLNQA'), InvalidSecurityIdentifierException::class, 'FIGI body must be 11 consonants or digits.'];
-        yield 'FIGI excluded prefix' => [static fn (): Figi => Figi::fromParts('BSG000BLNQ1'), InvalidSecurityIdentifierException::class, 'FIGI has an invalid format (two consonants outside the excluded prefixes, G, eight consonants or digits, a digit).'];
+        yield 'FIGI body of 12' => [static fn (): Figi => Figi::fromParts('BBG000BLNQ16'), InvalidSecurityIdentifierException::class, 'FIGI body must be two consonants outside the excluded prefixes, G, eight consonants or digits.'];
+        yield 'FIGI body with a vowel' => [static fn (): Figi => Figi::fromParts('BBG000BLNQA'), InvalidSecurityIdentifierException::class, 'FIGI body must be two consonants outside the excluded prefixes, G, eight consonants or digits.'];
+        yield 'FIGI excluded prefix' => [static fn (): Figi => Figi::fromParts('BSG000BLNQ1'), InvalidSecurityIdentifierException::class, 'FIGI body must be two consonants outside the excluded prefixes, G, eight consonants or digits.'];
+        yield 'FIGI body without G in position 3' => [static fn (): Figi => Figi::fromParts('BBB000BLNQ1'), InvalidSecurityIdentifierException::class, 'FIGI body must be two consonants outside the excluded prefixes, G, eight consonants or digits.'];
+        yield 'FIGI body with digits in positions 1 and 2' => [static fn (): Figi => Figi::fromParts('12G000BLNQ1'), InvalidSecurityIdentifierException::class, 'FIGI body must be two consonants outside the excluded prefixes, G, eight consonants or digits.'];
         yield 'SEDOL body of 7' => [static fn (): Sedol => Sedol::fromParts('B1F3M59'), InvalidSecurityIdentifierException::class, 'SEDOL body must be 6 digits or capital consonants.'];
         yield 'SEDOL body with a vowel' => [static fn (): Sedol => Sedol::fromParts('A1F3M5'), InvalidSecurityIdentifierException::class, 'SEDOL body must be 6 digits or capital consonants.'];
         yield 'CUSIP body with a letter' => [static fn (): Cusip => Cusip::fromParts('037833AL'), InvalidSecurityIdentifierException::class, 'CUSIP body must be 8 digits: no published check-digit values exist for letters or *, @, #.'];
@@ -89,7 +91,7 @@ final class FromPartsTest extends TestCase
         yield 'QR reference with a letter' => [static fn (): QrReference => QrReference::fromParts('2100000000031394714300090A'), InvalidPaymentReferenceException::class, 'A QR reference body must be 26 digits.'];
         yield 'LEI body of 19' => [static fn (): Lei => Lei::fromParts('XF50EOCWSQFAUVO9Q8Z'), InvalidSecurityIdentifierException::class, 'LEI body must be 18 letters or digits.'];
         yield 'LEI body with a trailing newline' => [static fn (): Lei => Lei::fromParts("F50EOCWSQFAUVO9Q8Z\n"), InvalidSecurityIdentifierException::class, 'LEI body must be 18 letters or digits.'];
-        yield 'FIGI body with a trailing newline' => [static fn (): Figi => Figi::fromParts("BBG000BLNQ1\n"), InvalidSecurityIdentifierException::class, 'FIGI body must be 11 consonants or digits.'];
+        yield 'FIGI body with a trailing newline' => [static fn (): Figi => Figi::fromParts("BBG000BLNQ1\n"), InvalidSecurityIdentifierException::class, 'FIGI body must be two consonants outside the excluded prefixes, G, eight consonants or digits.'];
         yield 'SEDOL body with a trailing newline' => [static fn (): Sedol => Sedol::fromParts("B1F3M5\n"), InvalidSecurityIdentifierException::class, 'SEDOL body must be 6 digits or capital consonants.'];
         yield 'CUSIP body with a trailing newline' => [static fn (): Cusip => Cusip::fromParts("03783310\n"), InvalidSecurityIdentifierException::class, 'CUSIP body must be 8 digits: no published check-digit values exist for letters or *, @, #.'];
         yield 'creditor reference body with a trailing newline' => [static fn (): CreditorReference => CreditorReference::fromParts("539007547034\n"), InvalidPaymentReferenceException::class, 'A creditor reference body must be 1 to 21 letters or digits.'];
