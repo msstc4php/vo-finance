@@ -30,10 +30,14 @@ use MSSTC4PHP\ValueObject\Financial\PaymentQr\Thailand\PromptPayQr;
  * tries the national profiles the payload identifies (the Pix GUI `br.gov.bcb.pix` in a template 26 to 51, a
  * PromptPay AID in template 29 or 30, the DuitNow AID in template 26, a template 29 or 30 with country `KH` for KHQR,
  * the GUI `jp.or.paymentsjapan` for JPQR) and builds the one that accepts it. When the payload identifies profiles but
- * none accepts it, the first identified profile's exception is thrown. Only a payload that identifies no built profile
- * (one that is not built, such as SGQR or QRIS) gives {@see MerchantPresentedQr}. A payload that fits several
- * profiles, which a code carrying several arrangements can, throws {@see AmbiguousValueException} listing them; the
- * factory never picks silently.
+ * none accepts it, the generic {@see MerchantPresentedQr} is the one candidate left: it is returned when it accepts
+ * the payload (a Pix GUI with currency 840 is a valid EMVCo payload, not a valid Pix code), and otherwise the first
+ * identified profile's exception is thrown. A payload that identifies no built profile (one that is not built, such
+ * as SGQR or QRIS) gives {@see MerchantPresentedQr}. A payload that fits several profiles, which a code carrying
+ * several arrangements can, throws {@see AmbiguousValueException} listing them; the factory never picks silently.
+ *
+ * The candidate set is frozen for 1.x: a profile added in a minor release is usable directly and joins the factory in
+ * the next major, so a payload keeps resolving to the same class within 1.x.
  */
 final class PaymentQrFactory
 {
@@ -88,8 +92,8 @@ final class PaymentQrFactory
 
     /**
      * @throws AmbiguousValueException when several profiles accept the payload
-     * @throws InvalidPaymentQrException when the marked class, every identified profile or the generic format does not
-     *                                   accept it
+     * @throws InvalidPaymentQrException when the marked class does not accept it, or neither an identified profile nor
+     *                                   the generic format does
      */
     public static function fromString(string $payload): PaymentPayload
     {
@@ -123,7 +127,7 @@ final class PaymentQrFactory
         if ($matches === []) {
             \assert($refusal instanceof InvalidPaymentQrException);
 
-            throw $refusal;
+            return MerchantPresentedQr::tryFrom($payload) ?? throw $refusal;
         }
 
         return match (\count($matches)) {

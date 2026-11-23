@@ -245,15 +245,27 @@ final class PaymentQrFactoryTest extends TestCase
         }
     }
 
-    public function testAPixPayloadThatBreaksAPixRuleThrowsThePixRefusal(): void
+    public function testAPixPayloadThatOnlyTheGenericFormatAcceptsGivesMerchantPresentedQr(): void
     {
         // BCB Pix manual example with a merchant name of 30 characters (BR Code manual: at most 25).
         $payload = \str_replace('5913Fulano de Tal', '5930' . \str_repeat('A', 30), \substr(self::PIX, 0, -4));
         $payload .= Crc16CcittFalse::compute($payload);
-        self::assertInstanceOf(MerchantPresentedQr::class, MerchantPresentedQr::tryFrom($payload));
+        self::assertNull(PixBrCode::tryFrom($payload));
+
+        $qr = PaymentQrFactory::fromString($payload);
+
+        self::assertInstanceOf(MerchantPresentedQr::class, $qr);
+        self::assertSame($payload, (string) $qr);
+    }
+
+    public function testAPixPayloadThatTheGenericFormatRefusesToo(): void
+    {
+        // BCB Pix manual example without the merchant category code: the generic format needs it, Pix too.
+        $payload = \str_replace('52040000', '', \substr(self::PIX, 0, -4));
+        $payload .= Crc16CcittFalse::compute($payload);
 
         $this->expectException(InvalidPaymentQrException::class);
-        $this->expectExceptionMessage('PixBrCode requires a merchant name of at most 25 characters.');
+        $this->expectExceptionMessageMatches('/^PixBrCode /');
 
         PaymentQrFactory::fromString($payload);
     }
@@ -271,26 +283,56 @@ final class PaymentQrFactoryTest extends TestCase
     }
 
     /**
-     * @return iterable<string, array{string, non-empty-string}>
+     * @return iterable<string, array{string}>
      */
     public static function identifiedButRefused(): iterable
     {
         $base = [self::tlv('00', '01'), self::tlv('52', '5999'), self::tlv('59', 'Shop'), self::tlv('60', 'City')];
 
-        yield 'Pix GUI in uppercase, template 51' => [self::sealed(...$base, ...[self::tlv('51', self::tlv('00', 'BR.GOV.BCB.PIX') . self::tlv('01', 'k')), self::tlv('53', '840'), self::tlv('58', 'US')]), 'PixBrCode'];
-        yield 'PromptPay credit transfer AID in lowercase' => [self::sealed(...$base, ...[self::tlv('29', self::tlv('00', 'a000000677010111') . self::tlv('01', '1')), self::tlv('53', '764'), self::tlv('58', 'TH')]), 'PromptPayQr'];
-        yield 'PromptPay bill payment AID' => [self::sealed(...$base, ...[self::tlv('30', self::tlv('00', 'A000000677012006') . self::tlv('01', '1')), self::tlv('53', '764'), self::tlv('58', 'TH')]), 'PromptPayQr'];
-        yield 'DuitNow AID in lowercase' => [self::sealed(...$base, ...[self::tlv('26', self::tlv('00', 'a0000006150001') . self::tlv('01', '1')), self::tlv('53', '458'), self::tlv('58', 'MY')]), 'DuitNowQr'];
-        yield 'Bakong template 30 with country KH' => [self::sealed(...$base, ...[self::tlv('30', self::tlv('00', 'shop@bank')), self::tlv('53', '116'), self::tlv('58', 'KH'), self::tlv('54', '0')]), 'KhqrCode'];
-        yield 'JPQR GUI in uppercase' => [self::sealed(...$base, ...[self::tlv('26', self::tlv('00', 'JP.OR.PAYMENTSJAPAN') . self::tlv('01', '1')), self::tlv('53', '392'), self::tlv('58', 'JP')]), 'JpqrCode'];
+        yield 'Pix GUI in uppercase, template 51' => [self::sealed(...$base, ...[self::tlv('51', self::tlv('00', 'BR.GOV.BCB.PIX') . self::tlv('01', 'k')), self::tlv('53', '840'), self::tlv('58', 'US')])];
+        yield 'PromptPay credit transfer AID in lowercase' => [self::sealed(...$base, ...[self::tlv('29', self::tlv('00', 'a000000677010111') . self::tlv('01', '1')), self::tlv('53', '764'), self::tlv('58', 'TH')])];
+        yield 'PromptPay bill payment AID' => [self::sealed(...$base, ...[self::tlv('30', self::tlv('00', 'A000000677012006') . self::tlv('01', '1')), self::tlv('53', '764'), self::tlv('58', 'TH')])];
+        yield 'DuitNow AID in lowercase' => [self::sealed(...$base, ...[self::tlv('26', self::tlv('00', 'a0000006150001') . self::tlv('01', '1')), self::tlv('53', '458'), self::tlv('58', 'MY')])];
+        yield 'Bakong template 30 with country KH' => [self::sealed(...$base, ...[self::tlv('30', self::tlv('00', 'shop@bank')), self::tlv('53', '116'), self::tlv('58', 'KH'), self::tlv('54', '0')])];
+        yield 'JPQR GUI in uppercase' => [self::sealed(...$base, ...[self::tlv('26', self::tlv('00', 'JP.OR.PAYMENTSJAPAN') . self::tlv('01', '1')), self::tlv('53', '392'), self::tlv('58', 'JP')])];
+    }
+
+    /**
+     * Every identified profile refuses, the generic format accepts: one candidate, so it is returned.
+     */
+    #[DataProvider('identifiedButRefused')]
+    public function testAPayloadEveryIdentifiedProfileRefusesFallsBackToTheGenericFormat(string $payload): void
+    {
+        $qr = PaymentQrFactory::fromString($payload);
+
+        self::assertInstanceOf(MerchantPresentedQr::class, $qr);
+        self::assertSame($payload, (string) $qr);
+    }
+
+    /**
+     * @return iterable<string, array{string, non-empty-string}>
+     */
+    public static function refusedByEveryCandidate(): iterable
+    {
+        // No merchant category code: the generic format and Pix, DuitNow, KHQR and JPQR need it; PromptPay is refused
+        // for its proxy instead.
+        $base = [self::tlv('00', '01'), self::tlv('59', 'Shop'), self::tlv('60', 'City')];
+
+        yield 'Pix' => [self::sealed(...$base, ...[self::tlv('51', self::tlv('00', 'BR.GOV.BCB.PIX') . self::tlv('01', 'k')), self::tlv('53', '840'), self::tlv('58', 'US')]), 'PixBrCode'];
+        yield 'PromptPay' => [self::sealed(...$base, ...[self::tlv('29', self::tlv('00', 'a000000677010111') . self::tlv('01', '1')), self::tlv('53', '764'), self::tlv('58', 'TH')]), 'PromptPayQr'];
+        yield 'DuitNow' => [self::sealed(...$base, ...[self::tlv('26', self::tlv('00', 'a0000006150001') . self::tlv('01', '1')), self::tlv('53', '458'), self::tlv('58', 'MY')]), 'DuitNowQr'];
+        yield 'KHQR' => [self::sealed(...$base, ...[self::tlv('30', self::tlv('00', 'shop@bank')), self::tlv('53', '116'), self::tlv('58', 'KH'), self::tlv('54', '0')]), 'KhqrCode'];
+        yield 'JPQR' => [self::sealed(...$base, ...[self::tlv('26', self::tlv('00', 'JP.OR.PAYMENTSJAPAN') . self::tlv('01', '1')), self::tlv('53', '392'), self::tlv('58', 'JP')]), 'JpqrCode'];
     }
 
     /**
      * @param non-empty-string $profile
      */
-    #[DataProvider('identifiedButRefused')]
-    public function testAnIdentifiedProfileThatRefusesThrowsItsRefusal(string $payload, string $profile): void
+    #[DataProvider('refusedByEveryCandidate')]
+    public function testAPayloadTheGenericFormatRefusesTooThrowsTheFirstProfileRefusal(string $payload, string $profile): void
     {
+        self::assertNull(MerchantPresentedQr::tryFrom($payload));
+
         $this->expectException(InvalidPaymentQrException::class);
         $this->expectExceptionMessageMatches('/^' . $profile . ' /');
 
@@ -318,6 +360,43 @@ final class PaymentQrFactoryTest extends TestCase
     public function testAPayloadIdentifyingNoProfileGivesTheGenericPayload(string $payload): void
     {
         self::assertInstanceOf(MerchantPresentedQr::class, PaymentQrFactory::fromString($payload));
+    }
+
+    /**
+     * No category code, so the generic format refuses; a profile identified by mistake would throw its own refusal.
+     *
+     * @return iterable<string, array{string}>
+     */
+    public static function identifyingNoProfileAndRefusedByTheGenericFormat(): iterable
+    {
+        $base = [self::tlv('00', '01'), self::tlv('53', '840'), self::tlv('59', 'Shop'), self::tlv('60', 'City')];
+
+        yield 'template 26 with another GUI' => [self::sealed(...$base, ...[self::tlv('26', self::tlv('00', 'com.example')), self::tlv('58', 'US')])];
+        yield 'template 26 in Cambodia' => [self::sealed(...$base, ...[self::tlv('26', self::tlv('00', 'shop@bank')), self::tlv('58', 'KH')])];
+        yield 'Pix GUI in template 62' => [self::sealed(...$base, ...[self::tlv('26', self::tlv('00', 'com.example')), self::tlv('58', 'BR'), self::tlv('62', self::tlv('00', 'br.gov.bcb.pix'))])];
+    }
+
+    #[DataProvider('identifyingNoProfileAndRefusedByTheGenericFormat')]
+    public function testAPayloadIdentifyingNoProfileThrowsTheGenericRefusal(string $payload): void
+    {
+        $this->expectException(InvalidPaymentQrException::class);
+        $this->expectExceptionMessageMatches('/^MerchantPresentedQr /');
+
+        PaymentQrFactory::fromString($payload);
+    }
+
+    public function testAPromptPayBillPaymentGivesPromptPayQr(): void
+    {
+        // Synthetic, from the BOT guideline section 2.3, tag 30.
+        $payload = self::sealed(
+            self::tlv('00', '01'),
+            self::tlv('30', self::tlv('00', 'A000000677010112') . self::tlv('01', '010753600031507') . self::tlv('02', 'INV1')),
+            self::tlv('53', '764'),
+            self::tlv('58', 'TH'),
+            self::tlv('59', 'Shop'),
+        );
+
+        self::assertInstanceOf(PromptPayQr::class, PaymentQrFactory::fromString($payload));
     }
 
     public function testATemplateThatIsNotTlvIdentifiesNoProfile(): void
@@ -359,12 +438,11 @@ final class PaymentQrFactoryTest extends TestCase
 
     public function testTheFirstIdentifiedProfileRefusalIsThrown(): void
     {
-        // Synthetic: Pix and JPQR templates, country US, which both refuse.
+        // Synthetic: Pix and JPQR templates, country US and no category code, which both refuse, the generic format too.
         $payload = self::sealed(
             self::tlv('00', '01'),
             self::tlv('26', self::tlv('00', 'jp.or.paymentsjapan') . self::tlv('01', '1')),
             self::tlv('27', self::tlv('00', 'br.gov.bcb.pix') . self::tlv('01', 'k')),
-            self::tlv('52', '0000'),
             self::tlv('53', '840'),
             self::tlv('58', 'US'),
             self::tlv('59', 'Shop'),
