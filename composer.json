@@ -39,8 +39,7 @@
         }
     ],
     "require": {
-        "ext-bcmath": "*",
-        "msstc4php/vo-base": "^1.3",
+        "msstc4php/vo-base": "^1.4",
         "php": ">=8.4"
     },
     "require-dev": {
@@ -54,6 +53,7 @@
         "roave/security-advisories": "dev-latest"
     },
     "suggest": {
+        "ext-bcmath": "Required by vo-base Decimal::compareTo() on the amounts the payment payloads return.",
         "ext-mbstring": "Required by EpcQr::fromBytes() and Gost56042Payload::fromBytes() to transcode payloads declared in a single-byte character set."
     },
     "autoload": {
