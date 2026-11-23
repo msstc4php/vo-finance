@@ -33,7 +33,7 @@ final class EmvcoMerchantPresented
     private const int MAX_GUI_LENGTH = 32;
 
     /**
-     * @param bool $bounded whether to refuse a payload over {@see EmvcoTlv::MAX_PAYLOAD_LENGTH} characters
+     * @param bool $bounded whether to refuse a payload over {@see PayloadBound::MAX_CHARACTERS} characters
      *
      * @return list<DataObject> the root data objects
      *

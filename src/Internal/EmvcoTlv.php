@@ -17,8 +17,6 @@ use MSSTC4PHP\ValueObject\Financial\PaymentQr\Emvco\DataObject;
  */
 final class EmvcoTlv
 {
-    public const int MAX_PAYLOAD_LENGTH = PayloadBound::MAX_CHARACTERS;
-
     /**
      * @return list<DataObject>
      *
