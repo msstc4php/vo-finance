@@ -36,6 +36,7 @@ references.
   CHANGELOG and FINANCE.md in step). Helpers: `Mask::keepEnds` (accounts/identifiers: nothing at <= 6, last 2 at 7-11,
   last 4 at 12-17, first 2 + last 4 from 18), `Mask::name` (first char + `***`), `Mask::ADDRESS` (locating data),
   `Mask::TEXT`/`text()` (free text; empty stays empty). A slot meant for a code (EPC reference, QR-bill billing
-  information) stays visible only when it holds that code (RF creditor reference / starts with `//`); parse is not
-  stricter. SBP fails closed: only `type`, `bank`, `sum`, `cur`, `crc` values stay. EMVCo 62: 02/04/06/10 and 50-99
-  asterisks, 08 `***`.
+  information) stays visible only when it holds that code (RF creditor reference / Swico S1, free-text tags 10 and 20
+  starred); parse is not stricter. SBP fails closed on names and values: only `type`, `bank`, `sum`, `cur`, `crc` in a
+  code shape stay. GOST: aliases outside table В.1 are `***`. EMVCo 62: 02/04/06/10 and 50-99 asterisks, 08 `***`;
+  64: 00 stays, 01 `X***`, 02-99 `***`.

@@ -407,19 +407,50 @@ final class QrBillTest extends TestCase
         $lines = [...$this->exampleTwo(), 'twint/light/simon.muster@example.com'];
         $masked = \explode("\n", QrBill::from(\implode("\n", $lines))->masked());
 
-        self::assertSame(['210000000003139471430009017', '***', 'EPD', '//S1/10/1234/11/201021/30/102673386/32/7.7/40/0:30', '***', '***'], \array_slice($masked, 28));
+        self::assertSame(['210000000003139471430009017', '***', 'EPD', '//S1/10/***/11/201021/30/102673386/32/7.7/40/0:30', '***', '***'], \array_slice($masked, 28));
         self::assertStringNotContainsString('Order from 15.10.2020', \implode("\n", $masked));
         self::assertStringNotContainsString('simon.muster@example.com', \implode("\n", $masked));
     }
 
-    public function testMaskedHidesBillingInformationWithoutTheSlashSlashCoding(): void
+    /**
+     * @return iterable<string, array{string, string}>
+     */
+    public static function billingInformation(): iterable
+    {
+        // SIX IG 2.3 Annex D, table 31, example 4: an escaped slash in the free-text invoice number.
+        yield 'Swico example 4' => ['//S1/10/X.66711\\/8824/11/200712/20/MW-2020-04/30/107978798/32/2.5:117.22/40/3:5;1.5:20;1:40;0:60', '//S1/10/***/11/200712/20/***/30/107978798/32/2.5:117.22/40/3:5;1.5:20;1:40;0:60'];
+        yield 'Swico example 2' => ['//S1/10/10104/11/180228/30/395856455/31/180226180227/32/3.7:400.19;7.7:553.39;0:14/40/0:30', '//S1/10/***/11/180228/30/395856455/31/180226180227/32/3.7:400.19;7.7:553.39;0:14/40/0:30'];
+        yield 'empty tags' => ['//S1/10//11//20//30//31//32//33//40/', '//S1/10//11//20//30//31//32//33//40/'];
+        yield 'one-date VAT period' => ['//S1/31/180508', '//S1/31/180508'];
+        yield 'free text' => ['Invoice for Anna Smith', '***'];
+        yield 'slash slash and an e-mail' => ['//anna@x.com', '***'];
+        yield 'another prefix' => ['//S2/10/1', '***'];
+        yield 'prefix only' => ['//S1', '***'];
+        yield 'prefix and a slash' => ['//S1/', '***'];
+        yield 'text after the prefix' => ['//S1 Anna', '***'];
+        yield 'unknown tag' => ['//S1/12/Anna', '***'];
+        yield 'tags out of order' => ['//S1/11/200712/10/1', '***'];
+        yield 'repeated tag' => ['//S1/11/200712/11/200713', '***'];
+        yield 'date of five digits' => ['//S1/11/20071', '***'];
+        yield 'VAT number with a letter' => ['//S1/30/10797879A', '***'];
+        yield 'VAT number of ten digits' => ['//S1/30/1079787980', '***'];
+        yield 'VAT period of nine digits' => ['//S1/31/180508123', '***'];
+        yield 'VAT details as text' => ['//S1/32/Anna', '***'];
+        yield 'import tax as text' => ['//S1/33/Anna', '***'];
+        yield 'conditions as text' => ['//S1/40/Anna', '***'];
+        yield 'an unescaped backslash' => ['//S1/10/a\\b', '***'];
+        yield 'two-digit tag of three' => ['//S1/100/1', '***'];
+    }
+
+    #[DataProvider('billingInformation')]
+    public function testMaskedKeepsOnlySwicoS1BillingInformationWithoutItsFreeText(string $billing, string $expected): void
     {
         $lines = $this->exampleThree();
-        $lines[31] = 'Invoice for Anna Smith';
+        $lines[31] = $billing;
         $qr = QrBill::from(\implode("\n", $lines));
 
-        self::assertSame('Invoice for Anna Smith', $qr->billingInformation());
-        self::assertSame(['', 'EPD', '***', '', ''], \array_slice(\explode("\n", $qr->masked()), 29));
+        self::assertSame($billing, $qr->billingInformation());
+        self::assertSame(['', 'EPD', $expected, '', ''], \array_slice(\explode("\n", $qr->masked()), 29));
     }
 
     public function testMaskedLeavesAnEmptyMessageAndAbsentAlternativeProceduresEmpty(): void

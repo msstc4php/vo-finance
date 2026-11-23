@@ -99,6 +99,15 @@ final class TextHelpersTest extends TestCase
         self::assertSame('a=XY&b=[z]&c=w', $query->withMasked(['a' => \strtoupper(...), 'b' => static fn (string $value): string => '[' . $value . ']']));
     }
 
+    public function testQueryStringRewritesEachPairAndKeepsEmptyPairs(): void
+    {
+        $query = QueryString::parse('a=1&&b&c=&=x&d=e=f');
+        $writer = static fn (string $name, ?string $value): string => '[' . $name . ($value === null ? '' : '|' . $value) . ']';
+
+        self::assertSame('[a|1]&&[b]&[c|]&[|x]&[d|e=f]', $query->rewritten($writer));
+        self::assertSame('', QueryString::parse('')->rewritten($writer));
+    }
+
     public function testQueryStringPairs(): void
     {
         $query = QueryString::parse('a=1&&b&a=1&c=x=y');

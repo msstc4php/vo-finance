@@ -15,8 +15,10 @@ use MSSTC4PHP\ValueObject\Financial\PaymentQr\Emvco\DataObject;
  * masked the same way, and the free-text purpose of transaction (62-08) becomes `***`; the bill, store, reference and
  * terminal labels (01, 03, 05, 07), the consumer data request codes (09), the merchant channel (11) and RFU 12 to 49
  * stay. The merchant name (59), on a person-to-person code a person's name, keeps its first character; the city (60)
- * and the postal code (61) become `***`, and so do, in the language template (64), the alternate name (64-01, first
- * character kept) and city (64-02). Headers and all other objects stay visible; the result is no valid payload.
+ * and the postal code (61) become `***`. In the language template (64), which carries only the merchant's identity in
+ * another language, the language preference (64-00) stays, the alternate name (64-01) keeps its first character, the
+ * alternate city (64-02) becomes `***` and so does any RFU sub-field (64-03 to 64-99), String-format text. Headers and
+ * all other objects stay visible; the result is no valid payload.
  *
  * @internal
  *
@@ -111,8 +113,8 @@ final class EmvcoMask
         foreach ($subFields as $subField) {
             $value .= EmvcoTlv::encode(match ($subField->id) {
                 '01' => new DataObject($subField->id, Mask::name($subField->value)),
-                '02' => new DataObject($subField->id, Mask::ADDRESS),
-                default => $subField,
+                '00' => $subField,
+                default => new DataObject($subField->id, Mask::TEXT),
             });
         }
 

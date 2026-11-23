@@ -111,6 +111,29 @@ final readonly class QueryString
     }
 
     /**
+     * The query rebuilt pair by pair: each non-empty pair is replaced by what the writer returns for its name and its
+     * value (null for a pair without `=`); empty pairs stay empty, so `&&` is kept.
+     *
+     * @param Closure(string, string|null): string $writer
+     */
+    public function rewritten(Closure $writer): string
+    {
+        $parts = [];
+        foreach (\explode('&', $this->query) as $pair) {
+            if ($pair === '') {
+                $parts[] = '';
+
+                continue;
+            }
+
+            $split = \explode('=', $pair, 2);
+            $parts[] = $writer($split[0], $split[1] ?? null);
+        }
+
+        return \implode('&', $parts);
+    }
+
+    /**
      * @param array<string, Closure(string): string> $masks
      */
     private function maskPair(string $pair, array $masks): string

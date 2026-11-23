@@ -33,9 +33,10 @@ use Override;
  * kept byte for byte. {@see masked()} hides the IBAN, keeps the first character of the creditor's and the ultimate
  * debtor's name and replaces their street, building number, postal code and town with `***`; the address type and
  * the country stay. The free text of a filled unstructured message (`Ustrd`) and of both alternative procedures
- * (`AltPmt`) becomes `***` too. The reference stays, and so does the billing information (`StrdBkgInf`) when it has
- * the syntax of section 4.3.3 (`//` and an abbreviation such as `S1`); other billing text becomes `***` (parsing still
- * accepts it).
+ * (`AltPmt`) becomes `***` too. The reference stays. The billing information (`StrdBkgInf`) stays only in the Swico
+ * S1 syntax of Annex D (`//S1` and `/<tag>/<value>` groups of the tags 10, 11, 20, 30, 31, 32, 33 and 40 in
+ * ascending order, each value in its form), with the free-text invoice number (10) and customer reference (20) as
+ * `***`; any other billing text becomes `***` (parsing still accepts it).
  *
  * @see https://www.six-group.com/dam/download/banking-services/standardization/qr-bill/ig-qr-bill-v2.3-en.pdf SIX Swiss Implementation Guidelines for the QR-bill 2.3, sections 2.8, 4.1 to 4.4 and Annex A
  * @see https://github.com/msstc4php/vo-finance/blob/main/docs/sources/FINANCE.md "SIX QR-bill layout"
@@ -51,6 +52,23 @@ final class QrBill extends AbstractStringValueObject implements PaymentPayload
     private const string TYPE = 'QrBill';
 
     /** Section 4.1.1: Basic Latin, Latin-1 Supplement, Latin Extended-A, Ș ș Ț ț and €. */
+    /**
+     * Swico S1 tags (SIX IG 2.3 Annex D, tables 28 and 29) with the form of their value; null marks free text. A value
+     * escapes `/` and `\` with `\`.
+     */
+    private const array SWICO_TAGS = [
+        '10' => null,
+        '11' => '/^\d{6}$/D',
+        '20' => null,
+        '30' => '/^\d{9}$/D',
+        '31' => '/^\d{6}(\d{6})?$/D',
+        '32' => '/^[0-9.:;]+$/D',
+        '33' => '/^[0-9.:;]+$/D',
+        '40' => '/^[0-9.:;]+$/D',
+    ];
+
+    private const string SWICO_GROUP = '\/(\d{2})\/((?:[^\/\\\\]|\\\\[\/\\\\])*)';
+
     private const string CHARACTERS = '/^[\x{20}-\x{7E}\x{A0}-\x{17F}\x{218}-\x{21B}\x{20AC}]*$/Du';
 
     private TextLines $lines;
@@ -162,8 +180,8 @@ final class QrBill extends AbstractStringValueObject implements PaymentPayload
         }
 
         $billing = $this->billingInformation();
-        if ($billing !== null && !\str_starts_with($billing, '//')) {
-            $replacements[31] = Mask::TEXT;
+        if ($billing !== null) {
+            $replacements[31] = $this->maskedBillingInformation($billing);
         }
 
         foreach ([4, 20] as $start) {
@@ -262,6 +280,36 @@ final class QrBill extends AbstractStringValueObject implements PaymentPayload
         }
 
         ProfileRule::ensure(!\str_contains($reference, ' ') && CreditorReference::isValid($reference), self::TYPE, 'a valid creditor reference of 5 to 25 letters or digits');
+    }
+
+    /**
+     * @return non-empty-string the Swico S1 billing information with its free-text values as `***`, or `***` for any
+     *                          other text
+     */
+    private function maskedBillingInformation(string $billing): string
+    {
+        if (\preg_match('/^\/\/S1(?:' . self::SWICO_GROUP . ')+$/D', $billing) !== 1) {
+            return Mask::TEXT;
+        }
+
+        \preg_match_all('/' . self::SWICO_GROUP . '/', $billing, $groups, \PREG_SET_ORDER);
+        $masked = '//S1';
+        $previous = '';
+        foreach ($groups as [, $tag, $value]) {
+            if (!\array_key_exists($tag, self::SWICO_TAGS) || $tag <= $previous) {
+                return Mask::TEXT;
+            }
+
+            $form = self::SWICO_TAGS[$tag];
+            if ($form !== null && $value !== '' && \preg_match($form, $value) !== 1) {
+                return Mask::TEXT;
+            }
+
+            $masked .= '/' . $tag . '/' . ($form === null ? Mask::text($value) : $value);
+            $previous = $tag;
+        }
+
+        return $masked;
     }
 
     /**

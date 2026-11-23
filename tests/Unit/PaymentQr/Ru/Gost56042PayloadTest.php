@@ -221,8 +221,22 @@ final class Gost56042PayloadTest extends TestCase
     {
         $masked = Gost56042Payload::from('ST00012|' . self::MANDATORY . '|Contract=Д-17/Иванов|CounterId=123456789|ExecId=12345/24/77001-ИП|RuleId=18810177220110012345')->masked();
 
-        self::assertStringEndsWith('|Contract=*********ов|CounterId=*******89|ExecId=*************1-ИП|RuleId=18**************2345', $masked);
+        self::assertStringEndsWith('|Contract=***|CounterId=*******89|ExecId=*************1-ИП|RuleId=18**************2345', $masked);
         self::assertStringNotContainsString('Иванов', $masked);
+    }
+
+    public function testMaskedHidesTheValueOfEveryAliasOutsideAnnexV(): void
+    {
+        $masked = Gost56042Payload::from('ST00012|' . self::MANDATORY . '|Comment=Анна Иванова, тел 79101234567|SomeNewReq=100|Empty=|DocNo=12|TechCode=02|Sum=100')->masked();
+
+        self::assertStringEndsWith('|Comment=***|SomeNewReq=***|Empty=|DocNo=12|TechCode=02|Sum=100', $masked);
+    }
+
+    public function testMaskedKeepsTheOtherAnnexVAliases(): void
+    {
+        $visible = 'BankName=Б|BIC=044525225|CorrespAcc=0|Sum=1|PayeeINN=2|DrawerStatus=3|KPP=4|CBC=5|OKTMO=6|PaytReason=7|TaxPeriod=8|DocNo=9|DocDate=10|TaxPaytKind=11|DocIdx=12|PayerIdType=13|PaymTerm=14|PaymPeriod=15|Category=16|ServiceName=17|CounterVal=18|QuittId=19|QuittDate=20|AddAmount=21|RegType=22|UIN=23|TechCode=24';
+
+        self::assertStringEndsWith('|' . $visible, Gost56042Payload::from('ST00012|' . self::MANDATORY . '|' . $visible)->masked());
     }
 
     public function testMaskedHidesThePayeeAndPayerAccounts(): void

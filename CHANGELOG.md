@@ -51,15 +51,18 @@ package only; methods may be added to them in minors. Not covered: exception mes
 - `masked()` hides every field that names or locates a person, and all free text (README, "Payment QR payloads", one
   list per class): names keep their first character (`X***`), addresses, other personal data and free text become
   `***`, accounts and identifiers keep at most about a third. Newly hidden since 0.2.0:
-  - EMVCo: 59 and 64-01 (`X***`), 60, 61, 64-02 and 62-08 (`***`), 62-04, 62-10 and 62-50 to 62-99 (asterisks).
+  - EMVCo: 59 and 64-01 (`X***`), 60, 61, 64-02, 62-08 and 64-03 to 64-99 (`***`), 62-04, 62-10 and 62-50 to 62-99
+    (asterisks).
   - EPC: beneficiary name; remittance text, beneficiary to originator information and a reference that is no RF
     creditor reference (`***`).
   - QR-bill: creditor and ultimate debtor name, street, building number, postal code and town; unstructured message,
-    both alternative procedures and billing information that does not start with `//` (`***`).
+    both alternative procedures, billing information outside the Swico S1 syntax, and the S1 invoice number and
+    customer reference (`***`).
   - GOST: `Name`, `LastName`, `FirstName`, `MiddleName`, `ChildFio`, `SpecFio` (`X***`); `PayerAddress`, `Flat`,
-    `InstNum`, `ClassNum`, `BirthDate`, `Purpose` (`***`); `Phone`, `Contract`, `CounterId`, `ExecId`, `RuleId` (keep
-    ends).
-  - SBP: every query value except `type`, `bank`, `sum`, `cur` and `crc` (`***`).
+    `InstNum`, `ClassNum`, `BirthDate`, `Purpose`, `Contract` and any alias outside Annex V table В.1 (`***`); `Phone`,
+    `CounterId`, `ExecId`, `RuleId` (keep ends).
+  - SBP: every query pair except `type`, `bank`, `sum`, `cur` and `crc` in their code shape, its name included
+    (`***=***`, `***=`, `***`); an allowlisted value of another shape becomes `***`.
   - UPI: `pn` (`X***`) and `tn` (`***`).
 - `QrBillAddress` throws `InvalidPaymentQrException` (a subclass of the `InvalidArgumentException` it threw).
 - `MerchantPresentedQrBuilder` has an argument-less constructor; the `MerchantAccount` constructor is `@internal`.

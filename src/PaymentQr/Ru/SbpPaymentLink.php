@@ -18,9 +18,10 @@ use Override;
  * segment of ASCII letters and digits), optionally followed by a query. Format only: NSPK publishes the link layout
  * and its query fields only in the SBP OPKTs standards on its closed participant portal, so neither the identifier
  * length nor any query field is checked. Scheme and host are compared case-insensitively; the link is kept as given.
- * {@see masked()} hides the identifier and, failing closed, the value of every query parameter except the codes and
- * amounts `type`, `bank`, `sum`, `cur` and `crc` (names compared exactly): with no published field list an unknown
- * parameter may hold free text, so it becomes `***` (an empty value stays empty). At most 7089 characters, the
+ * {@see masked()} hides the identifier and fails closed on the query: it keeps only the codes and amounts `type`,
+ * `bank`, `sum`, `cur` and `crc` (names compared exactly) whose value has a code shape (`sum=Anna` gives `sum=***`).
+ * With no published field list, any other pair may hold free text in its name as in its value, so it becomes
+ * `***=***`, `***=` for an empty value and `***` without `=`; an empty pair stays empty. At most 7089 characters, the
  * largest QR content: a bound against abusive input.
  *
  * @see https://sbp.nspk.ru/file/pravila-informacionno-tekhnologicheskogo-vzaimodejstviya_v.4.0.pdf NSPK, Rules P.235 v4.0 (2024): the SBP OPKTs standards are published on the NSPK portal
@@ -33,8 +34,18 @@ final class SbpPaymentLink extends AbstractStringValueObject implements PaymentP
 
     private const string TYPE = 'SbpPaymentLink';
 
-    /** The only query fields of the link examples found (third-party; NSPK publishes none): codes and amounts. */
-    private const array VISIBLE_PARAMETERS = ['type', 'bank', 'sum', 'cur', 'crc'];
+    /**
+     * The query fields kept visible, with the shape a code must have: `type`, `bank` and `crc` from the only link
+     * examples found (third-party; NSPK publishes none), `sum` and `cur` by ruling. Loose on purpose: the shapes only
+     * keep prose out.
+     */
+    private const array VISIBLE_PARAMETERS = [
+        'type' => '/^\d{1,2}$/D',
+        'bank' => '/^\d{1,12}$/D',
+        'sum' => '/^\d{1,18}$/D',
+        'cur' => '/^[A-Z]{3}$/D',
+        'crc' => '/^[0-9A-Fa-f]{1,8}$/D',
+    ];
 
     private const string PATTERN = '~^(https://qr\.nspk\.ru/)([A-Za-z0-9]+)(?:\?([\x21-\x22\x24-\x7E]*))?$~Di';
 
@@ -79,12 +90,7 @@ final class SbpPaymentLink extends AbstractStringValueObject implements PaymentP
             return $masked;
         }
 
-        $masks = [];
-        foreach (\array_diff($this->query->names(), self::VISIBLE_PARAMETERS) as $name) {
-            $masks[$name] = Mask::text(...);
-        }
-
-        return $masked . '?' . $this->query->withMasked($masks);
+        return $masked . '?' . $this->query->rewritten($this->maskedPair(...));
     }
 
     #[Override]
@@ -99,5 +105,17 @@ final class SbpPaymentLink extends AbstractStringValueObject implements PaymentP
         $this->query = isset($match[3]) ? QueryString::parse($match[3]) : null;
 
         return $value;
+    }
+
+    private function maskedPair(string $name, ?string $value): string
+    {
+        $shape = self::VISIBLE_PARAMETERS[$name] ?? null;
+
+        return match (true) {
+            $value === null => Mask::TEXT,
+            $shape === null => Mask::TEXT . '=' . Mask::text($value),
+            $value === '', \preg_match($shape, $value) === 1 => $name . '=' . $value,
+            default => $name . '=' . Mask::TEXT,
+        };
     }
 }

@@ -109,7 +109,36 @@ final class SbpPaymentLinkTest extends TestCase
     {
         $masked = SbpPaymentLink::from('https://qr.nspk.ru/AD10006M?type=02&purpose=Anna%20Ivanova&sum=10000&cur=RUB&Bank=x&note=&flag&crc=AB12')->masked();
 
-        self::assertSame('https://qr.nspk.ru/******6M?type=02&purpose=***&sum=10000&cur=RUB&Bank=***&note=&flag&crc=AB12', $masked);
+        self::assertSame('https://qr.nspk.ru/******6M?type=02&***=***&sum=10000&cur=RUB&***=***&***=&***&crc=AB12', $masked);
+    }
+
+    public function testMaskedHidesBareParametersAndNamesThatAreText(): void
+    {
+        self::assertSame('https://qr.nspk.ru/******6M?***&***&&***=***', SbpPaymentLink::from('https://qr.nspk.ru/AD10006M?79101234567&anna@x.com&&anna@x.com=1')->masked());
+    }
+
+    /**
+     * @return iterable<string, array{string, string}>
+     */
+    public static function allowlistedValuesWithoutACodeShape(): iterable
+    {
+        yield 'sum as text' => ['sum=Anna-Ivanova', 'sum=***'];
+        yield 'bank as e-mail' => ['bank=anna@x.com', 'bank=***'];
+        yield 'type of three digits' => ['type=123', 'type=***'];
+        yield 'bank of 13 digits' => ['bank=1000000000011', 'bank=***'];
+        yield 'sum of 19 digits' => ['sum=1234567890123456789', 'sum=***'];
+        yield 'lowercase currency' => ['cur=rub', 'cur=***'];
+        yield 'crc of nine characters' => ['crc=ABCDEF012', 'crc=***'];
+        yield 'crc with a non-hex letter' => ['crc=AG', 'crc=***'];
+        yield 'bare allowlisted name' => ['sum', '***'];
+        yield 'empty allowlisted value' => ['sum=', 'sum='];
+        yield 'all shapes at their bounds' => ['type=1&bank=123456789012&sum=123456789012345678&cur=EUR&crc=abcdef01', 'type=1&bank=123456789012&sum=123456789012345678&cur=EUR&crc=abcdef01'];
+    }
+
+    #[DataProvider('allowlistedValuesWithoutACodeShape')]
+    public function testMaskedKeepsAnAllowlistedValueOnlyInItsCodeShape(string $query, string $expected): void
+    {
+        self::assertSame($expected, \substr(SbpPaymentLink::from('https://qr.nspk.ru/AD10006M?' . $query)->masked(), 28));
     }
 
     public function testMaskedKeepsALinkWithoutAQueryOrWithAnEmptyOne(): void

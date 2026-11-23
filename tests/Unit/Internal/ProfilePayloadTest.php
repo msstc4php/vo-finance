@@ -202,7 +202,8 @@ final class ProfilePayloadTest extends TestCase
             new DataObject('64', '0002EN0108Jane Doe0204Town0302xy'),
         ]);
 
-        self::assertSame('5904J***6003***6103***64270002EN0104J***0203***0302xy', $masked);
+        self::assertSame('5904J***6003***6103***64280002EN0104J***0203***0303***', $masked);
+        self::assertSame('64200002EN0303***9903***', EmvcoMask::apply([new DataObject('64', '0002EN0312Anna Ivanova9905Flat5')]));
         self::assertSame('6403***', EmvcoMask::apply([new DataObject('64', 'ABCD')]));
     }
 
