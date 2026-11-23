@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace MSSTC4PHP\ValueObject\Financial\Security;
 
+use MSSTC4PHP\ValueObject\Financial\Exception\InvalidSecurityIdentifierException;
 use MSSTC4PHP\ValueObject\Financial\Internal\Iso7064Mod97;
 use MSSTC4PHP\ValueObject\Financial\Internal\SecurityRules;
 use MSSTC4PHP\ValueObject\Support\AbstractStringValueObject;
@@ -23,6 +24,21 @@ final class Lei extends AbstractStringValueObject implements SecurityIdentifier
     public const int MAX_LENGTH = 20;
 
     private const string TYPE = 'LEI';
+
+    /**
+     * Builds the LEI from its first 18 characters, computing the ISO/IEC 7064 MOD 97-10 check pair.
+     *
+     * @throws InvalidSecurityIdentifierException when the body is not 18 letters or digits
+     */
+    public static function fromParts(string $body): self
+    {
+        $body = \strtoupper($body);
+        if (\preg_match('/^[A-Z0-9]{18}$/D', $body) !== 1) {
+            throw SecurityRules::fail(self::TYPE, 'body must be 18 letters or digits');
+        }
+
+        return new self($body . Iso7064Mod97::compute($body));
+    }
 
     /**
      * @return non-empty-string four characters

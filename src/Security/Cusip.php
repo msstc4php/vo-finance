@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace MSSTC4PHP\ValueObject\Financial\Security;
 
+use MSSTC4PHP\ValueObject\Financial\Exception\InvalidSecurityIdentifierException;
 use MSSTC4PHP\ValueObject\Financial\Internal\CusipCheckDigit;
 use MSSTC4PHP\ValueObject\Financial\Internal\SecurityRules;
 use MSSTC4PHP\ValueObject\Support\AbstractStringValueObject;
@@ -28,6 +29,21 @@ final class Cusip extends AbstractStringValueObject implements SecurityIdentifie
     public const int MAX_LENGTH = 9;
 
     private const string TYPE = 'CUSIP';
+
+    /**
+     * Builds an all-digit CUSIP from its first eight digits, computing the check digit. A body with letters or `*`, `@`,
+     * `#` is refused: no reached CGS publication gives their values in the sum.
+     *
+     * @throws InvalidSecurityIdentifierException when the body is not eight digits
+     */
+    public static function fromParts(string $body): self
+    {
+        if (\preg_match('/^[0-9]{8}$/D', $body) !== 1) {
+            throw SecurityRules::fail(self::TYPE, 'body must be 8 digits: no published check-digit values exist for letters or *, @, #');
+        }
+
+        return new self($body . CusipCheckDigit::compute($body));
+    }
 
     #[Override]
     protected function parse(string $value): string

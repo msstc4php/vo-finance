@@ -23,6 +23,21 @@ final class CreditorReference extends AbstractStringValueObject
     public const int MAX_LENGTH = 25;
 
     /**
+     * Builds `RF`, the check digits and the body; blanks are removed and letters folded to capitals.
+     *
+     * @throws InvalidPaymentReferenceException when the body is not 1 to 21 letters or digits
+     */
+    public static function fromParts(string $body): self
+    {
+        $body = \strtoupper(\str_replace(' ', '', $body));
+        if (\preg_match('/^[A-Z0-9]{1,21}$/D', $body) !== 1) {
+            throw new InvalidPaymentReferenceException('A creditor reference body must be 1 to 21 letters or digits.');
+        }
+
+        return new self('RF' . Iso7064Mod97::compute($body . 'RF') . $body);
+    }
+
+    /**
      * @return non-empty-string two digits
      */
     public function checkDigits(): string

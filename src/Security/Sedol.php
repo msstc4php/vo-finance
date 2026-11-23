@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace MSSTC4PHP\ValueObject\Financial\Security;
 
+use MSSTC4PHP\ValueObject\Financial\Exception\InvalidSecurityIdentifierException;
 use MSSTC4PHP\ValueObject\Financial\Internal\SecurityRules;
 use MSSTC4PHP\ValueObject\Financial\Internal\SedolCheckDigit;
 use MSSTC4PHP\ValueObject\Support\AbstractStringValueObject;
@@ -22,6 +23,21 @@ final class Sedol extends AbstractStringValueObject implements SecurityIdentifie
     public const int MAX_LENGTH = 7;
 
     private const string TYPE = 'SEDOL';
+
+    /**
+     * Builds the SEDOL from its first six characters, computing the check digit.
+     *
+     * @throws InvalidSecurityIdentifierException when the body is not six digits or capital consonants
+     */
+    public static function fromParts(string $body): self
+    {
+        $body = \strtoupper($body);
+        if (\preg_match('/^[0-9BCDFGHJKLMNPQRSTVWXYZ]{6}$/D', $body) !== 1) {
+            throw SecurityRules::fail(self::TYPE, 'body must be 6 digits or capital consonants');
+        }
+
+        return new self($body . SedolCheckDigit::compute($body));
+    }
 
     #[Override]
     protected function parse(string $value): string

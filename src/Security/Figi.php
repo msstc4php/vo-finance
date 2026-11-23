@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace MSSTC4PHP\ValueObject\Financial\Security;
 
+use MSSTC4PHP\ValueObject\Financial\Exception\InvalidSecurityIdentifierException;
 use MSSTC4PHP\ValueObject\Financial\Internal\FigiCheckDigit;
 use MSSTC4PHP\ValueObject\Financial\Internal\SecurityRules;
 use MSSTC4PHP\ValueObject\Support\AbstractStringValueObject;
@@ -23,6 +24,21 @@ final class Figi extends AbstractStringValueObject implements SecurityIdentifier
     public const int MAX_LENGTH = 12;
 
     private const string TYPE = 'FIGI';
+
+    /**
+     * Builds the FIGI from its first 11 characters, computing the check digit.
+     *
+     * @throws InvalidSecurityIdentifierException when the body is not 11 consonants or digits, or has an excluded prefix
+     */
+    public static function fromParts(string $body): self
+    {
+        $body = \strtoupper($body);
+        if (\preg_match('/^[BCDFGHJKLMNPQRSTVWXYZ0-9]{11}$/D', $body) !== 1) {
+            throw SecurityRules::fail(self::TYPE, 'body must be 11 consonants or digits');
+        }
+
+        return new self($body . FigiCheckDigit::compute($body));
+    }
 
     #[Override]
     protected function parse(string $value): string

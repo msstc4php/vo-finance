@@ -22,6 +22,22 @@ final class QrReference extends AbstractStringValueObject
     public const int MAX_LENGTH = 27;
 
     /**
+     * Builds the reference from its first 26 digits, computing the recursive modulo 10 check digit; blanks of the
+     * printed grouping are removed.
+     *
+     * @throws InvalidPaymentReferenceException when the body is not 26 digits, or the reference would be zeros only
+     */
+    public static function fromParts(string $body): self
+    {
+        $body = \str_replace(' ', '', $body);
+        if (\preg_match('/^\d{26}$/D', $body) !== 1) {
+            throw new InvalidPaymentReferenceException('A QR reference body must be 26 digits.');
+        }
+
+        return new self($body . Mod10Recursive::compute($body));
+    }
+
+    /**
      * @return numeric-string
      */
     public function checkDigit(): string
