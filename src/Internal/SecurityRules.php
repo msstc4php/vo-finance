@@ -29,7 +29,7 @@ final class SecurityRules
     public static function shape(string $value, string $type, int $length, string $pattern, string $charset): void
     {
         if (\strlen($value) !== $length) {
-            throw self::fail($type, \sprintf('must have %d characters, got %d', $length, \strlen($value)));
+            throw self::fail($type, \sprintf('must have %d characters', $length));
         }
 
         if (\preg_match($pattern, $value) !== 1) {

@@ -94,4 +94,17 @@ final class FisnTest extends TestCase
             self::assertStringNotContainsString('SECRET', $e->getMessage());
         }
     }
+
+    public function testTheMessageHoldsNoLengthOfTheInput(): void
+    {
+        $value = 'ISSUERISSUERISSUERISSUERISS/DESCRIPTIONS';
+
+        try {
+            new Fisn($value);
+            self::fail('Expected an exception.');
+        } catch (InvalidSecurityIdentifierException $e) {
+            self::assertSame('FISN must have at most 35 characters.', $e->getMessage());
+            self::assertStringNotContainsString((string) \mb_strlen($value), $e->getMessage());
+        }
+    }
 }

@@ -7,3 +7,6 @@
 - Tests use the source's own examples; each test names the source in a comment. Where a test pins a value that only an
   aggregator gives (ISIN, CUSIP `*@#`), FINANCE.md says so.
 - Infection needs `#[UsesClass]` for helpers that call other helpers, or PHPUnit marks the tests risky (coverage metadata is strict).
+- Exception messages hold no part of the input: no value, no excerpt, no length or count (`SecurityRules::shape()` says
+  "must have 12 characters", never what it got). Fixed bounds, the type and a fixed reason are fine. A test with an
+  over-long input asserts that its length is not in the message (`IdentifiersTest`, `IsinTest`, `FisnTest`).

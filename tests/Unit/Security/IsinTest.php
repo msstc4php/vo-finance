@@ -83,6 +83,17 @@ final class IsinTest extends TestCase
         }
     }
 
+    public function testTheLengthMessageHoldsNoLengthOfTheInput(): void
+    {
+        try {
+            new Isin('US03783310051');
+            self::fail('Expected an exception.');
+        } catch (InvalidSecurityIdentifierException $e) {
+            self::assertSame('ISIN must have 12 characters.', $e->getMessage());
+            self::assertStringNotContainsString('13', $e->getMessage());
+        }
+    }
+
     public function testParts(): void
     {
         $isin = new Isin('US0378331005');

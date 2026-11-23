@@ -57,12 +57,8 @@ final class Fisn extends AbstractStringValueObject
     protected function parse(string $value): string
     {
         $value = \strtr(\strtoupper($value), $this->lowercaseLatin1());
-        $length = \preg_match_all('/./su', $value);
-
-        if ($length > self::MAX_LENGTH) {
-            $rule = \sprintf('must have at most %d characters, got %d', self::MAX_LENGTH, $length);
-
-            throw SecurityRules::fail(self::TYPE, $rule);
+        if (\preg_match_all('/./su', $value) > self::MAX_LENGTH) {
+            throw SecurityRules::fail(self::TYPE, \sprintf('must have at most %d characters', self::MAX_LENGTH));
         }
 
         $shape = '/^' . self::CHARACTER . '+\/' . self::CHARACTER . '+$/Du';

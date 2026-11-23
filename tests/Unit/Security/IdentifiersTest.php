@@ -189,8 +189,32 @@ final class IdentifiersTest extends TestCase
     public function testAWrongLengthIsReportedAsTheLengthRule(): void
     {
         $this->expectException(InvalidSecurityIdentifierException::class);
-        $this->expectExceptionMessage('MIC must have 4 characters, got 5.');
+        $this->expectExceptionMessage('MIC must have 4 characters.');
 
         new Mic('XNASA');
+    }
+
+    /**
+     * @return iterable<string, array{class-string<ValueObject>, string}>
+     */
+    public static function overLong(): iterable
+    {
+        yield 'LEI of 23' => [Lei::class, 'F50EOCWSQFAUVO9Q8Z97123'];
+        yield 'MIC of 13' => [Mic::class, 'XNASXNASXNASX'];
+        yield 'CUSIP of 13' => [Cusip::class, '0378331001234'];
+    }
+
+    /**
+     * @param class-string<ValueObject> $class
+     */
+    #[DataProvider('overLong')]
+    public function testTheMessageHoldsNoLengthOfTheInput(string $class, string $value): void
+    {
+        try {
+            new $class($value);
+            self::fail('Expected an exception.');
+        } catch (InvalidSecurityIdentifierException $e) {
+            self::assertStringNotContainsString((string) \strlen($value), $e->getMessage());
+        }
     }
 }
