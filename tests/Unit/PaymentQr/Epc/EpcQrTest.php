@@ -408,6 +408,16 @@ final class EpcQrTest extends TestCase
         self::assertStringEndsWith("\nRF18539007547034", EpcQr::from(\implode("\n", self::V1))->masked());
     }
 
+    public function testMaskedHidesAReferenceThatIsNoCreditorReference(): void
+    {
+        $lines = self::V1;
+        $lines[9] = 'Anna Smith anna@x.com';
+        $qr = EpcQr::from(\implode("\n", $lines));
+
+        self::assertSame('Anna Smith anna@x.com', $qr->reference());
+        self::assertStringEndsWith("\nGDDS\n***", $qr->masked());
+    }
+
     public function testMessagesCarryNoPartOfThePayload(): void
     {
         $lines = self::V1;

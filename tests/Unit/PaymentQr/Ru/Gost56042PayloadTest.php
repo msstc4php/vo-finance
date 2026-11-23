@@ -211,10 +211,18 @@ final class Gost56042PayloadTest extends TestCase
 
     public function testMaskedHidesThePhoneFlatBirthDateAndSpecialistButKeepsTheReferences(): void
     {
-        $masked = Gost56042Payload::from('ST00012|' . self::MANDATORY . '|Phone=79101234567|Flat=15|BirthDate=01.02.2010|SpecFio=Сидорова Анна|Contract=Д-17|UIN=18810177220110012345|Sum=100000')->masked();
+        $masked = Gost56042Payload::from('ST00012|' . self::MANDATORY . '|Phone=79101234567|Flat=15|BirthDate=01.02.2010|SpecFio=Сидорова Анна|InstNum=1234|ClassNum=5А|QuittId=987654|UIN=18810177220110012345|Sum=100000')->masked();
 
-        self::assertStringEndsWith('|Phone=*********67|Flat=***|BirthDate=***|SpecFio=С***|Contract=Д-17|UIN=18810177220110012345|Sum=100000', $masked);
+        self::assertStringEndsWith('|Phone=*********67|Flat=***|BirthDate=***|SpecFio=С***|InstNum=***|ClassNum=***|QuittId=987654|UIN=18810177220110012345|Sum=100000', $masked);
         self::assertStringEndsWith('|Purpose=|Phone=', Gost56042Payload::from('ST00012|' . self::MANDATORY . '|Purpose=|Phone=')->masked());
+    }
+
+    public function testMaskedHidesTheReferencesThatIdentifyThePayer(): void
+    {
+        $masked = Gost56042Payload::from('ST00012|' . self::MANDATORY . '|Contract=Д-17/Иванов|CounterId=123456789|ExecId=12345/24/77001-ИП|RuleId=18810177220110012345')->masked();
+
+        self::assertStringEndsWith('|Contract=*********ов|CounterId=*******89|ExecId=*************1-ИП|RuleId=18**************2345', $masked);
+        self::assertStringNotContainsString('Иванов', $masked);
     }
 
     public function testMaskedHidesThePayeeAndPayerAccounts(): void

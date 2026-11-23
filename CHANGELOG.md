@@ -48,12 +48,19 @@ package only; methods may be added to them in minors. Not covered: exception mes
 - `get()` returns a non-empty string or null everywhere: `Gost56042Payload::get()`, `SbpPaymentLink::get()`,
   `UpiPaymentUri::get()` and `writtenAmount()` read an empty value as absent. A repeat with another value, the empty
   one included (`am=&am=10`), still throws `AmbiguousPaymentQrFieldException`.
-- `masked()` hides every field that names or locates a person, and all free text: names keep their first character
-  (`X***`), addresses and free text become `***`. EPC beneficiary name, remittance text and beneficiary to originator
-  information; QR-bill creditor and ultimate debtor, unstructured message and both alternative procedures (the billing
-  information stays); EMVCo 59, 60, 61, 64-01, 64-02 and the purpose of transaction 62-08; UPI `pn` and note `tn`; GOST
-  `Name`, `LastName`, `FirstName`, `MiddleName`, `ChildFio`, `SpecFio`, `PayerAddress`, `Flat`, `BirthDate` and
-  `Purpose`, and `Phone` like an account (last two digits kept).
+- `masked()` hides every field that names or locates a person, and all free text (README, "Payment QR payloads", one
+  list per class): names keep their first character (`X***`), addresses, other personal data and free text become
+  `***`, accounts and identifiers keep at most about a third. Newly hidden since 0.2.0:
+  - EMVCo: 59 and 64-01 (`X***`), 60, 61, 64-02 and 62-08 (`***`), 62-04, 62-10 and 62-50 to 62-99 (asterisks).
+  - EPC: beneficiary name; remittance text, beneficiary to originator information and a reference that is no RF
+    creditor reference (`***`).
+  - QR-bill: creditor and ultimate debtor name, street, building number, postal code and town; unstructured message,
+    both alternative procedures and billing information that does not start with `//` (`***`).
+  - GOST: `Name`, `LastName`, `FirstName`, `MiddleName`, `ChildFio`, `SpecFio` (`X***`); `PayerAddress`, `Flat`,
+    `InstNum`, `ClassNum`, `BirthDate`, `Purpose` (`***`); `Phone`, `Contract`, `CounterId`, `ExecId`, `RuleId` (keep
+    ends).
+  - SBP: every query value except `type`, `bank`, `sum`, `cur` and `crc` (`***`).
+  - UPI: `pn` (`X***`) and `tn` (`***`).
 - `QrBillAddress` throws `InvalidPaymentQrException` (a subclass of the `InvalidArgumentException` it threw).
 - `MerchantPresentedQrBuilder` has an argument-less constructor; the `MerchantAccount` constructor is `@internal`.
 - `PaymentQrFactory` and `SecurityIdentifierFactory` have a private constructor; they are static only.
@@ -84,9 +91,8 @@ package only; methods may be added to them in minors. Not covered: exception mes
 - `PixBrCode::pixKeys()`, `paymentUrls()` and `recurrenceUrls()` drop repeated values, so counts and indexes can differ;
   an `array_unique()` around them is no longer needed.
 - `PaymentQrFactory` and `SecurityIdentifierFactory` have a private constructor: call them statically, never with `new`.
-- Log pipelines that read names, addresses or free text (QR-bill message and alternative procedures, EPC remittance
-  text, UPI `tn`, GOST `Purpose`, EMVCo 62-08) from `masked()` get `X***` and `***` instead; GOST `Phone` keeps its last
-  two digits.
+- Log pipelines that read any of the newly hidden fields listed under "Changed" from `masked()` get `X***`, `***` or
+  asterisks instead; read the field from the value object where it is needed.
 - `ext-bcmath` is still required (vo-base `Decimal::compareTo()` on `amount()`); keep it installed.
 - No value object accepts or refuses differently (only the factory results change, as above): `tryFrom()` and
   `isValid()` of every value object accept exactly what 0.2.0 accepted, so 0.x rows need no data check before the

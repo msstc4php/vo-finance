@@ -10,11 +10,13 @@ use MSSTC4PHP\ValueObject\Financial\PaymentQr\Emvco\DataObject;
 /**
  * Writes root data objects with the values of the account-bearing IDs replaced by asterisks of the same character
  * count: merchant accounts 02 to 51, unreserved templates 80 to 99 and the CRC. In the Additional Data Field Template
- * (62) the mobile number (62-02) and the customer label (62-06), personal data in a person-to-person code, are masked
- * the same way, and the free-text purpose of transaction (62-08) becomes `***`. The merchant name (59), on a person-to-person code a person's name, keeps its first character; the
- * city (60) and the postal code (61) become `***`, and so do, in the language template (64), the alternate name
- * (64-01, first character kept) and city (64-02). Headers and all other objects stay visible; the result is no valid
- * payload.
+ * (62) the mobile number (62-02), the loyalty number (62-04), the customer label (62-06) and the merchant tax ID
+ * (62-10), which identify a person in a person-to-person code, and the payment-system templates (62-50 to 62-99) are
+ * masked the same way, and the free-text purpose of transaction (62-08) becomes `***`; the bill, store, reference and
+ * terminal labels (01, 03, 05, 07), the consumer data request codes (09), the merchant channel (11) and RFU 12 to 49
+ * stay. The merchant name (59), on a person-to-person code a person's name, keeps its first character; the city (60)
+ * and the postal code (61) become `***`, and so do, in the language template (64), the alternate name (64-01, first
+ * character kept) and city (64-02). Headers and all other objects stay visible; the result is no valid payload.
  *
  * @internal
  *
@@ -33,7 +35,7 @@ final class EmvcoMask
     private const array ADDRESS = ['60', '61'];
 
     /** @var non-empty-list<non-empty-string> */
-    private const array PERSONAL_ADDITIONAL_DATA = ['02', '06'];
+    private const array PERSONAL_ADDITIONAL_DATA = ['02', '04', '06', '10'];
 
     private const string PURPOSE_OF_TRANSACTION = '08';
 
@@ -83,7 +85,7 @@ final class EmvcoMask
         $value = '';
         foreach ($subFields as $subField) {
             $value .= EmvcoTlv::encode(match (true) {
-                \in_array($subField->id, self::PERSONAL_ADDITIONAL_DATA, true) => self::asterisks($subField),
+                \in_array($subField->id, self::PERSONAL_ADDITIONAL_DATA, true), $subField->id >= '50' => self::asterisks($subField),
                 $subField->id === self::PURPOSE_OF_TRANSACTION => new DataObject($subField->id, Mask::TEXT),
                 default => $subField,
             });

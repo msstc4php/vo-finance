@@ -18,7 +18,10 @@ use Override;
  * segment of ASCII letters and digits), optionally followed by a query. Format only: NSPK publishes the link layout
  * and its query fields only in the SBP OPKTs standards on its closed participant portal, so neither the identifier
  * length nor any query field is checked. Scheme and host are compared case-insensitively; the link is kept as given.
- * {@see masked()} hides the identifier. At most 7089 characters, the largest QR content: a bound against abusive input.
+ * {@see masked()} hides the identifier and, failing closed, the value of every query parameter except the codes and
+ * amounts `type`, `bank`, `sum`, `cur` and `crc` (names compared exactly): with no published field list an unknown
+ * parameter may hold free text, so it becomes `***` (an empty value stays empty). At most 7089 characters, the
+ * largest QR content: a bound against abusive input.
  *
  * @see https://sbp.nspk.ru/file/pravila-informacionno-tekhnologicheskogo-vzaimodejstviya_v.4.0.pdf NSPK, Rules P.235 v4.0 (2024): the SBP OPKTs standards are published on the NSPK portal
  * @see https://github.com/msstc4php/vo-finance/blob/main/docs/sources/FINANCE.md "NSPK SBP"
@@ -29,6 +32,9 @@ final class SbpPaymentLink extends AbstractStringValueObject implements PaymentP
     public const int MAX_LENGTH = PayloadBound::MAX_CHARACTERS;
 
     private const string TYPE = 'SbpPaymentLink';
+
+    /** The only query fields of the link examples found (third-party; NSPK publishes none): codes and amounts. */
+    private const array VISIBLE_PARAMETERS = ['type', 'bank', 'sum', 'cur', 'crc'];
 
     private const string PATTERN = '~^(https://qr\.nspk\.ru/)([A-Za-z0-9]+)(?:\?([\x21-\x22\x24-\x7E]*))?$~Di';
 
@@ -68,9 +74,17 @@ final class SbpPaymentLink extends AbstractStringValueObject implements PaymentP
     #[Override]
     public function masked(): string
     {
-        $prefix = \substr($this->value, 0, 19);
+        $masked = \substr($this->value, 0, 19) . Mask::keepEnds($this->id);
+        if (!$this->query instanceof QueryString) {
+            return $masked;
+        }
 
-        return $prefix . Mask::keepEnds($this->id) . \substr($this->value, 19 + \strlen($this->id));
+        $masks = [];
+        foreach (\array_diff($this->query->names(), self::VISIBLE_PARAMETERS) as $name) {
+            $masks[$name] = Mask::text(...);
+        }
+
+        return $masked . '?' . $this->query->withMasked($masks);
     }
 
     #[Override]

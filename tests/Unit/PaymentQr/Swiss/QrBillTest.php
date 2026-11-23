@@ -412,6 +412,16 @@ final class QrBillTest extends TestCase
         self::assertStringNotContainsString('simon.muster@example.com', \implode("\n", $masked));
     }
 
+    public function testMaskedHidesBillingInformationWithoutTheSlashSlashCoding(): void
+    {
+        $lines = $this->exampleThree();
+        $lines[31] = 'Invoice for Anna Smith';
+        $qr = QrBill::from(\implode("\n", $lines));
+
+        self::assertSame('Invoice for Anna Smith', $qr->billingInformation());
+        self::assertSame(['', 'EPD', '***', '', ''], \array_slice(\explode("\n", $qr->masked()), 29));
+    }
+
     public function testMaskedLeavesAnEmptyMessageAndAbsentAlternativeProceduresEmpty(): void
     {
         $masked = QrBill::from(\implode("\n", $this->exampleThree()))->masked();

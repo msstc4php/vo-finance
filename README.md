@@ -110,25 +110,20 @@ by this package only, and methods may be added to them in minor releases.
 
 `masked()` is for logs and screens; `__toString()` and the JSON form still give the full payload. It hides every field
 that names or locates a person, and all free text, which can carry names, e-mail addresses or phone numbers.
-Machine-structured codes stay visible: amounts, currency, structured references (RF, QRR), the Swiss billing
-information (`//S1/` codes), MCC and country codes.
+Machine-structured codes stay visible: amounts, currency, structured references, MCC and country codes; a slot meant
+for a code that holds other text is masked as free text. Accounts and identifiers keep at most about a third (`keep
+ends`): nothing at six characters or fewer, the last two at 7 to 11, the last four at 12 to 17, the first two and the
+last four from 18. Names keep their first character (`X***`); addresses, other personal data and free text become
+`***`. An empty field stays empty. A masked string is not a valid payload. A minor release may hide more, never less.
 
-- Accounts and identifiers. On the EMVCo classes the values of the merchant accounts (IDs 02 to 51), the templates 80
-  to 99, the mobile number (62-02), the customer label (62-06) and the CRC become asterisks of the same length. On the
-  others the IBAN, account, identifier, phone number or VPA keeps at most about a third: nothing at six characters or
-  fewer, the last two at 7 to 11, the last four at 12 to 17, the first two and the last four from 18 (EPC and QR-bill
-  IBAN; GOST `PersonalAcc`, `PersAcc`, `PersonalAccount`, `PensAcc`, `PayerIdNum`, `PayerINN`, `Phone`; SBP
-  identifier; UPI `pa`).
-- Names keep their first character and become `X***`: the EPC beneficiary; the QR-bill creditor and ultimate debtor;
-  EMVCo 59 and 64-01; UPI `pn`; GOST `Name`, `LastName`, `FirstName`, `MiddleName`, `ChildFio`, `SpecFio`.
-- Addresses become `***`: the QR-bill street, building number, postal code and town of both parties (address type and
-  country stay); EMVCo city 60 and 64-02 and postal code 61; GOST `PayerAddress`, `Flat` and `BirthDate`.
-- Free text becomes `***`: the QR-bill unstructured message and both alternative procedures; the EPC remittance text and
-  beneficiary to originator information; EMVCo purpose of transaction (62-08); UPI note `tn`; GOST `Purpose`.
-
-An empty field stays empty. A masked string is not a valid payload. A minor release may hide more, never less. SBP
-query fields are published only on NSPK's closed portal, so none of them is known to be free text and they stay
-visible.
+| Class | Masked |
+|---|---|
+| EMVCo (`MerchantPresentedQr` and the five profiles) | Asterisks of the same length: merchant accounts 02 to 51, templates 80 to 99, the CRC, and in 62 the mobile number (02), loyalty number (04), customer label (06), merchant tax ID (10) and the payment-system templates 50 to 99. `X***`: merchant name 59 and 64-01. `***`: city 60 and 64-02, postal code 61, purpose of transaction 62-08. Visible: 62-01, 03, 05, 07, 09, 11 and all other objects |
+| `EpcQr` | Keep ends: IBAN. `X***`: beneficiary name. `***`: remittance text, beneficiary to originator information, and a reference that is no ISO 11649 creditor reference. Visible: BIC, amount, purpose, RF reference |
+| `QrBill` | Keep ends: IBAN. `X***`: creditor and ultimate debtor names. `***`: their street, building number, postal code and town; the unstructured message; both alternative procedures; billing information that does not start with `//`. Visible: address type, country, amount, currency, reference, `//`-coded billing information |
+| `Gost56042Payload` | Keep ends: `PersonalAcc`, `PersAcc`, `PersonalAccount`, `PensAcc`, `PayerIdNum`, `PayerINN`, `Phone`, `Contract`, `CounterId`, `ExecId`, `RuleId`. `X***`: `Name`, `LastName`, `FirstName`, `MiddleName`, `ChildFio`, `SpecFio`. `***`: `PayerAddress`, `Flat`, `InstNum`, `ClassNum` (they locate a person), `BirthDate`, `Purpose` (free text). Visible: the service block, `BankName`, `BIC`, `CorrespAcc`, amounts, dates, codes, `QuittId`, `DocNo`, `DocIdx`, `UIN` and all other aliases |
+| `SbpPaymentLink` | Keep ends: the identifier. `***`: every query value except `type`, `bank`, `sum`, `cur` and `crc` (NSPK publishes no field list, so an unknown field fails closed) |
+| `UpiPaymentUri` | Keep ends: `pa`. `X***`: `pn`. `***`: the note `tn`. Visible: all other parameters |
 
 `serialize()` stores only the payload, and `unserialize()` validates it again, so the parsed fields are never restored
 apart from the value they came from (vo-base 1.3 runs `parse()` again). A forged payload throws the class's

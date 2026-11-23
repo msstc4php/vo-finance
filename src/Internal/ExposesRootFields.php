@@ -142,8 +142,7 @@ trait ExposesRootFields
     }
 
     /**
-     * The values of merchant accounts 02 to 51, templates 80 to 99 and the CRC are replaced by asterisks of the same
-     * length; the result is no valid payload.
+     * Hides accounts, personal data and free text as {@see EmvcoMask} describes; the result is no valid payload.
      */
     #[Override]
     public function masked(): string

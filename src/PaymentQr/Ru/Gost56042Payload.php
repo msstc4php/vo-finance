@@ -31,11 +31,14 @@ use Override;
  * through {@see fromBytes()}, which transcodes it and rewrites the character set to `2`. {@see masked()} hides the
  * accounts and identifiers of Annex V: the payee's account (`PersonalAcc`), the payer's account with the provider
  * (`PersAcc`), the budget recipient's personal account (`PersonalAccount`), and the identifiers of the payer as a
- * person: the SNILS (`PensAcc`), the identity document number (`PayerIdNum`), the taxpayer number (`PayerINN`) and
- * the phone number (`Phone`). Of the names (`Name`, `LastName`, `FirstName`, `MiddleName`, `ChildFio`, `SpecFio`) it
- * keeps the first character; the payer's address (`PayerAddress`), flat number (`Flat`) and birth date
- * (`BirthDate`) and the free-text purpose (`Purpose`) become `***`. An empty value stays empty. Amounts, codes and
- * the references of the payee's records (`DocNo`, `Contract`, `QuittId`, `CounterId`, `UIN`, ...) stay visible.
+ * person: the SNILS (`PensAcc`), the identity document number (`PayerIdNum`), the taxpayer number (`PayerINN`), the
+ * phone number (`Phone`), the payer's contract number (`Contract`), the meter number at the payer's premises
+ * (`CounterId`), the enforcement proceedings number (`ExecId`) and the traffic-fine resolution number (`RuleId`). Of the
+ * names (`Name`, `LastName`, `FirstName`, `MiddleName`, `ChildFio`, `SpecFio`) it keeps the first character. What
+ * locates a person becomes `***`: the payer's address (`PayerAddress`), flat number (`Flat`), birth date
+ * (`BirthDate`) and the institution and class or group numbers (`InstNum`, `ClassNum`); so does the free-text purpose
+ * (`Purpose`). An empty value stays empty. Amounts, dates, meter readings, codes and the payee's bill and accrual
+ * references (`QuittId`, `DocNo`, `DocIdx`, `UIN`, ...) stay visible.
  *
  * @see https://files.stroyinf.ru/Data2/1/4293771/4293771168.htm GOST R 56042-2014 (as quoted), sections 5.2 to 5.5, Annexes V and D
  * @see https://pravo.ppt.ru/poryadok/98817 Bank of Russia, Order 515 of 08.09.1997 (as quoted)
@@ -59,11 +62,13 @@ final class Gost56042Payload extends AbstractStringValueObject implements Paymen
         'correspacc' => '/^\d{1,20}$/D',
     ];
 
-    private const array MASKED = ['personalacc', 'persacc', 'personalaccount', 'pensacc', 'payeridnum', 'payerinn', 'phone'];
+    private const array MASKED = ['personalacc', 'persacc', 'personalaccount', 'pensacc', 'payeridnum', 'payerinn', 'phone', 'contract', 'counterid', 'execid', 'ruleid'];
 
     private const array NAMES = ['name', 'lastname', 'firstname', 'middlename', 'childfio', 'specfio'];
 
-    private const array HIDDEN = ['payeraddress', 'flat', 'birthdate', 'purpose'];
+    private const array LOCATING = ['payeraddress', 'flat', 'birthdate', 'instnum', 'classnum'];
+
+    private const array FREE_TEXT = ['purpose'];
 
     /** @var non-empty-list<array{non-empty-string, string}> */
     private array $pairs;
@@ -229,7 +234,8 @@ final class Gost56042Payload extends AbstractStringValueObject implements Paymen
             $value === '' => '',
             \in_array($alias, self::MASKED, true) => Mask::keepEnds($value),
             \in_array($alias, self::NAMES, true) => Mask::name($value),
-            \in_array($alias, self::HIDDEN, true) => Mask::ADDRESS,
+            \in_array($alias, self::LOCATING, true) => Mask::ADDRESS,
+            \in_array($alias, self::FREE_TEXT, true) => Mask::TEXT,
             default => $value,
         };
     }

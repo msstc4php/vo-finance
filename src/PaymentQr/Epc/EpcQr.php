@@ -32,8 +32,9 @@ use Override;
  * UTF-8 text: a declared set other than `1` is accepted only for ASCII text, whose bytes are the same in every set;
  * other text goes through {@see fromBytes()}, which transcodes it and rewrites the character set to `1`.
  * {@see masked()} hides the IBAN, keeps only the first character of the beneficiary name and replaces the free text
- * of a filled unstructured remittance text and beneficiary to originator information with `***`; the BIC,
- * amount, purpose and structured reference stay.
+ * of a filled unstructured remittance text and beneficiary to originator information with `***`. The BIC, amount and
+ * purpose stay, and so does the reference when it is an ISO 11649 creditor reference; any other reference text is
+ * free text to the mask and becomes `***` (parsing still accepts it).
  *
  * @see https://www.europeanpaymentscouncil.eu/sites/default/files/kb/file/2022-09/EPC069-12%20v3.0%20Quick%20Response%20Code%20-%20Guidelines%20to%20Enable%20the%20Data%20Capture%20for%20the%20Initiation%20of%20an%20SCT_0.pdf EPC069-12 v3.0, sections 2.1 to 2.3
  * @see https://github.com/msstc4php/vo-finance/blob/main/docs/sources/FINANCE.md "EPC069-12"
@@ -201,6 +202,10 @@ final class EpcQr extends AbstractStringValueObject implements PaymentPayload
     public function masked(): string
     {
         $replacements = [5 => Mask::name($this->beneficiaryName()), 6 => Mask::keepEnds($this->iban->value)];
+        if ($this->reference() !== null && !$this->creditorReference() instanceof CreditorReference) {
+            $replacements[9] = Mask::TEXT;
+        }
+
         foreach ([10, 11] as $index) {
             if ($this->optional($index) !== null) {
                 $replacements[$index] = Mask::TEXT;

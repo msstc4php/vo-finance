@@ -33,8 +33,9 @@ use Override;
  * kept byte for byte. {@see masked()} hides the IBAN, keeps the first character of the creditor's and the ultimate
  * debtor's name and replaces their street, building number, postal code and town with `***`; the address type and
  * the country stay. The free text of a filled unstructured message (`Ustrd`) and of both alternative procedures
- * (`AltPmt`) becomes `***` too; the reference and the billing information (`StrdBkgInf`, structured Swico `//S1/`
- * codes) stay.
+ * (`AltPmt`) becomes `***` too. The reference stays, and so does the billing information (`StrdBkgInf`) when it has
+ * the syntax of section 4.3.3 (`//` and an abbreviation such as `S1`); other billing text becomes `***` (parsing still
+ * accepts it).
  *
  * @see https://www.six-group.com/dam/download/banking-services/standardization/qr-bill/ig-qr-bill-v2.3-en.pdf SIX Swiss Implementation Guidelines for the QR-bill 2.3, sections 2.8, 4.1 to 4.4 and Annex A
  * @see https://github.com/msstc4php/vo-finance/blob/main/docs/sources/FINANCE.md "SIX QR-bill layout"
@@ -158,6 +159,11 @@ final class QrBill extends AbstractStringValueObject implements PaymentPayload
             if ($this->optional($index) !== null) {
                 $replacements[$index] = Mask::TEXT;
             }
+        }
+
+        $billing = $this->billingInformation();
+        if ($billing !== null && !\str_starts_with($billing, '//')) {
+            $replacements[31] = Mask::TEXT;
         }
 
         foreach ([4, 20] as $start) {

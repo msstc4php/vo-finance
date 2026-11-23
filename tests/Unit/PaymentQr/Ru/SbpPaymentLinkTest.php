@@ -105,6 +105,19 @@ final class SbpPaymentLinkTest extends TestCase
         self::assertStringNotContainsString('AS1000670LSS7DN18SJQDNP4B05KLJL2', $masked);
     }
 
+    public function testMaskedHidesEveryQueryValueOutsideTheKnownCodes(): void
+    {
+        $masked = SbpPaymentLink::from('https://qr.nspk.ru/AD10006M?type=02&purpose=Anna%20Ivanova&sum=10000&cur=RUB&Bank=x&note=&flag&crc=AB12')->masked();
+
+        self::assertSame('https://qr.nspk.ru/******6M?type=02&purpose=***&sum=10000&cur=RUB&Bank=***&note=&flag&crc=AB12', $masked);
+    }
+
+    public function testMaskedKeepsALinkWithoutAQueryOrWithAnEmptyOne(): void
+    {
+        self::assertSame('https://qr.nspk.ru/******6M', SbpPaymentLink::from('https://qr.nspk.ru/AD10006M')->masked());
+        self::assertSame('https://qr.nspk.ru/******6M?', SbpPaymentLink::from('https://qr.nspk.ru/AD10006M?')->masked());
+    }
+
     public function testMessagesCarryNoPartOfTheLink(): void
     {
         try {

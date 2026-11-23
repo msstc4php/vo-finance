@@ -78,8 +78,8 @@ final readonly class QueryString
     }
 
     /**
-     * As {@see single()}, with an empty value read as absent only when it is the only one: `am=&am=10` stays ambiguous,
-     * since a first-wins parser would read no amount there.
+     * As {@see single()}, with an empty value read as absent only when every occurrence is empty (`b=&b` is absent):
+     * `am=&am=10` stays ambiguous, since a first-wins parser would read no amount there.
      *
      * @param non-empty-string $type
      *
