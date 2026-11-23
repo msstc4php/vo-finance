@@ -85,6 +85,13 @@ final class TextHelpersTest extends TestCase
         TextLines::parse("\xFF", 'Test');
     }
 
+    public function testQueryStringMasksGetTheValueOnly(): void
+    {
+        $query = QueryString::parse('a=xy&b=z&c=w');
+
+        self::assertSame('a=XY&b=[z]&c=w', $query->withMasked(['a' => \strtoupper(...), 'b' => static fn (string $value): string => '[' . $value . ']']));
+    }
+
     public function testQueryStringPairs(): void
     {
         $query = QueryString::parse('a=1&&b&a=1&c=x=y');
