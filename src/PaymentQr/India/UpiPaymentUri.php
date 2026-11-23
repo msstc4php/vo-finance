@@ -68,7 +68,7 @@ final class UpiPaymentUri extends AbstractStringValueObject implements PaymentPa
     /**
      * @return non-empty-string|null
      *
-     * @throws AmbiguousPaymentQrFieldException when `tr` repeats with distinct non-empty values
+     * @throws AmbiguousPaymentQrFieldException when `tr` repeats with distinct values
      */
     public function transactionReference(): ?string
     {
@@ -80,7 +80,7 @@ final class UpiPaymentUri extends AbstractStringValueObject implements PaymentPa
      *
      * @return non-empty-string|null
      *
-     * @throws AmbiguousPaymentQrFieldException when `am` repeats with distinct non-empty values
+     * @throws AmbiguousPaymentQrFieldException when `am` repeats with distinct values
      */
     public function writtenAmount(): ?string
     {
@@ -90,7 +90,7 @@ final class UpiPaymentUri extends AbstractStringValueObject implements PaymentPa
     /**
      * Null when `am` is absent or not digits with one optional decimal point.
      *
-     * @throws AmbiguousPaymentQrFieldException when `am` repeats with distinct non-empty values
+     * @throws AmbiguousPaymentQrFieldException when `am` repeats with distinct values
      */
     public function amount(): ?Decimal
     {
@@ -104,7 +104,7 @@ final class UpiPaymentUri extends AbstractStringValueObject implements PaymentPa
      *
      * @return non-empty-string|null
      *
-     * @throws AmbiguousPaymentQrFieldException when the parameter repeats with distinct non-empty values
+     * @throws AmbiguousPaymentQrFieldException when the parameter repeats with distinct values
      */
     public function get(string $name): ?string
     {

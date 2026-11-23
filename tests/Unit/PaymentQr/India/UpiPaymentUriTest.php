@@ -71,21 +71,19 @@ final class UpiPaymentUriTest extends TestCase
         self::assertNull($uri->get('tn'));
     }
 
-    public function testAnEmptyRepeatBesideOneFilledValueGivesThatValue(): void
+    public function testAnEmptyRepeatBesideAFilledValueIsAmbiguous(): void
     {
-        $uri = UpiPaymentUri::from('upi://pay?pa=merchant@bank&pn=Shop&am=&am=10&am=10&tn');
-
-        self::assertSame('10', $uri->writtenAmount());
-        self::assertSame('10', $uri->get('am'));
-    }
-
-    public function testTwoDistinctFilledValuesBesideAnEmptyOneStayAmbiguous(): void
-    {
-        $uri = UpiPaymentUri::from('upi://pay?pa=merchant@bank&pn=Shop&am=&am=10&am=11');
+        // A first-wins parser reads no amount here; reading 10 would be a parser differential.
+        $uri = UpiPaymentUri::from('upi://pay?pa=merchant@bank&pn=Shop&am=&am=10');
 
         $this->expectException(AmbiguousPaymentQrFieldException::class);
 
         $uri->writtenAmount();
+    }
+
+    public function testARepeatOfTheSameAmountIsThatAmount(): void
+    {
+        self::assertSame('10', UpiPaymentUri::from('upi://pay?pa=merchant@bank&pn=Shop&am=10&am=10')->writtenAmount());
     }
 
     public function testSchemeIsCaseInsensitive(): void

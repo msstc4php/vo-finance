@@ -67,23 +67,31 @@ final readonly class QueryString
      */
     public function single(string $name, string $type): ?string
     {
-        return $this->distinct($this->all($name), $name, $type);
+        $distinct = \array_values(\array_unique($this->all($name)));
+        if (\count($distinct) > 1) {
+            $field = \preg_match('/^[A-Za-z0-9_]{1,20}$/D', $name) === 1 ? 'the parameter ' . $name : 'the requested parameter';
+
+            throw new AmbiguousPaymentQrFieldException($type, $field, 'several distinct values');
+        }
+
+        return $distinct[0] ?? null;
     }
 
     /**
-     * As {@see single()}, with an empty value read as absent: `am=&am=10` gives `10`.
+     * As {@see single()}, with an empty value read as absent only when it is the only one: `am=&am=10` stays ambiguous,
+     * since a first-wins parser would read no amount there.
      *
      * @param non-empty-string $type
      *
      * @return non-empty-string|null
      *
-     * @throws AmbiguousPaymentQrFieldException when the parameter repeats with distinct non-empty values
+     * @throws AmbiguousPaymentQrFieldException when the parameter repeats with distinct values
      */
     public function filled(string $name, string $type): ?string
     {
-        $values = \array_filter($this->all($name), static fn (string $value): bool => $value !== '');
+        $value = $this->single($name, $type);
 
-        return $this->distinct($values, $name, $type);
+        return $value === '' ? null : $value;
     }
 
     /**
@@ -100,28 +108,6 @@ final readonly class QueryString
         }
 
         return \implode('&', $parts);
-    }
-
-    /**
-     * @template TValue of string
-     *
-     * @param array<int, TValue> $values
-     * @param non-empty-string $type
-     *
-     * @return TValue|null
-     *
-     * @throws AmbiguousPaymentQrFieldException
-     */
-    private function distinct(array $values, string $name, string $type): ?string
-    {
-        $distinct = \array_values(\array_unique($values));
-        if (\count($distinct) > 1) {
-            $field = \preg_match('/^[A-Za-z0-9_]{1,20}$/D', $name) === 1 ? 'the parameter ' . $name : 'the requested parameter';
-
-            throw new AmbiguousPaymentQrFieldException($type, $field, 'several distinct values');
-        }
-
-        return $distinct[0] ?? null;
     }
 
     /**

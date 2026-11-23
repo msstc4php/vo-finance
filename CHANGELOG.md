@@ -46,9 +46,8 @@ package only; methods may be added to them in minors. Not covered: exception mes
   `MerchantPresentedQr` keeps `string` for the first two, and `JpqrCode::postalCode()` keeps `string`.
 - `PixBrCode::pixKeys()`, `paymentUrls()` and `recurrenceUrls()` give distinct values in payload order.
 - `get()` returns a non-empty string or null everywhere: `Gost56042Payload::get()`, `SbpPaymentLink::get()`,
-  `UpiPaymentUri::get()` and `writtenAmount()` read an empty value as absent. On SBP and UPI an empty repeat is no
-  second value: `am=&am=10` gives `10` (it threw `AmbiguousPaymentQrFieldException`); two distinct filled values still
-  throw.
+  `UpiPaymentUri::get()` and `writtenAmount()` read an empty value as absent. A repeat with another value, the empty
+  one included (`am=&am=10`), still throws `AmbiguousPaymentQrFieldException`.
 - `masked()` hides every field that names or locates a person, and all free text: names keep their first character
   (`X***`), addresses and free text become `***`. EPC beneficiary name, remittance text and beneficiary to originator
   information; QR-bill creditor and ultimate debtor, unstructured message and both alternative procedures (the billing
@@ -81,8 +80,7 @@ package only; methods may be added to them in minors. Not covered: exception mes
   identifies a profile but fails its rules comes back as `MerchantPresentedQr` when that accepts it, instead of
   throwing. Test `instanceof PixBrCode` (or build `PixBrCode` directly, which still throws).
 - `get()` on `Gost56042Payload`, `SbpPaymentLink` and `UpiPaymentUri`, and `UpiPaymentUri::writtenAmount()`, return
-  `null` for `Alias=` / `am=` (was `''`): replace `=== ''` checks with `=== null`. On SBP and UPI, `am=&am=10` gives
-  `10` instead of throwing `AmbiguousPaymentQrFieldException`.
+  `null` for `Alias=` / `am=` (was `''`): replace `=== ''` checks with `=== null`.
 - `PixBrCode::pixKeys()`, `paymentUrls()` and `recurrenceUrls()` drop repeated values, so counts and indexes can differ;
   an `array_unique()` around them is no longer needed.
 - `PaymentQrFactory` and `SecurityIdentifierFactory` have a private constructor: call them statically, never with `new`.

@@ -112,24 +112,21 @@ final class TextHelpersTest extends TestCase
         self::assertSame('a=*&&b&a=*&c=x=y', $query->withMasked(['a' => static fn (string $value): string => '*']));
     }
 
-    public function testQueryStringFilledReadsAnEmptyValueAsAbsent(): void
+    public function testQueryStringFilledReadsALoneEmptyValueAsAbsent(): void
     {
-        $query = QueryString::parse('a=&a=10&a=10&b=&b&c=&c=1&c=2');
+        $query = QueryString::parse('a=&b=&b&c=10&c=10');
 
-        self::assertSame('10', $query->filled('a', 'Test'));
+        self::assertNull($query->filled('a', 'Test'));
         self::assertNull($query->filled('b', 'Test'));
+        self::assertSame('10', $query->filled('c', 'Test'));
         self::assertNull($query->filled('d', 'Test'));
-
-        $this->expectException(AmbiguousPaymentQrFieldException::class);
-
-        $query->filled('c', 'Test');
     }
 
-    public function testQueryStringSingleCountsAnEmptyValueAsDistinct(): void
+    public function testQueryStringFilledKeepsAnEmptyRepeatAmbiguous(): void
     {
         $this->expectException(AmbiguousPaymentQrFieldException::class);
 
-        QueryString::parse('a=&a=10')->single('a', 'Test');
+        QueryString::parse('a=&a=10')->filled('a', 'Test');
     }
 
     public function testQueryStringAmbiguityDoesNotNameAParameterWithATrailingNewline(): void
