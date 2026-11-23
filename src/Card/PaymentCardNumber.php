@@ -19,7 +19,7 @@ use Override;
  *
  * @see https://cdn.standards.iteh.ai/samples/70484/1b747b382337445fbbdae5584d268bcc/ISO-IEC-7812-1-2017.pdf ISO/IEC 7812-1:2017, IIN of 8 digits, PAN of 10 to 19 digits (preview)
  * @see https://www.pcisecuritystandards.org/faqs/1492/ PCI SSC FAQ 1492, requirement 3.4.1
- * @see docs/sources/FINANCE.md "ISO/IEC 7812-1, IIN and PAN", "Card IIN publications"
+ * @see https://github.com/msstc4php/vo-finance/blob/main/docs/sources/FINANCE.md "ISO/IEC 7812-1, IIN and PAN", "Card IIN publications"
  */
 final class PaymentCardNumber extends AbstractStringValueObject implements Maskable
 {

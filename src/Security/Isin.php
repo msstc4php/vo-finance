@@ -23,7 +23,7 @@ use Override;
  * @see https://anna-web.org/identifiers/ ANNA, the ISIN structure and its "Double-Add-Double" check digit
  * @see https://www.set.or.th/en/tsd/information/isin-calculate Stock Exchange of Thailand, worked check-digit examples
  * @see https://www.cusip.com/identifiers.html CUSIP Global Services, the CUSIP inside a US or CA ISIN
- * @see docs/sources/FINANCE.md "ISIN, ISO 6166"
+ * @see https://github.com/msstc4php/vo-finance/blob/main/docs/sources/FINANCE.md "ISIN, ISO 6166"
  */
 final class Isin extends AbstractStringValueObject implements SecurityIdentifier
 {

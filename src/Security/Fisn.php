@@ -19,7 +19,7 @@ use Override;
  * reached, so any printable ASCII punctuation is accepted.
  *
  * @see https://anna-web.org/wp-content/uploads/2026/06/FISN-Guidelines-Version-1-Jun-2026.pdf ANNA, FISN Guidelines, June 2026, section 3.2
- * @see docs/sources/FINANCE.md "FISN, ISO 18774"
+ * @see https://github.com/msstc4php/vo-finance/blob/main/docs/sources/FINANCE.md "FISN, ISO 18774"
  */
 final class Fisn extends AbstractStringValueObject implements SecurityIdentifier
 {

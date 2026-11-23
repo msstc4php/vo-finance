@@ -27,7 +27,7 @@ use Override;
  *
  * @see https://docs.developer.paynet.my/docs/duitNow-QR/integration/QR-generation-specification/merchant-presented-mode/qr-data-object PayNet, DuitNow QR merchant-presented mode 1.5, "QR Data Object"
  * @see https://docs.developer.paynet.my/docs/duitNow-QR/integration/QR-generation-specification/merchant-presented-mode/example PayNet, DuitNow QR merchant-presented mode 1.5, "Examples"
- * @see docs/sources/FINANCE.md "National EMVCo profiles"
+ * @see https://github.com/msstc4php/vo-finance/blob/main/docs/sources/FINANCE.md "National EMVCo profiles"
  */
 final class DuitNowQr extends AbstractStringValueObject implements EmvcoPayload
 {

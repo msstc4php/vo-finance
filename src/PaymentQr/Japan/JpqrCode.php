@@ -26,7 +26,7 @@ use Override;
  *
  * @see https://web.archive.org/web/20200918130533id_/https://www.paymentsjapan.or.jp/wordpress/wp-content/uploads/2020/04/MPM_Guideline_2.0.pdf Payments Japan, Unified technical specification guidelines for code payments, merchant-presented mode (MPM) 2.0 (27 April 2020), part 1 and part 2, tables 2.1-1, 2.1-2 and 3.2
  * @see https://www.rfc-editor.org/rfc/rfc4343 RFC 4343, Domain Name System (DNS) Case Insensitivity Clarification
- * @see docs/sources/FINANCE.md "National EMVCo profiles"
+ * @see https://github.com/msstc4php/vo-finance/blob/main/docs/sources/FINANCE.md "National EMVCo profiles"
  */
 final class JpqrCode extends AbstractStringValueObject implements EmvcoPayload
 {

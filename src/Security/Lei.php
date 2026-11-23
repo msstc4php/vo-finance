@@ -16,7 +16,7 @@ use Override;
  * no official text reached confirms what they mean, so nothing is verified about them.
  *
  * @see https://cdn.standards.iteh.ai/samples/59771/b4526b6c9dc04897b014c659ed70ad27/ISO-17442-2012.pdf ISO 17442:2012, clauses 4 and 5
- * @see docs/sources/FINANCE.md "LEI, ISO 17442"
+ * @see https://github.com/msstc4php/vo-finance/blob/main/docs/sources/FINANCE.md "LEI, ISO 17442"
  */
 final class Lei extends AbstractStringValueObject implements SecurityIdentifier
 {

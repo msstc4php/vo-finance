@@ -24,7 +24,7 @@ use MSSTC4PHP\ValueObject\I18n\CurrencyCode;
  *
  * @see https://docs.developer.paynet.my/docs/duitNow-QR/integration/QR-generation-specification/merchant-presented-mode/qr-data-object PayNet DuitNow QR merchant-presented mode 1.5, "DuitNow QR Data Object"
  * @see https://www.bot.or.th/content/dam/bot/fipcs/documents/FPG/2562/EngPDF/25620084.pdf Bank of Thailand, Standardized Thai QR Code for Payment Transactions, section 2.3
- * @see docs/sources/FINANCE.md "National EMVCo profiles"
+ * @see https://github.com/msstc4php/vo-finance/blob/main/docs/sources/FINANCE.md "National EMVCo profiles"
  */
 final readonly class ProfilePayload
 {

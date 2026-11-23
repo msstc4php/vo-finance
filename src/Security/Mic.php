@@ -13,7 +13,7 @@ use Override;
  * operating/segment distinction needs it, so no list is embedded and there is no `operatingMic()`.
  *
  * @see https://www.iso20022.org/sites/default/files/2023-01/FAQ_ISO_10383_January2023.pdf ISO 10383 Registration Authority, FAQ January 2023
- * @see docs/sources/FINANCE.md "MIC, ISO 10383"
+ * @see https://github.com/msstc4php/vo-finance/blob/main/docs/sources/FINANCE.md "MIC, ISO 10383"
  */
 final class Mic extends AbstractStringValueObject implements SecurityIdentifier
 {

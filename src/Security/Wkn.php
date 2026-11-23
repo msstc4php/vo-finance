@@ -13,7 +13,7 @@ use Override;
  * no check digit.
  *
  * @see https://www.wmdatenservice.com/wp-content/uploads/2022/10/Vergaberegeln_WKN.pdf WM Datenservice, "Struktur und Aufbau der deutschen WKN", July 2012
- * @see docs/sources/FINANCE.md "WKN, WM Datenservice"
+ * @see https://github.com/msstc4php/vo-finance/blob/main/docs/sources/FINANCE.md "WKN, WM Datenservice"
  */
 final class Wkn extends AbstractStringValueObject implements SecurityIdentifier
 {

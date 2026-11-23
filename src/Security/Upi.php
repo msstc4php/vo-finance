@@ -16,7 +16,7 @@ use Override;
  *
  * @see https://www.leiroc.org/international_bodies.htm Regulatory Oversight Committee, the UPI format
  * @see https://cdn.standards.iteh.ai/samples/80506/11803bc283ce4b6d8c633ca72ef6ab03/ISO-4914-2021.pdf ISO 4914:2021 (preview, contents only)
- * @see docs/sources/FINANCE.md "UPI, ISO 4914"
+ * @see https://github.com/msstc4php/vo-finance/blob/main/docs/sources/FINANCE.md "UPI, ISO 4914"
  */
 final class Upi extends AbstractStringValueObject implements SecurityIdentifier
 {

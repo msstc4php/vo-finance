@@ -30,7 +30,7 @@ use Override;
  *
  * @see https://web.archive.org/web/20230330080021id_/https://www.nbc.gov.kh/download_files/legislation/prakas_kh/Prakas_F14-020-351-PR_KHQR_for_Payment_in_Cambodia_appendix.pdf National Bank of Cambodia, Prakas on KHQR for Payment in Cambodia, appendix "KHQR Code Specification in Cambodia, Merchant-Presented Mode" 3.0 (April 2020), section 4
  * @see https://web.archive.org/web/20230201043137id_/https://bakong.nbc.gov.kh/download/KHQR/integration/KHQR%20Content%20Guideline%20v.1.3.pdf National Bank of Cambodia, KHQR Content Guideline 1.3, tags 29 and 30 and FAQ 3 to 5
- * @see docs/sources/FINANCE.md "National EMVCo profiles"
+ * @see https://github.com/msstc4php/vo-finance/blob/main/docs/sources/FINANCE.md "National EMVCo profiles"
  */
 final class KhqrCode extends AbstractStringValueObject implements EmvcoPayload
 {

@@ -7,6 +7,9 @@ namespace MSSTC4PHP\ValueObject\Financial\PaymentQr\Thailand;
 /**
  * The kind of PromptPay proxy a credit-transfer template (tag 29) carries; the value is its sub-tag ID.
  *
+ * Cases may be added in a minor release, so a `match` over them needs a default arm; backed values never change in
+ * 1.x.
+ *
  * @see https://www.bot.or.th/content/dam/bot/fipcs/documents/FPG/2562/EngPDF/25620084.pdf Bank of Thailand, Standardized Thai QR Code for Payment Transactions, section 2.3, tag 29
  */
 enum PromptPayProxyType: string

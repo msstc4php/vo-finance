@@ -32,7 +32,7 @@ use Override;
  *
  * @see https://www.bcb.gov.br/content/estabilidadefinanceira/pix/Regulamento_Pix/II_ManualdePadroesparaIniciacaodoPix.pdf BCB, Manual de Padroes para Iniciacao do Pix 2.10.0, section 2.5 to 2.8
  * @see https://www.bcb.gov.br/content/estabilidadefinanceira/spb_docs/ManualBRCode.pdf BCB, Manual do BR Code 2.0.1, section 2.1 table 1 and section 2.2
- * @see docs/sources/FINANCE.md "National EMVCo profiles"
+ * @see https://github.com/msstc4php/vo-finance/blob/main/docs/sources/FINANCE.md "National EMVCo profiles"
  */
 final class PixBrCode extends AbstractStringValueObject implements EmvcoPayload
 {

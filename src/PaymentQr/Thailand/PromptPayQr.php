@@ -24,7 +24,7 @@ use Override;
  * other countries for cross-border use), tags 31, 39 and 80, and the character set of the references.
  *
  * @see https://www.bot.or.th/content/dam/bot/fipcs/documents/FPG/2562/EngPDF/25620084.pdf Bank of Thailand, Policy Guideline: Standardized Thai QR Code for Payment Transactions (17 April 2019), section 2.3
- * @see docs/sources/FINANCE.md "National EMVCo profiles"
+ * @see https://github.com/msstc4php/vo-finance/blob/main/docs/sources/FINANCE.md "National EMVCo profiles"
  */
 final class PromptPayQr extends AbstractStringValueObject implements EmvcoPayload
 {

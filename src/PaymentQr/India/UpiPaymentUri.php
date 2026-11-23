@@ -25,7 +25,7 @@ use Override;
  * abusive input.
  *
  * @see https://www.npci.org.in/PDF/npci/upi/circular/2017/Circular18_BankCompliances_to_enbaleUPIMerchantecosystem_0.pdf NPCI, UPI OC No. 18/2016-17, Annexure A Table 1 and D.7
- * @see docs/sources/FINANCE.md "NPCI UPI linking specification"
+ * @see https://github.com/msstc4php/vo-finance/blob/main/docs/sources/FINANCE.md "NPCI UPI linking specification"
  */
 final class UpiPaymentUri extends AbstractStringValueObject implements PaymentPayload
 {

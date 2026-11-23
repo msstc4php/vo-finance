@@ -16,7 +16,7 @@ use Override;
  *
  * @see https://cdn.standards.iteh.ai/samples/81140/575a3327c8d34576ad2932719988f966/ISO-10962-2021.pdf ISO 10962:2021, clause 5 (preview)
  * @see https://www.six-group.com/dam/download/financial-information/data-center/cfi/cfi-20210507-current.xlsx SIX, ISO 10962 CFI list
- * @see docs/sources/FINANCE.md "CFI, ISO 10962"
+ * @see https://github.com/msstc4php/vo-finance/blob/main/docs/sources/FINANCE.md "CFI, ISO 10962"
  */
 final class Cfi extends AbstractStringValueObject implements SecurityIdentifier
 {

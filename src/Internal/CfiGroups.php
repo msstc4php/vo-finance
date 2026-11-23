@@ -11,7 +11,7 @@ namespace MSSTC4PHP\ValueObject\Financial\Internal;
  * @internal
  *
  * @see https://www.six-group.com/dam/download/financial-information/data-center/cfi/cfi-20210507-current.xlsx SIX, ISO 10962 CFI list
- * @see docs/sources/FINANCE.md "CFI, ISO 10962"
+ * @see https://github.com/msstc4php/vo-finance/blob/main/docs/sources/FINANCE.md "CFI, ISO 10962"
  */
 final class CfiGroups
 {

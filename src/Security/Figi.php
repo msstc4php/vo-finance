@@ -16,7 +16,7 @@ use Override;
  * conformance table and seven in section 6.1 and its regular expression; the seven are refused.
  *
  * @see https://www.omg.org/spec/FIGI/1.0 OMG Financial Instrument Global Identifier 1.0 (formal/2015-12-01), section 6.1
- * @see docs/sources/FINANCE.md "FIGI, OMG"
+ * @see https://github.com/msstc4php/vo-finance/blob/main/docs/sources/FINANCE.md "FIGI, OMG"
  */
 final class Figi extends AbstractStringValueObject implements SecurityIdentifier
 {

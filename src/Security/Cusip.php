@@ -21,7 +21,7 @@ use Override;
  *
  * @see https://www.cusip.com/pdf/news/CUSIP-ACommonLanguageForEfficientMarkets_2022.pdf CUSIP Global Services, "Modulus 10 Double Add Double"
  * @see https://www.cusip.com/pdf/fact_sheet/CGS_Private_Placement_Numbers.pdf CGS, the characters `*`, `@`, `#`
- * @see docs/sources/FINANCE.md "CUSIP, CUSIP Global Services"
+ * @see https://github.com/msstc4php/vo-finance/blob/main/docs/sources/FINANCE.md "CUSIP, CUSIP Global Services"
  */
 final class Cusip extends AbstractStringValueObject implements SecurityIdentifier
 {

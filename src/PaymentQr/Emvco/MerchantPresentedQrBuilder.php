@@ -14,7 +14,7 @@ use MSSTC4PHP\ValueObject\Financial\Internal\EmvcoTlv;
  * value in place; ID 63 cannot be set. Start empty, or from a payload with {@see MerchantPresentedQr::toBuilder()}.
  *
  * @see https://mvallim.github.io/emv-qrcode/docs/EMVCo-Merchant-Presented-QR-Specification-v1.1.pdf EMV QRCPS Merchant-Presented Mode 1.1 (third-party copy), sections 4.6 and 4.7.3
- * @see docs/sources/FINANCE.md "EMVCo QRCPS merchant-presented mode"
+ * @see https://github.com/msstc4php/vo-finance/blob/main/docs/sources/FINANCE.md "EMVCo QRCPS merchant-presented mode"
  */
 final class MerchantPresentedQrBuilder
 {

@@ -12,7 +12,7 @@ namespace MSSTC4PHP\ValueObject\Financial\Internal;
  * @internal
  *
  * @see https://www.unicode.org/Public/MAPPINGS/ISO8859/ Unicode Consortium, ISO 8859 mapping tables 8859-2.TXT, 8859-4.TXT, 8859-5.TXT, 8859-7.TXT, 8859-10.TXT, 8859-15.TXT
- * @see docs/sources/FINANCE.md "EPC069-12"
+ * @see https://github.com/msstc4php/vo-finance/blob/main/docs/sources/FINANCE.md "EPC069-12"
  */
 final class Iso8859
 {

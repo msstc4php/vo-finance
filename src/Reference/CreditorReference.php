@@ -15,7 +15,7 @@ use Override;
  * allows in both cases, are stored in capitals.
  *
  * @see https://www.iso.org/standard/50649.html ISO 11649:2009, clauses 5 and 6
- * @see docs/sources/FINANCE.md "Creditor reference, ISO 11649"
+ * @see https://github.com/msstc4php/vo-finance/blob/main/docs/sources/FINANCE.md "Creditor reference, ISO 11649"
  */
 final class CreditorReference extends AbstractStringValueObject
 {

@@ -16,7 +16,7 @@ use MSSTC4PHP\ValueObject\Financial\Card\CardScheme;
  *
  * @see https://www.discoverglobalnetwork.com/content/dam/discover/en_us/dgn/docs/IPP-VAR-Enabler-Compliance.pdf Discover Global Network, IIN Range Summary: "a. JCB IIN Ranges", "b. UnionPay IIN Ranges"
  * @see https://www.americanexpress.com/uk/merchant/get-started.html American Express: "Card account numbers begin with "34" or "37""
- * @see docs/sources/FINANCE.md "Card IIN publications"
+ * @see https://github.com/msstc4php/vo-finance/blob/main/docs/sources/FINANCE.md "Card IIN publications"
  */
 final readonly class IinRanges
 {

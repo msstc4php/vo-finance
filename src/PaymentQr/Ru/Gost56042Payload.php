@@ -37,7 +37,7 @@ use Override;
  *
  * @see https://files.stroyinf.ru/Data2/1/4293771/4293771168.htm GOST R 56042-2014 (as quoted), sections 5.2 to 5.5, Annexes V and D
  * @see https://pravo.ppt.ru/poryadok/98817 Bank of Russia, Order 515 of 08.09.1997 (as quoted)
- * @see docs/sources/FINANCE.md "GOST R 56042-2014 and the Bank of Russia account key"
+ * @see https://github.com/msstc4php/vo-finance/blob/main/docs/sources/FINANCE.md "GOST R 56042-2014 and the Bank of Russia account key"
  */
 final class Gost56042Payload extends AbstractStringValueObject implements PaymentPayload
 {

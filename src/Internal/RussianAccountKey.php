@@ -19,7 +19,7 @@ namespace MSSTC4PHP\ValueObject\Financial\Internal;
  * @internal
  *
  * @see https://pravo.ppt.ru/poryadok/98817 Bank of Russia, Order 515 of 08.09.1997 "Порядок расчета контрольного ключа в номере лицевого счета", items 2 to 7 (as quoted)
- * @see docs/sources/FINANCE.md "GOST R 56042-2014 and the Bank of Russia account key"
+ * @see https://github.com/msstc4php/vo-finance/blob/main/docs/sources/FINANCE.md "GOST R 56042-2014 and the Bank of Russia account key"
  */
 final class RussianAccountKey
 {

@@ -34,7 +34,7 @@ use Override;
  * {@see masked()} hides the IBAN and keeps only the first character of the beneficiary name.
  *
  * @see https://www.europeanpaymentscouncil.eu/sites/default/files/kb/file/2022-09/EPC069-12%20v3.0%20Quick%20Response%20Code%20-%20Guidelines%20to%20Enable%20the%20Data%20Capture%20for%20the%20Initiation%20of%20an%20SCT_0.pdf EPC069-12 v3.0, sections 2.1 to 2.3
- * @see docs/sources/FINANCE.md "EPC069-12"
+ * @see https://github.com/msstc4php/vo-finance/blob/main/docs/sources/FINANCE.md "EPC069-12"
  */
 final class EpcQr extends AbstractStringValueObject implements PaymentPayload
 {

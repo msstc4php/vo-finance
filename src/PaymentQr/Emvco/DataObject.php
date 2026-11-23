@@ -12,7 +12,7 @@ use MSSTC4PHP\ValueObject\Financial\Exception\InvalidPaymentQrException;
  * and the accessors of {@see MerchantAccount} exchange sub-fields as data objects.
  *
  * @see https://www.hkma.gov.hk/media/chi/doc/key-functions/financial-infrastructure/infrastructure/retail-payment-initiatives/Common_QR_Code_Specification.pdf HKMA Common QR Code Specification 1.0, section 2
- * @see docs/sources/FINANCE.md "EMVCo QRCPS merchant-presented mode"
+ * @see https://github.com/msstc4php/vo-finance/blob/main/docs/sources/FINANCE.md "EMVCo QRCPS merchant-presented mode"
  */
 final readonly class DataObject
 {

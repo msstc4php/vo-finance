@@ -8,9 +8,12 @@ namespace MSSTC4PHP\ValueObject\Financial\PaymentQr\Brazil;
  * The type of a Pix key, decoded from the formats the DICT stores; the value is the DICT's `KeyType`. A key of no
  * listed format has no type, and is never refused for that ("new types may appear", the DICT API says).
  *
+ * Cases may be added in a minor release, so a `match` over them needs a default arm; backed values never change in
+ * 1.x.
+ *
  * @see https://www.bcb.gov.br/content/estabilidadefinanceira/pix/Regulamento_Pix/X_ManualOperacionaldoDICT.pdf BCB, Manual Operacional do DICT 8.5, section 1 "Chaves Pix"
  * @see https://www.bcb.gov.br/content/estabilidadefinanceira/pix/API-DICT.html BCB, API do DICT 2.13.0, "Chave" (regular expression per key type)
- * @see docs/sources/FINANCE.md "National EMVCo profiles"
+ * @see https://github.com/msstc4php/vo-finance/blob/main/docs/sources/FINANCE.md "National EMVCo profiles"
  */
 enum PixKeyType: string
 {

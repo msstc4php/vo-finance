@@ -21,7 +21,7 @@ use Override;
  * {@see masked()} hides the identifier. At most 7089 characters, the largest QR content: a bound against abusive input.
  *
  * @see https://sbp.nspk.ru/file/pravila-informacionno-tekhnologicheskogo-vzaimodejstviya_v.4.0.pdf NSPK, Rules P.235 v4.0 (2024): the SBP OPKTs standards are published on the NSPK portal
- * @see docs/sources/FINANCE.md "NSPK SBP"
+ * @see https://github.com/msstc4php/vo-finance/blob/main/docs/sources/FINANCE.md "NSPK SBP"
  */
 final class SbpPaymentLink extends AbstractStringValueObject implements PaymentPayload
 {

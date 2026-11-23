@@ -35,7 +35,7 @@ use Override;
  * the country stay.
  *
  * @see https://www.six-group.com/dam/download/banking-services/standardization/qr-bill/ig-qr-bill-v2.3-en.pdf SIX Swiss Implementation Guidelines for the QR-bill 2.3, sections 2.8, 4.1 to 4.4 and Annex A
- * @see docs/sources/FINANCE.md "SIX QR-bill layout"
+ * @see https://github.com/msstc4php/vo-finance/blob/main/docs/sources/FINANCE.md "SIX QR-bill layout"
  */
 final class QrBill extends AbstractStringValueObject implements PaymentPayload
 {

@@ -24,7 +24,7 @@ use MSSTC4PHP\ValueObject\I18n\CurrencyCode;
  *
  * @see https://www.hkma.gov.hk/media/chi/doc/key-functions/financial-infrastructure/infrastructure/retail-payment-initiatives/Common_QR_Code_Specification.pdf HKMA Common QR Code Specification 1.0, sections 2 and 4
  * @see https://www.bcb.gov.br/content/estabilidadefinanceira/spb_docs/ManualBRCode.pdf Banco Central do Brasil, Manual do BR Code 2.0.1, sections 2.1 and 2.2
- * @see docs/sources/FINANCE.md "EMVCo QRCPS merchant-presented mode"
+ * @see https://github.com/msstc4php/vo-finance/blob/main/docs/sources/FINANCE.md "EMVCo QRCPS merchant-presented mode"
  */
 final class EmvcoMerchantPresented
 {

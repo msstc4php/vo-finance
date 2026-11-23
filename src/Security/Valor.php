@@ -14,7 +14,7 @@ use Override;
  * a national number is zero-padded.
  *
  * @see https://www.six-group.com/en/products-services/financial-information/data-standards.html SIX, the Swiss numbering agency
- * @see docs/sources/FINANCE.md "Valor, SIX"
+ * @see https://github.com/msstc4php/vo-finance/blob/main/docs/sources/FINANCE.md "Valor, SIX"
  */
 final class Valor extends AbstractStringValueObject implements SecurityIdentifier
 {

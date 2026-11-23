@@ -15,7 +15,7 @@ use Override;
  * 1, 3, 1, 7, 3, 9. A numeric first character is accepted, because legacy numeric SEDOLs stay in circulation.
  *
  * @see https://www.lseg.com/content/dam/lseg/en_us/documents/sedol/sedol-masterfile-service-and-technical-guide-v8.8.pdf SEDOL Masterfile Service and Technical Guide v8.8, section 8
- * @see docs/sources/FINANCE.md "SEDOL, London Stock Exchange Group"
+ * @see https://github.com/msstc4php/vo-finance/blob/main/docs/sources/FINANCE.md "SEDOL, London Stock Exchange Group"
  */
 final class Sedol extends AbstractStringValueObject implements SecurityIdentifier
 {
