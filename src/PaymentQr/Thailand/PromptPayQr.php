@@ -4,11 +4,12 @@ declare(strict_types=1);
 
 namespace MSSTC4PHP\ValueObject\Financial\PaymentQr\Thailand;
 
-use MSSTC4PHP\ValueObject\Contract\Maskable;
 use MSSTC4PHP\ValueObject\Financial\Exception\AmbiguousPaymentQrFieldException;
 use MSSTC4PHP\ValueObject\Financial\Internal\ExposesRootFields;
+use MSSTC4PHP\ValueObject\Financial\Internal\PayloadBound;
 use MSSTC4PHP\ValueObject\Financial\Internal\ProfilePayload;
 use MSSTC4PHP\ValueObject\Financial\Internal\ProfileRule;
+use MSSTC4PHP\ValueObject\Financial\PaymentQr\Emvco\EmvcoPayload;
 use MSSTC4PHP\ValueObject\Financial\PaymentQr\Emvco\MerchantAccount;
 use MSSTC4PHP\ValueObject\Support\AbstractStringValueObject;
 use Override;
@@ -25,9 +26,12 @@ use Override;
  * @see https://www.bot.or.th/content/dam/bot/fipcs/documents/FPG/2562/EngPDF/25620084.pdf Bank of Thailand, Policy Guideline: Standardized Thai QR Code for Payment Transactions (17 April 2019), section 2.3
  * @see docs/sources/FINANCE.md "National EMVCo profiles"
  */
-final class PromptPayQr extends AbstractStringValueObject implements Maskable
+final class PromptPayQr extends AbstractStringValueObject implements EmvcoPayload
 {
     use ExposesRootFields;
+
+    /** The longest stored payload, in characters: the abuse bound of 7089; frozen for 1.x. */
+    public const int MAX_LENGTH = PayloadBound::MAX_CHARACTERS;
 
     private const string TYPE = 'PromptPayQr';
 

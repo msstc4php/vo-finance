@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace MSSTC4PHP\ValueObject\Financial\PaymentQr\India;
 
-use MSSTC4PHP\ValueObject\Contract\Maskable;
 use MSSTC4PHP\ValueObject\Finance\Decimal;
 use MSSTC4PHP\ValueObject\Financial\Exception\AmbiguousPaymentQrFieldException;
 use MSSTC4PHP\ValueObject\Financial\Exception\InvalidPaymentQrException;
@@ -12,6 +11,7 @@ use MSSTC4PHP\ValueObject\Financial\Internal\Mask;
 use MSSTC4PHP\ValueObject\Financial\Internal\PayloadBound;
 use MSSTC4PHP\ValueObject\Financial\Internal\ProfileRule;
 use MSSTC4PHP\ValueObject\Financial\Internal\QueryString;
+use MSSTC4PHP\ValueObject\Financial\PaymentQr\PaymentPayload;
 use MSSTC4PHP\ValueObject\Support\AbstractStringValueObject;
 use Override;
 
@@ -27,8 +27,11 @@ use Override;
  * @see https://www.npci.org.in/PDF/npci/upi/circular/2017/Circular18_BankCompliances_to_enbaleUPIMerchantecosystem_0.pdf NPCI, UPI OC No. 18/2016-17, Annexure A Table 1 and D.7
  * @see docs/sources/FINANCE.md "NPCI UPI linking specification"
  */
-final class UpiPaymentUri extends AbstractStringValueObject implements Maskable
+final class UpiPaymentUri extends AbstractStringValueObject implements PaymentPayload
 {
+    /** The longest stored payload, in characters: the abuse bound of 7089; frozen for 1.x. */
+    public const int MAX_LENGTH = PayloadBound::MAX_CHARACTERS;
+
     private const string TYPE = 'UpiPaymentUri';
 
     private QueryString $query;

@@ -258,7 +258,7 @@ final class PixBrCodeTest extends TestCase
 
         $pix = new PixBrCode($payload);
 
-        self::assertSame(25, \strlen((string) $pix->merchantName()));
+        self::assertSame(25, \strlen($pix->merchantName()));
         self::assertSame(15, \strlen((string) $pix->merchantCity()));
         self::assertSame(25, \strlen((string) $pix->txid()));
         self::assertSame('12345678', $pix->withdrawalProvider());

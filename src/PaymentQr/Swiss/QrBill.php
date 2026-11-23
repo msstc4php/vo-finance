@@ -4,13 +4,13 @@ declare(strict_types=1);
 
 namespace MSSTC4PHP\ValueObject\Financial\PaymentQr\Swiss;
 
-use MSSTC4PHP\ValueObject\Contract\Maskable;
 use MSSTC4PHP\ValueObject\Finance\Decimal;
 use MSSTC4PHP\ValueObject\Finance\Iban;
 use MSSTC4PHP\ValueObject\Financial\Exception\InvalidPaymentQrException;
 use MSSTC4PHP\ValueObject\Financial\Internal\Mask;
 use MSSTC4PHP\ValueObject\Financial\Internal\ProfileRule;
 use MSSTC4PHP\ValueObject\Financial\Internal\TextLines;
+use MSSTC4PHP\ValueObject\Financial\PaymentQr\PaymentPayload;
 use MSSTC4PHP\ValueObject\Financial\Reference\CreditorReference;
 use MSSTC4PHP\ValueObject\Financial\Reference\QrReference;
 use MSSTC4PHP\ValueObject\I18n\CurrencyCode;
@@ -35,8 +35,14 @@ use Override;
  * @see https://www.six-group.com/dam/download/banking-services/standardization/qr-bill/ig-qr-bill-v2.3-en.pdf SIX Swiss Implementation Guidelines for the QR-bill 2.3, sections 2.8, 4.1 to 4.4 and Annex A
  * @see docs/sources/FINANCE.md "SIX QR-bill layout"
  */
-final class QrBill extends AbstractStringValueObject implements Maskable
+final class QrBill extends AbstractStringValueObject implements PaymentPayload
 {
+    /**
+     * The Swiss QR Code maximum of SIX IG 2.3 section 6.2, 997 characters; frozen for 1.x. The element limits of Table 8
+     * keep every accepted payload within it (the longest has 902 characters).
+     */
+    public const int MAX_LENGTH = 997;
+
     private const string TYPE = 'QrBill';
 
     /** Section 4.1.1: Basic Latin, Latin-1 Supplement, Latin Extended-A, Ș ș Ț ț and €. */

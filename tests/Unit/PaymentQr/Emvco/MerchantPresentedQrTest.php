@@ -63,7 +63,7 @@ final class MerchantPresentedQrTest extends TestCase
         self::assertSame('NOME DO RECEBEDOR', $qr->merchantName());
         self::assertSame('BRASILIA', $qr->merchantCity());
         self::assertSame('70074900', $qr->postalCode());
-        self::assertSame(['05' => 'RP12345678-2019'], $qr->additionalData());
+        self::assertEquals([new DataObject('05', 'RP12345678-2019')], $qr->additionalData());
         self::assertSame('AD38', $qr->get('63'));
         self::assertSame('01', $qr->get('00'));
         self::assertSame('0012BR.COM.OUTRO01190123.ABCD.3456.WXYZ', $qr->get('80'));
@@ -127,7 +127,7 @@ final class MerchantPresentedQrTest extends TestCase
         self::assertSame('BEIJING', $qr->merchantCity());
         self::assertNull($qr->postalCode());
         self::assertSame('0002ZH0104最佳运输0202北京', $qr->get('64'));
-        self::assertSame(['03' => '1234', '06' => '***', '07' => 'A6008667', '09' => 'ME'], $qr->additionalData());
+        self::assertEquals([new DataObject('03', '1234'), new DataObject('06', '***'), new DataObject('07', 'A6008667'), new DataObject('09', 'ME')], $qr->additionalData());
         self::assertSame('0016A011223344998877070812345678', $qr->get('91'));
         self::assertSame('A13A', $qr->get('63'));
 
@@ -160,7 +160,7 @@ final class MerchantPresentedQrTest extends TestCase
     {
         $qr = new MerchantPresentedQr(self::sealed(self::MINIMAL_BODY . '62440105BILL10212+601234567890503REF0608Jane Doe'));
 
-        self::assertSame('+60123456789', $qr->additionalData()['02']);
+        self::assertSame('+60123456789', $qr->additionalDataField('02'));
         self::assertStringContainsString('62440105BILL10212' . \str_repeat('*', 12) . '0503REF0608' . \str_repeat('*', 8) . '6304', $qr->masked());
     }
 
@@ -170,7 +170,7 @@ final class MerchantPresentedQrTest extends TestCase
 
         self::assertSame('0002ZH0104Café', $qr->get('64'));
         self::assertSame('Ünïcödé-ok', $qr->merchantAccounts()[1]->subField('01'));
-        self::assertSame(['12' => 'ÄÖÜäöüßéèàùç!'], $qr->additionalData());
+        self::assertEquals([new DataObject('12', 'ÄÖÜäöüßéèàùç!')], $qr->additionalData());
     }
 
     public function testMerchantAccountIdsRunFrom02To51(): void
@@ -245,7 +245,7 @@ final class MerchantPresentedQrTest extends TestCase
     {
         $qr = new MerchantPresentedQr(self::sealed(self::MINIMAL_BODY . '62240507INV-0010709TERM-0001'));
 
-        self::assertSame(['05' => 'INV-001', '07' => 'TERM-0001'], $qr->additionalData());
+        self::assertEquals([new DataObject('05', 'INV-001'), new DataObject('07', 'TERM-0001')], $qr->additionalData());
     }
 
     public function testMaskedHidesTheMerchantAccountsAndKeepsTheRest(): void
@@ -380,7 +380,26 @@ final class MerchantPresentedQrTest extends TestCase
     {
         $qr = new MerchantPresentedQr(self::sealed(self::MINIMAL_BODY . '62140503abc0503def'));
 
-        self::assertSame(['05' => 'def'], $qr->additionalData());
+        self::assertEquals([new DataObject('05', 'abc'), new DataObject('05', 'def')], $qr->additionalData());
+        self::assertSame('def', $qr->additionalDataField('05'));
+        self::assertNull($qr->additionalDataField('06'));
+    }
+
+    public function testAdditionalDataIsAListEvenForTwoDigitSubIdsAboveNine(): void
+    {
+        $qr = new MerchantPresentedQr(self::sealed(self::MINIMAL_BODY . '62140503abc1003xyz'));
+
+        self::assertTrue(\array_is_list($qr->additionalData()));
+        self::assertSame('10', $qr->additionalData()[1]->id);
+        self::assertSame('xyz', $qr->additionalDataField('10'));
+    }
+
+    public function testWrittenAmount(): void
+    {
+        $qr = new MerchantPresentedQr(self::sealed(self::MINIMAL_BODY . '540510.50'));
+
+        self::assertSame('10.50', $qr->writtenAmount());
+        self::assertNull(new MerchantPresentedQr(self::sealed(self::MINIMAL_BODY))->writtenAmount());
     }
 
     public function testAmountAcceptsALeadingDecimalMark(): void
@@ -454,7 +473,7 @@ final class MerchantPresentedQrTest extends TestCase
     {
         $qr = new MerchantPresentedQr(self::sealed(self::MINIMAL_BODY . '26130001G0104Café62081204Café'));
 
-        self::assertSame('Café', $qr->additionalData()['12']);
+        self::assertSame('Café', $qr->additionalDataField('12'));
     }
 
     /**

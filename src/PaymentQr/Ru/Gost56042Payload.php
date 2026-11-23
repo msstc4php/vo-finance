@@ -5,13 +5,13 @@ declare(strict_types=1);
 namespace MSSTC4PHP\ValueObject\Financial\PaymentQr\Ru;
 
 use LogicException;
-use MSSTC4PHP\ValueObject\Contract\Maskable;
 use MSSTC4PHP\ValueObject\Financial\Exception\InvalidPaymentQrException;
 use MSSTC4PHP\ValueObject\Financial\Internal\Mask;
 use MSSTC4PHP\ValueObject\Financial\Internal\PayloadBound;
 use MSSTC4PHP\ValueObject\Financial\Internal\ProfileRule;
 use MSSTC4PHP\ValueObject\Financial\Internal\RussianAccountKey;
 use MSSTC4PHP\ValueObject\Financial\Internal\Transcoder;
+use MSSTC4PHP\ValueObject\Financial\PaymentQr\PaymentPayload;
 use MSSTC4PHP\ValueObject\Support\AbstractStringValueObject;
 use Override;
 
@@ -37,8 +37,11 @@ use Override;
  * @see https://pravo.ppt.ru/poryadok/98817 Bank of Russia, Order 515 of 08.09.1997 (as quoted)
  * @see docs/sources/FINANCE.md "GOST R 56042-2014 and the Bank of Russia account key"
  */
-final class Gost56042Payload extends AbstractStringValueObject implements Maskable
+final class Gost56042Payload extends AbstractStringValueObject implements PaymentPayload
 {
+    /** The longest stored payload, in characters: the abuse bound of 7089; frozen for 1.x. */
+    public const int MAX_LENGTH = PayloadBound::MAX_CHARACTERS;
+
     private const string TYPE = 'Gost56042Payload';
 
     private const array ENCODINGS = ['1' => 'Windows-1251', '3' => 'KOI8-R'];

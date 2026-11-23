@@ -142,7 +142,7 @@ final class KhqrCodeTest extends TestCase
             self::tlv('64', self::tlv('00', 'km') . self::tlv('01', \str_repeat('ន', 25)) . self::tlv('02', \str_repeat('ក', 15))),
         ));
 
-        self::assertSame(25, \strlen((string) $qr->merchantName()));
+        self::assertSame(25, \strlen($qr->merchantName()));
         self::assertSame(15, \strlen((string) $qr->merchantCity()));
         self::assertSame(\str_repeat('9', 10), $qr->postalCode());
         self::assertSame('1234567890.12', $qr->amount()?->value);

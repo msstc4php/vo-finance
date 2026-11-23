@@ -5,11 +5,12 @@ declare(strict_types=1);
 namespace MSSTC4PHP\ValueObject\Financial\PaymentQr\Malaysia;
 
 use LogicException;
-use MSSTC4PHP\ValueObject\Contract\Maskable;
 use MSSTC4PHP\ValueObject\Financial\Exception\InvalidPaymentQrException;
 use MSSTC4PHP\ValueObject\Financial\Internal\ExposesRootFields;
+use MSSTC4PHP\ValueObject\Financial\Internal\PayloadBound;
 use MSSTC4PHP\ValueObject\Financial\Internal\ProfilePayload;
 use MSSTC4PHP\ValueObject\Financial\Internal\ProfileRule;
+use MSSTC4PHP\ValueObject\Financial\PaymentQr\Emvco\EmvcoPayload;
 use MSSTC4PHP\ValueObject\Financial\PaymentQr\Emvco\MerchantAccount;
 use MSSTC4PHP\ValueObject\Support\AbstractStringValueObject;
 use Override;
@@ -28,9 +29,12 @@ use Override;
  * @see https://docs.developer.paynet.my/docs/duitNow-QR/integration/QR-generation-specification/merchant-presented-mode/example PayNet, DuitNow QR merchant-presented mode 1.5, "Examples"
  * @see docs/sources/FINANCE.md "National EMVCo profiles"
  */
-final class DuitNowQr extends AbstractStringValueObject implements Maskable
+final class DuitNowQr extends AbstractStringValueObject implements EmvcoPayload
 {
     use ExposesRootFields;
+
+    /** The longest stored payload, in characters: the abuse bound of 7089; frozen for 1.x. */
+    public const int MAX_LENGTH = PayloadBound::MAX_CHARACTERS;
 
     private const string TYPE = 'DuitNowQr';
 
@@ -72,14 +76,6 @@ final class DuitNowQr extends AbstractStringValueObject implements Maskable
     public function mobileNumber(): ?string
     {
         return $this->account->subField('04');
-    }
-
-    /**
-     * @return non-empty-string|null
-     */
-    public function postalCode(): ?string
-    {
-        return $this->payload->get('61');
     }
 
     public function isJomPay(): bool

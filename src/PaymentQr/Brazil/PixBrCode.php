@@ -4,14 +4,15 @@ declare(strict_types=1);
 
 namespace MSSTC4PHP\ValueObject\Financial\PaymentQr\Brazil;
 
-use MSSTC4PHP\ValueObject\Contract\Maskable;
 use MSSTC4PHP\ValueObject\Financial\Exception\AmbiguousPaymentQrFieldException;
 use MSSTC4PHP\ValueObject\Financial\Exception\InvalidPaymentQrException;
 use MSSTC4PHP\ValueObject\Financial\Internal\EmvcoTlv;
 use MSSTC4PHP\ValueObject\Financial\Internal\ExposesRootFields;
+use MSSTC4PHP\ValueObject\Financial\Internal\PayloadBound;
 use MSSTC4PHP\ValueObject\Financial\Internal\ProfilePayload;
 use MSSTC4PHP\ValueObject\Financial\Internal\ProfileRule;
 use MSSTC4PHP\ValueObject\Financial\PaymentQr\Emvco\DataObject;
+use MSSTC4PHP\ValueObject\Financial\PaymentQr\Emvco\EmvcoPayload;
 use MSSTC4PHP\ValueObject\Financial\PaymentQr\Emvco\MerchantAccount;
 use MSSTC4PHP\ValueObject\Support\AbstractStringValueObject;
 use Override;
@@ -33,9 +34,12 @@ use Override;
  * @see https://www.bcb.gov.br/content/estabilidadefinanceira/spb_docs/ManualBRCode.pdf BCB, Manual do BR Code 2.0.1, section 2.1 table 1 and section 2.2
  * @see docs/sources/FINANCE.md "National EMVCo profiles"
  */
-final class PixBrCode extends AbstractStringValueObject implements Maskable
+final class PixBrCode extends AbstractStringValueObject implements EmvcoPayload
 {
     use ExposesRootFields;
+
+    /** The longest stored payload, in characters: the abuse bound of 7089; frozen for 1.x. */
+    public const int MAX_LENGTH = PayloadBound::MAX_CHARACTERS;
 
     private const string TYPE = 'PixBrCode';
 

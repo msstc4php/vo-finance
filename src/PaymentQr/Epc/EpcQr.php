@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace MSSTC4PHP\ValueObject\Financial\PaymentQr\Epc;
 
 use LogicException;
-use MSSTC4PHP\ValueObject\Contract\Maskable;
 use MSSTC4PHP\ValueObject\Finance\Bic;
 use MSSTC4PHP\ValueObject\Finance\Decimal;
 use MSSTC4PHP\ValueObject\Finance\Iban;
@@ -15,6 +14,7 @@ use MSSTC4PHP\ValueObject\Financial\Internal\Mask;
 use MSSTC4PHP\ValueObject\Financial\Internal\ProfileRule;
 use MSSTC4PHP\ValueObject\Financial\Internal\TextLines;
 use MSSTC4PHP\ValueObject\Financial\Internal\Transcoder;
+use MSSTC4PHP\ValueObject\Financial\PaymentQr\PaymentPayload;
 use MSSTC4PHP\ValueObject\Financial\Reference\CreditorReference;
 use MSSTC4PHP\ValueObject\Support\AbstractStringValueObject;
 use Override;
@@ -36,11 +36,14 @@ use Override;
  * @see https://www.europeanpaymentscouncil.eu/sites/default/files/kb/file/2022-09/EPC069-12%20v3.0%20Quick%20Response%20Code%20-%20Guidelines%20to%20Enable%20the%20Data%20Capture%20for%20the%20Initiation%20of%20an%20SCT_0.pdf EPC069-12 v3.0, sections 2.1 to 2.3
  * @see docs/sources/FINANCE.md "EPC069-12"
  */
-final class EpcQr extends AbstractStringValueObject implements Maskable
+final class EpcQr extends AbstractStringValueObject implements PaymentPayload
 {
-    private const string TYPE = 'EpcQr';
+    /**
+     * The longest stored payload: 331 bytes, or 331 characters of one ISO 8859 set; frozen for 1.x.
+     */
+    public const int MAX_LENGTH = 331;
 
-    private const int MAX_LENGTH = 331;
+    private const string TYPE = 'EpcQr';
 
     /** The character sets of section 2.1 as mbstring names; `1` is UTF-8. */
     private const array ENCODINGS = [

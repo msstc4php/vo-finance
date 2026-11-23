@@ -4,12 +4,12 @@ declare(strict_types=1);
 
 namespace MSSTC4PHP\ValueObject\Financial\PaymentQr\Ru;
 
-use MSSTC4PHP\ValueObject\Contract\Maskable;
 use MSSTC4PHP\ValueObject\Financial\Exception\AmbiguousPaymentQrFieldException;
 use MSSTC4PHP\ValueObject\Financial\Exception\InvalidPaymentQrException;
 use MSSTC4PHP\ValueObject\Financial\Internal\Mask;
 use MSSTC4PHP\ValueObject\Financial\Internal\PayloadBound;
 use MSSTC4PHP\ValueObject\Financial\Internal\QueryString;
+use MSSTC4PHP\ValueObject\Financial\PaymentQr\PaymentPayload;
 use MSSTC4PHP\ValueObject\Support\AbstractStringValueObject;
 use Override;
 
@@ -23,8 +23,11 @@ use Override;
  * @see https://sbp.nspk.ru/file/pravila-informacionno-tekhnologicheskogo-vzaimodejstviya_v.4.0.pdf NSPK, Rules P.235 v4.0 (2024): the SBP OPKTs standards are published on the NSPK portal
  * @see docs/sources/FINANCE.md "NSPK SBP"
  */
-final class SbpPaymentLink extends AbstractStringValueObject implements Maskable
+final class SbpPaymentLink extends AbstractStringValueObject implements PaymentPayload
 {
+    /** The longest stored payload, in characters: the abuse bound of 7089; frozen for 1.x. */
+    public const int MAX_LENGTH = PayloadBound::MAX_CHARACTERS;
+
     private const string TYPE = 'SbpPaymentLink';
 
     private const string PATTERN = '~^(https://qr\.nspk\.ru/)([A-Za-z0-9]+)(?:\?([\x21-\x22\x24-\x7E]*))?$~Di';

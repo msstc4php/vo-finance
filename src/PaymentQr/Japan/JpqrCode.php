@@ -5,11 +5,11 @@ declare(strict_types=1);
 namespace MSSTC4PHP\ValueObject\Financial\PaymentQr\Japan;
 
 use LogicException;
-use MSSTC4PHP\ValueObject\Contract\Maskable;
 use MSSTC4PHP\ValueObject\Financial\Exception\AmbiguousPaymentQrFieldException;
 use MSSTC4PHP\ValueObject\Financial\Internal\ExposesRootFields;
 use MSSTC4PHP\ValueObject\Financial\Internal\ProfilePayload;
 use MSSTC4PHP\ValueObject\Financial\Internal\ProfileRule;
+use MSSTC4PHP\ValueObject\Financial\PaymentQr\Emvco\EmvcoPayload;
 use MSSTC4PHP\ValueObject\Financial\PaymentQr\Emvco\MerchantAccount;
 use MSSTC4PHP\ValueObject\Support\AbstractStringValueObject;
 use Override;
@@ -28,15 +28,19 @@ use Override;
  * @see https://www.rfc-editor.org/rfc/rfc4343 RFC 4343, Domain Name System (DNS) Case Insensitivity Clarification
  * @see docs/sources/FINANCE.md "National EMVCo profiles"
  */
-final class JpqrCode extends AbstractStringValueObject implements Maskable
+final class JpqrCode extends AbstractStringValueObject implements EmvcoPayload
 {
     use ExposesRootFields;
+
+    /** Payments Japan's bound of 512 bytes, so at most 512 characters; frozen for 1.x. */
+    public const int MAX_BYTES = 512;
+
+    /** The longest stored payload, in characters; frozen for 1.x. */
+    public const int MAX_LENGTH = self::MAX_BYTES;
 
     private const string TYPE = 'JpqrCode';
 
     private const string GUI = 'jp.or.paymentsjapan';
-
-    private const int MAX_BYTES = 512;
 
     /** @var array<non-empty-string, positive-int> */
     private const array LEVELS = ['01' => 13, '02' => 4, '03' => 6, '04' => 6];
@@ -74,14 +78,6 @@ final class JpqrCode extends AbstractStringValueObject implements Maskable
         }
 
         return $ids[0] ?? throw new LogicException('A validated payload lacks the unified store ID.');
-    }
-
-    /**
-     * @return non-empty-string
-     */
-    public function postalCode(): string
-    {
-        return $this->payload->get('61') ?? throw new LogicException('A validated payload lacks the postal code.');
     }
 
     /**

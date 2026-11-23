@@ -163,22 +163,30 @@ final class EmvcoMerchantPresented
     /**
      * @param list<DataObject> $objects
      *
-     * @return array<array-key, non-empty-string> the sub-fields of template 62 by sub-ID; a repeated sub-ID keeps its
-     *                                            last value
+     * @return list<DataObject> the sub-fields of template 62 in payload order
      */
     public static function additionalData(array $objects): array
     {
         $template = self::get($objects, '62');
-        if ($template === null) {
-            return [];
+
+        return $template === null ? [] : EmvcoTlv::parse($template);
+    }
+
+    /**
+     * @param list<DataObject> $objects
+     *
+     * @return non-empty-string|null the last sub-field of template 62 with this sub-ID
+     */
+    public static function additionalDataField(array $objects, string $subId): ?string
+    {
+        $found = null;
+        foreach (self::additionalData($objects) as $subField) {
+            if ($subField->id === $subId) {
+                $found = $subField->value;
+            }
         }
 
-        $data = [];
-        foreach (EmvcoTlv::parse($template) as $subField) {
-            $data[$subField->id] = $subField->value;
-        }
-
-        return $data;
+        return $found;
     }
 
     /**

@@ -5,11 +5,12 @@ declare(strict_types=1);
 namespace MSSTC4PHP\ValueObject\Financial\PaymentQr\Cambodia;
 
 use LogicException;
-use MSSTC4PHP\ValueObject\Contract\Maskable;
 use MSSTC4PHP\ValueObject\Financial\Exception\AmbiguousPaymentQrFieldException;
 use MSSTC4PHP\ValueObject\Financial\Internal\ExposesRootFields;
+use MSSTC4PHP\ValueObject\Financial\Internal\PayloadBound;
 use MSSTC4PHP\ValueObject\Financial\Internal\ProfilePayload;
 use MSSTC4PHP\ValueObject\Financial\Internal\ProfileRule;
+use MSSTC4PHP\ValueObject\Financial\PaymentQr\Emvco\EmvcoPayload;
 use MSSTC4PHP\ValueObject\Financial\PaymentQr\Emvco\MerchantAccount;
 use MSSTC4PHP\ValueObject\Support\AbstractStringValueObject;
 use Override;
@@ -31,9 +32,12 @@ use Override;
  * @see https://web.archive.org/web/20230201043137id_/https://bakong.nbc.gov.kh/download/KHQR/integration/KHQR%20Content%20Guideline%20v.1.3.pdf National Bank of Cambodia, KHQR Content Guideline 1.3, tags 29 and 30 and FAQ 3 to 5
  * @see docs/sources/FINANCE.md "National EMVCo profiles"
  */
-final class KhqrCode extends AbstractStringValueObject implements Maskable
+final class KhqrCode extends AbstractStringValueObject implements EmvcoPayload
 {
     use ExposesRootFields;
+
+    /** The longest stored payload, in characters: the abuse bound of 7089; frozen for 1.x. */
+    public const int MAX_LENGTH = PayloadBound::MAX_CHARACTERS;
 
     private const string TYPE = 'KhqrCode';
 
@@ -101,14 +105,6 @@ final class KhqrCode extends AbstractStringValueObject implements Maskable
         }
 
         return $banks[0] ?? null;
-    }
-
-    /**
-     * @return non-empty-string|null
-     */
-    public function postalCode(): ?string
-    {
-        return $this->payload->get('61');
     }
 
     #[Override]

@@ -6,6 +6,18 @@ namespace MSSTC4PHP\ValueObject\Financial\Tests\Unit;
 
 use MSSTC4PHP\ValueObject\Financial\Card\PaymentCardNumber;
 use MSSTC4PHP\ValueObject\Financial\Exception\InvalidSecurityIdentifierException;
+use MSSTC4PHP\ValueObject\Financial\PaymentQr\Brazil\PixBrCode;
+use MSSTC4PHP\ValueObject\Financial\PaymentQr\Cambodia\KhqrCode;
+use MSSTC4PHP\ValueObject\Financial\PaymentQr\Emvco\MerchantPresentedQr;
+use MSSTC4PHP\ValueObject\Financial\PaymentQr\Epc\EpcQr;
+use MSSTC4PHP\ValueObject\Financial\PaymentQr\India\UpiPaymentUri;
+use MSSTC4PHP\ValueObject\Financial\PaymentQr\Japan\JpqrCode;
+use MSSTC4PHP\ValueObject\Financial\PaymentQr\Malaysia\DuitNowQr;
+use MSSTC4PHP\ValueObject\Financial\PaymentQr\PaymentPayload;
+use MSSTC4PHP\ValueObject\Financial\PaymentQr\Ru\Gost56042Payload;
+use MSSTC4PHP\ValueObject\Financial\PaymentQr\Ru\SbpPaymentLink;
+use MSSTC4PHP\ValueObject\Financial\PaymentQr\Swiss\QrBill;
+use MSSTC4PHP\ValueObject\Financial\PaymentQr\Thailand\PromptPayQr;
 use MSSTC4PHP\ValueObject\Financial\Reference\CreditorReference;
 use MSSTC4PHP\ValueObject\Financial\Reference\QrReference;
 use MSSTC4PHP\ValueObject\Financial\Security\Cfi;
@@ -83,5 +95,33 @@ final class StoredBoundsTest extends TestCase
     public function testEverySecurityIdentifierImplementsTheInterface(string $class): void
     {
         self::assertTrue(\is_subclass_of($class, SecurityIdentifier::class));
+    }
+
+    /**
+     * @return iterable<string, array{class-string, int}>
+     */
+    public static function paymentPayloads(): iterable
+    {
+        yield 'EMVCo' => [MerchantPresentedQr::class, MerchantPresentedQr::MAX_LENGTH];
+        yield 'Pix' => [PixBrCode::class, PixBrCode::MAX_LENGTH];
+        yield 'PromptPay' => [PromptPayQr::class, PromptPayQr::MAX_LENGTH];
+        yield 'DuitNow' => [DuitNowQr::class, DuitNowQr::MAX_LENGTH];
+        yield 'KHQR' => [KhqrCode::class, KhqrCode::MAX_LENGTH];
+        yield 'JPQR' => [JpqrCode::class, JpqrCode::MAX_LENGTH];
+        yield 'EPC' => [EpcQr::class, EpcQr::MAX_LENGTH];
+        yield 'QR-bill' => [QrBill::class, QrBill::MAX_LENGTH];
+        yield 'GOST' => [Gost56042Payload::class, Gost56042Payload::MAX_LENGTH];
+        yield 'SBP' => [SbpPaymentLink::class, SbpPaymentLink::MAX_LENGTH];
+        yield 'UPI' => [UpiPaymentUri::class, UpiPaymentUri::MAX_LENGTH];
+    }
+
+    /**
+     * @param class-string $class
+     */
+    #[DataProvider('paymentPayloads')]
+    public function testEveryPaymentPayloadImplementsTheInterfaceAndHasABound(string $class, int $bound): void
+    {
+        self::assertTrue(\is_subclass_of($class, PaymentPayload::class));
+        self::assertContains($bound, [331, 512, 997, 7089]);
     }
 }

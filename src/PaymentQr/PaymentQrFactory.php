@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace MSSTC4PHP\ValueObject\Financial\PaymentQr;
 
 use LogicException;
-use MSSTC4PHP\ValueObject\Contract\ValueObject;
 use MSSTC4PHP\ValueObject\Exception\AmbiguousValueException;
 use MSSTC4PHP\ValueObject\Financial\Exception\InvalidPaymentQrException;
 use MSSTC4PHP\ValueObject\Financial\Internal\EmvcoTlv;
@@ -34,12 +33,7 @@ use MSSTC4PHP\ValueObject\Financial\PaymentQr\Thailand\PromptPayQr;
  * none accepts it, the first identified profile's exception is thrown. Only a payload that identifies no built profile
  * (one that is not built, such as SGQR or QRIS) gives {@see MerchantPresentedQr}. A payload that fits several
  * profiles, which a code carrying several arrangements can, throws {@see AmbiguousValueException} listing them; the
- * factory never picks silently. `PaymentPayload` names every class it builds.
- *
- * @phpstan-type PaymentPayload (
- *     EpcQr|QrBill|Gost56042Payload|SbpPaymentLink|UpiPaymentUri
- *     |PixBrCode|PromptPayQr|DuitNowQr|KhqrCode|JpqrCode|MerchantPresentedQr
- * )
+ * factory never picks silently.
  */
 final class PaymentQrFactory
 {
@@ -71,13 +65,11 @@ final class PaymentQrFactory
      * Builds from scanned bytes: an EPC or GOST payload goes through its own `fromBytes()`, which transcodes a declared
      * single-byte character set; any other payload must be UTF-8 and is handled as by {@see fromString()}.
      *
-     * @return PaymentPayload
-     *
      * @throws AmbiguousValueException when several profiles accept the payload
      * @throws InvalidPaymentQrException when no class accepts it, or other bytes are not UTF-8
      * @throws LogicException without ext-mbstring, for an EPC or GOST payload in a single-byte character set
      */
-    public static function fromBytes(string $bytes): EpcQr|QrBill|Gost56042Payload|SbpPaymentLink|UpiPaymentUri|PixBrCode|PromptPayQr|DuitNowQr|KhqrCode|JpqrCode|MerchantPresentedQr
+    public static function fromBytes(string $bytes): PaymentPayload
     {
         if (\str_starts_with($bytes, 'BCD')) {
             return EpcQr::fromBytes($bytes);
@@ -95,13 +87,11 @@ final class PaymentQrFactory
     }
 
     /**
-     * @return PaymentPayload
-     *
      * @throws AmbiguousValueException when several profiles accept the payload
      * @throws InvalidPaymentQrException when the marked class, every identified profile or the generic format does not
      *                                   accept it
      */
-    public static function fromString(string $payload): EpcQr|QrBill|Gost56042Payload|SbpPaymentLink|UpiPaymentUri|PixBrCode|PromptPayQr|DuitNowQr|KhqrCode|JpqrCode|MerchantPresentedQr
+    public static function fromString(string $payload): PaymentPayload
     {
         $marked = match (true) {
             \str_starts_with($payload, 'BCD') => new EpcQr($payload),
@@ -232,12 +222,12 @@ final class PaymentQrFactory
     }
 
     /**
-     * @param non-empty-list<ValueObject> $matches
+     * @param non-empty-list<PaymentPayload> $matches
      *
-     * @return non-empty-list<class-string<ValueObject>>
+     * @return non-empty-list<class-string<PaymentPayload>>
      */
     private static function classesOf(array $matches): array
     {
-        return \array_map(static fn (ValueObject $match): string => $match::class, $matches);
+        return \array_map(static fn (PaymentPayload $match): string => $match::class, $matches);
     }
 }

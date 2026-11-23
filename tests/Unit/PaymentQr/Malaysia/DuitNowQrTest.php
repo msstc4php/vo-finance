@@ -123,7 +123,7 @@ final class DuitNowQrTest extends TestCase
         self::assertSame(28, \strlen($long->qrId()));
         self::assertSame(20, \strlen((string) $optional->merchantDescriptor()));
         self::assertSame(15, \strlen((string) $optional->mobileNumber()));
-        self::assertSame(25, \strlen((string) $long->merchantName()));
+        self::assertSame(25, \strlen($long->merchantName()));
         self::assertSame(15, \strlen((string) $long->merchantCity()));
     }
 

@@ -96,6 +96,14 @@ final readonly class ProfilePayload
     }
 
     /**
+     * @return non-empty-string the value of a root data object every profile makes mandatory
+     */
+    public function required(string $id): string
+    {
+        return EmvcoMerchantPresented::required($this->objects, $id);
+    }
+
+    /**
      * @return list<MerchantAccount> the objects with IDs 02 to 51 in payload order
      */
     public function accounts(): array
@@ -110,7 +118,15 @@ final readonly class ProfilePayload
      */
     public function additional(string $subId): ?string
     {
-        return EmvcoMerchantPresented::additionalData($this->copyObjects)[$subId] ?? null;
+        return EmvcoMerchantPresented::additionalDataField($this->objects, $subId);
+    }
+
+    /**
+     * @return list<DataObject> the sub-fields of template 62 in payload order
+     */
+    public function additionalData(): array
+    {
+        return EmvcoMerchantPresented::additionalData($this->objects);
     }
 
     /**
