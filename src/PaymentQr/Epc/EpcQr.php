@@ -126,14 +126,26 @@ final class EpcQr extends AbstractStringValueObject implements PaymentPayload
     }
 
     /**
-     * Null when the amount is absent. It may carry more than two decimals (`EUR1.999`): the guidelines bound the amount
-     * but give no number of decimals.
+     * The amount as written after `EUR`, e.g. "12.3"; null when absent.
+     *
+     * @return non-empty-string|null
+     */
+    public function writtenAmount(): ?string
+    {
+        $amount = \substr($this->lines->line(7), 3);
+
+        return $amount === '' ? null : $amount;
+    }
+
+    /**
+     * Normalised; null when the amount is absent. It may carry more than two decimals (`EUR1.999`): the guidelines
+     * bound the amount but give no number of decimals.
      */
     public function amount(): ?Decimal
     {
-        $amount = $this->lines->line(7);
+        $amount = $this->writtenAmount();
 
-        return $amount === '' ? null : new Decimal(\substr($amount, 3));
+        return $amount === null ? null : new Decimal($amount);
     }
 
     /**
@@ -176,11 +188,9 @@ final class EpcQr extends AbstractStringValueObject implements PaymentPayload
     }
 
     /**
-     * The beneficiary to originator information.
-     *
      * @return non-empty-string|null
      */
-    public function information(): ?string
+    public function beneficiaryToOriginatorInformation(): ?string
     {
         return $this->optional(11);
     }

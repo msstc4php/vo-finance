@@ -50,11 +50,12 @@ final class EpcQrTest extends TestCase
         self::assertSame('Franz Mustermänn', $qr->beneficiaryName());
         self::assertSame('DE71110220330123456789', $qr->iban()->value);
         self::assertSame('12.3', $qr->amount()?->value);
+        self::assertSame('12.3', $qr->writtenAmount());
         self::assertSame('GDDS', $qr->purpose());
         self::assertSame('RF18539007547034', $qr->reference());
         self::assertSame('RF18539007547034', $qr->creditorReference()?->value);
         self::assertNull($qr->remittanceText());
-        self::assertNull($qr->information());
+        self::assertNull($qr->beneficiaryToOriginatorInformation());
     }
 
     public function testTheV2ExampleComesThroughFromBytesAsUtf8(): void
@@ -225,7 +226,7 @@ final class EpcQrTest extends TestCase
         $lines[] = '';
         $lines[] = 'Thank you';
 
-        self::assertSame('Thank you', EpcQr::from(\implode("\n", $lines))->information());
+        self::assertSame('Thank you', EpcQr::from(\implode("\n", $lines))->beneficiaryToOriginatorInformation());
     }
 
     public function testANonRfReferenceGivesNoCreditorReference(): void
@@ -241,7 +242,10 @@ final class EpcQrTest extends TestCase
 
     public function testWithoutAmountTheAmountIsNull(): void
     {
-        self::assertNull(EpcQr::from(\implode("\n", \array_slice(self::V1, 0, 7)))->amount());
+        $qr = EpcQr::from(\implode("\n", \array_slice(self::V1, 0, 7)));
+
+        self::assertNull($qr->amount());
+        self::assertNull($qr->writtenAmount());
     }
 
     /**

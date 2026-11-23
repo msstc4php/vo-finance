@@ -126,9 +126,11 @@ final class Gost56042Payload extends AbstractStringValueObject implements Paymen
     }
 
     /**
+     * The Russian bank identification code (BIK, alias `BIC`), not an ISO 9362 BIC.
+     *
      * @return non-empty-string 9 digits
      */
-    public function bic(): string
+    public function bik(): string
     {
         return $this->mandatory('BIC');
     }
@@ -203,7 +205,7 @@ final class Gost56042Payload extends AbstractStringValueObject implements Paymen
             ProfileRule::ensure($format === null || \preg_match($format, $content) === 1, self::TYPE, 'the formats of the mandatory requisites');
         }
 
-        $bic = $this->bic();
+        $bic = $this->bik();
         foreach ($pairs as [$alias, $content]) {
             if (\in_array(\strtolower($alias), ['personalacc', 'correspacc'], true) && RussianAccountKey::isInScope($content)) {
                 ProfileRule::ensure(RussianAccountKey::isValid($content, $bic), self::TYPE, 'a correct control key of each account in the scope of Bank of Russia Order 515 against the BIC');

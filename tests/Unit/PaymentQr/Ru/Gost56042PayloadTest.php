@@ -42,7 +42,7 @@ final class Gost56042PayloadTest extends TestCase
         self::assertSame('ООО "Три кита"', $gost->name());
         self::assertSame('40702810138250123017', $gost->personalAccount());
         self::assertSame('ОАО "БАНК"', $gost->bankName());
-        self::assertSame('044525225', $gost->bic());
+        self::assertSame('044525225', $gost->bik());
         self::assertSame('30101810400000000225', $gost->correspondentAccount());
         self::assertSame('100000', $gost->get('Sum'));
         self::assertSame('6200098765', $gost->get('payeeinn'));
