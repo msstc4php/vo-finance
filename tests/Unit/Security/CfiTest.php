@@ -5,10 +5,10 @@ declare(strict_types=1);
 namespace MSSTC4PHP\ValueObject\Financial\Tests\Unit\Security;
 
 use MSSTC4PHP\ValueObject\Financial\Exception\InvalidSecurityIdentifierException;
+use MSSTC4PHP\ValueObject\Financial\Internal\CfiGroups;
 use MSSTC4PHP\ValueObject\Financial\Internal\SecurityRules;
 use MSSTC4PHP\ValueObject\Financial\Security\Cfi;
 use MSSTC4PHP\ValueObject\Financial\Security\CfiCategory;
-use MSSTC4PHP\ValueObject\Financial\Security\CfiGroups;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\UsesClass;

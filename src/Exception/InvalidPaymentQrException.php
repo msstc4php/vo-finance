@@ -6,6 +6,6 @@ namespace MSSTC4PHP\ValueObject\Financial\Exception;
 
 use MSSTC4PHP\ValueObject\Exception\InvalidValueObjectException;
 
-class InvalidPaymentQrException extends InvalidValueObjectException
+final class InvalidPaymentQrException extends InvalidValueObjectException
 {
 }

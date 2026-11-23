@@ -63,6 +63,10 @@ final class PaymentQrFactory
 
     private const string JPQR_GUI = 'jp.or.paymentsjapan';
 
+    private function __construct()
+    {
+    }
+
     /**
      * Builds from scanned bytes: an EPC or GOST payload goes through its own `fromBytes()`, which transcodes a declared
      * single-byte character set; any other payload must be UTF-8 and is handled as by {@see fromString()}.

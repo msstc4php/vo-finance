@@ -6,6 +6,6 @@ namespace MSSTC4PHP\ValueObject\Financial\Exception;
 
 use MSSTC4PHP\ValueObject\Exception\InvalidValueObjectException;
 
-class InvalidPaymentReferenceException extends InvalidValueObjectException
+final class InvalidPaymentReferenceException extends InvalidValueObjectException
 {
 }

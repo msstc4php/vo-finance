@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace MSSTC4PHP\ValueObject\Financial\Security;
+namespace MSSTC4PHP\ValueObject\Financial\Internal;
 
 /**
  * Names of the CFI groups, keyed by category and group letter, from the SIX list of ISO 10962 (edition 2021-05-07).

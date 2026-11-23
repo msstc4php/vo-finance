@@ -32,6 +32,10 @@ final class SecurityIdentifierFactory
         Valor::class,
     ];
 
+    private function __construct()
+    {
+    }
+
     public static function fromString(string $value): ValueObject
     {
         $matches = [];

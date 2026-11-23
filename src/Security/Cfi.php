@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace MSSTC4PHP\ValueObject\Financial\Security;
 
+use MSSTC4PHP\ValueObject\Financial\Internal\CfiGroups;
 use MSSTC4PHP\ValueObject\Financial\Internal\SecurityRules;
 use MSSTC4PHP\ValueObject\Support\AbstractStringValueObject;
 use Override;

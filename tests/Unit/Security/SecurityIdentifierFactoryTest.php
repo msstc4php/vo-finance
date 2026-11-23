@@ -6,6 +6,7 @@ namespace MSSTC4PHP\ValueObject\Financial\Tests\Unit\Security;
 
 use MSSTC4PHP\ValueObject\Exception\AmbiguousValueException;
 use MSSTC4PHP\ValueObject\Financial\Exception\InvalidSecurityIdentifierException;
+use MSSTC4PHP\ValueObject\Financial\Internal\CfiGroups;
 use MSSTC4PHP\ValueObject\Financial\Internal\CusipCheckDigit;
 use MSSTC4PHP\ValueObject\Financial\Internal\FigiCheckDigit;
 use MSSTC4PHP\ValueObject\Financial\Internal\IsinCheckDigit;
@@ -14,7 +15,6 @@ use MSSTC4PHP\ValueObject\Financial\Internal\Luhn;
 use MSSTC4PHP\ValueObject\Financial\Internal\SecurityRules;
 use MSSTC4PHP\ValueObject\Financial\Internal\SedolCheckDigit;
 use MSSTC4PHP\ValueObject\Financial\Security\Cfi;
-use MSSTC4PHP\ValueObject\Financial\Security\CfiGroups;
 use MSSTC4PHP\ValueObject\Financial\Security\Cusip;
 use MSSTC4PHP\ValueObject\Financial\Security\Figi;
 use MSSTC4PHP\ValueObject\Financial\Security\Fisn;
