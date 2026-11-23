@@ -61,6 +61,16 @@ final class UpiPaymentUriTest extends TestCase
         self::assertNull($uri->amount());
     }
 
+    public function testAnEmptyParameterIsReadAsAbsent(): void
+    {
+        $uri = UpiPaymentUri::from('upi://pay?pa=merchant@bank&pn=Shop&am=&tn');
+
+        self::assertNull($uri->writtenAmount());
+        self::assertNull($uri->amount());
+        self::assertNull($uri->get('am'));
+        self::assertNull($uri->get('tn'));
+    }
+
     public function testSchemeIsCaseInsensitive(): void
     {
         self::assertTrue(UpiPaymentUri::isValid('UPI://PAY?pa=a@b&pn=A'));

@@ -46,13 +46,15 @@ final class SbpPaymentLink extends AbstractStringValueObject implements PaymentP
     }
 
     /**
-     * The value of a query parameter as written; null when absent.
+     * The value of a query parameter as written; null when absent or empty.
+     *
+     * @return non-empty-string|null
      *
      * @throws AmbiguousPaymentQrFieldException when the parameter repeats with distinct values
      */
     public function get(string $name): ?string
     {
-        return $this->query?->single($name, self::TYPE);
+        return $this->query?->filled($name, self::TYPE);
     }
 
     /**

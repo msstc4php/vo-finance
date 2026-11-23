@@ -51,6 +51,15 @@ final class SbpPaymentLinkTest extends TestCase
         self::assertTrue(SbpPaymentLink::isValid('HTTPS://QR.NSPK.RU/AS1000670LSS7DN18SJQDNP4B05KLJL2'));
     }
 
+    public function testAnEmptyParameterIsReadAsAbsent(): void
+    {
+        $link = SbpPaymentLink::from(self::LINK . '&sum=&cur');
+
+        self::assertNull($link->get('sum'));
+        self::assertNull($link->get('cur'));
+        self::assertContains('sum', $link->parameterNames());
+    }
+
     public function testARepeatedParameterWithOneValueIsRead(): void
     {
         self::assertSame('01', SbpPaymentLink::from(self::LINK . '&type=01')->get('type'));

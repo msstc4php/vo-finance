@@ -211,6 +211,27 @@ final class PixBrCodeTest extends TestCase
         $pix = new PixBrCode(self::sealed(self::tlv('00', '01'), self::tlv('26', $template), self::tlv('27', $template), ...$this->tail()));
 
         self::assertSame('same@example.com', $pix->pixKey());
+        self::assertSame(['same@example.com'], $pix->pixKeys());
+    }
+
+    public function testTheListAccessorsGiveDistinctValuesInPayloadOrder(): void
+    {
+        $gui = self::tlv('00', 'br.gov.bcb.pix');
+        $url = self::tlv('25', 'pix.example.com/a');
+        $pix = new PixBrCode(self::sealed(
+            self::tlv('00', '01'),
+            self::tlv('26', $gui . self::tlv('01', 'b@example.com') . $url),
+            self::tlv('27', $gui . self::tlv('01', 'b@example.com') . $url),
+            self::tlv('28', $gui . self::tlv('01', 'a@example.com')),
+            ...$this->tail(),
+            ...[self::tlv('80', $gui . self::tlv('25', 'r.example.com/1')), self::tlv('81', $gui . self::tlv('25', 'r.example.com/1'))],
+        ));
+
+        self::assertSame(['b@example.com', 'a@example.com'], $pix->pixKeys());
+        self::assertSame(['pix.example.com/a'], $pix->paymentUrls());
+        self::assertSame('pix.example.com/a', $pix->paymentUrl());
+        self::assertSame(['r.example.com/1'], $pix->recurrenceUrls());
+        self::assertSame('r.example.com/1', $pix->recurrenceUrl());
     }
 
     public function testSeveralRecurrenceUrlsAreListed(): void

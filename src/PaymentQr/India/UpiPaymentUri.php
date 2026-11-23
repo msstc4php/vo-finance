@@ -71,19 +71,19 @@ final class UpiPaymentUri extends AbstractStringValueObject implements PaymentPa
      */
     public function transactionReference(): ?string
     {
-        $reference = $this->query->single('tr', self::TYPE);
-
-        return $reference === '' ? null : $reference;
+        return $this->query->filled('tr', self::TYPE);
     }
 
     /**
-     * The amount (`am`) as written.
+     * The amount (`am`) as written; null when absent or empty.
+     *
+     * @return non-empty-string|null
      *
      * @throws AmbiguousPaymentQrFieldException when `am` repeats with distinct values
      */
     public function writtenAmount(): ?string
     {
-        return $this->query->single('am', self::TYPE);
+        return $this->query->filled('am', self::TYPE);
     }
 
     /**
@@ -99,13 +99,15 @@ final class UpiPaymentUri extends AbstractStringValueObject implements PaymentPa
     }
 
     /**
-     * The value of any parameter as written; null when absent.
+     * The value of any parameter as written; null when absent or empty.
+     *
+     * @return non-empty-string|null
      *
      * @throws AmbiguousPaymentQrFieldException when the parameter repeats with distinct values
      */
     public function get(string $name): ?string
     {
-        return $this->query->single($name, self::TYPE);
+        return $this->query->filled($name, self::TYPE);
     }
 
     /**

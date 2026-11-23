@@ -77,11 +77,11 @@ final class PixBrCode extends AbstractStringValueObject implements EmvcoPayload
     }
 
     /**
-     * @return list<non-empty-string> the key of every Pix template, in payload order
+     * @return list<non-empty-string> the distinct keys of the Pix templates, in payload order
      */
     public function pixKeys(): array
     {
-        return $this->subFields('01');
+        return $this->distinct($this->subFields('01'));
     }
 
     /**
@@ -98,11 +98,11 @@ final class PixBrCode extends AbstractStringValueObject implements EmvcoPayload
     }
 
     /**
-     * @return list<non-empty-string>
+     * @return list<non-empty-string> the distinct payment URLs, in payload order
      */
     public function paymentUrls(): array
     {
-        return $this->subFields('25');
+        return $this->distinct($this->subFields('25'));
     }
 
     /**
@@ -119,11 +119,11 @@ final class PixBrCode extends AbstractStringValueObject implements EmvcoPayload
     }
 
     /**
-     * @return list<non-empty-string>
+     * @return list<non-empty-string> the distinct recurrence URLs, in payload order
      */
     public function recurrenceUrls(): array
     {
-        return $this->recurrenceUrls;
+        return $this->distinct($this->recurrenceUrls);
     }
 
     /**
@@ -203,13 +203,23 @@ final class PixBrCode extends AbstractStringValueObject implements EmvcoPayload
 
     /**
      * @param list<non-empty-string> $values
+     *
+     * @return list<non-empty-string>
+     */
+    private function distinct(array $values): array
+    {
+        return \array_values(\array_unique($values));
+    }
+
+    /**
+     * @param list<non-empty-string> $values
      * @param non-empty-string $field
      *
      * @return non-empty-string|null
      */
     private function single(array $values, string $field): ?string
     {
-        $distinct = \array_values(\array_unique($values));
+        $distinct = $this->distinct($values);
         if (\count($distinct) > 1) {
             throw new AmbiguousPaymentQrFieldException(self::TYPE, $field, 'several distinct values');
         }

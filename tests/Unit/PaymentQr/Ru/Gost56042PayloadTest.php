@@ -135,9 +135,12 @@ final class Gost56042PayloadTest extends TestCase
         self::assertSame('a=b', Gost56042Payload::from('ST00012|' . self::MANDATORY . '|Purpose=a=b')->get('Purpose'));
     }
 
-    public function testAnEmptyAdditionalValueIsKept(): void
+    public function testAnEmptyAdditionalValueIsKeptAndReadAsAbsent(): void
     {
-        self::assertSame('', Gost56042Payload::from('ST00012|' . self::MANDATORY . '|Phone=')->get('Phone'));
+        $gost = Gost56042Payload::from('ST00012|' . self::MANDATORY . '|Phone=');
+
+        self::assertNull($gost->get('Phone'));
+        self::assertStringEndsWith('|Phone=', (string) $gost);
     }
 
     public function testTheBankOfRussiaKeyExampleOfAnRkcClientAccountParses(): void

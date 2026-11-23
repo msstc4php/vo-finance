@@ -78,6 +78,22 @@ final readonly class QueryString
     }
 
     /**
+     * As {@see single()}, with an empty value read as absent.
+     *
+     * @param non-empty-string $type
+     *
+     * @return non-empty-string|null
+     *
+     * @throws AmbiguousPaymentQrFieldException when the parameter repeats with distinct values
+     */
+    public function filled(string $name, string $type): ?string
+    {
+        $value = $this->single($name, $type);
+
+        return $value === '' ? null : $value;
+    }
+
+    /**
      * The query as written with every value of `$name` replaced by the result of `$mask`; other pairs, pairs without
      * `=` and empty pairs stay as they are.
      *

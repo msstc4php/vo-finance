@@ -142,9 +142,9 @@ final class Gost56042Payload extends AbstractStringValueObject implements Paymen
     }
 
     /**
-     * The value of the last pair with this alias, compared case-insensitively; null when absent.
+     * The value of the last pair with this alias, compared case-insensitively; null when absent or written `Alias=`.
      *
-     * @return string|null empty when the pair is written `Alias=`
+     * @return non-empty-string|null
      */
     public function get(string $alias): ?string
     {
@@ -155,7 +155,7 @@ final class Gost56042Payload extends AbstractStringValueObject implements Paymen
             }
         }
 
-        return $found;
+        return $found === '' ? null : $found;
     }
 
     #[Override]
@@ -219,7 +219,7 @@ final class Gost56042Payload extends AbstractStringValueObject implements Paymen
     private function mandatory(string $alias): string
     {
         $value = $this->get($alias);
-        \assert($value !== null && $value !== '');
+        \assert($value !== null);
 
         return $value;
     }
