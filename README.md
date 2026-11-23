@@ -216,7 +216,14 @@ members), so their payloads parse as the generic `MerchantPresentedQr`:
   was found among NPCI's archived public files.
 - QR Ph (BSP): none found.
 
-## With the bridge
+## With the bridges
+
+Every class is a string value object, so `ValueObjectMapper` (vo-base) and every
+[framework bridge](https://github.com/msstc4php/vo-base#framework-integration) (Symfony, Laravel, Yii 2, CodeIgniter 4,
+Cycle, Spiral) validates, binds and stores it with no codec: the stored value is the canonical string, the full value
+for a card number too (`masked()` is for logs and screens, not storage). Type a column, a property or a parameter with
+the concrete class (`Isin`, `PaymentCardNumber`, `EpcQr`); `PaymentQrFactory` and `SecurityIdentifierFactory` are for
+input whose kind is not known in advance, and their results are stored under their own class.
 
 `msstc4php/vo-finance-doctrine` stores these value objects in Doctrine ORM and MongoDB ODM columns: one type per string
 value object, `fin_<snake_name>`.
