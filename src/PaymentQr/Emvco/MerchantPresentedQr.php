@@ -167,6 +167,22 @@ final class MerchantPresentedQr extends AbstractStringValueObject implements Emv
         return EmvcoMerchantPresented::get($this->objects, $id);
     }
 
+    /**
+     * A builder holding every data object of this payload but the CRC, in payload order; `build()` computes the CRC
+     * again.
+     */
+    public function toBuilder(): MerchantPresentedQrBuilder
+    {
+        $builder = new MerchantPresentedQrBuilder();
+        foreach ($this->objects as $object) {
+            if ($object->id !== '63') {
+                $builder = $builder->with($object->id, $object->value);
+            }
+        }
+
+        return $builder;
+    }
+
     #[Override]
     public function masked(): string
     {

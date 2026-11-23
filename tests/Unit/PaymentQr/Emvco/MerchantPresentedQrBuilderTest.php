@@ -52,6 +52,19 @@ final class MerchantPresentedQrBuilderTest extends TestCase
         self::assertSame(MerchantPresentedQrTest::BCB_PAYLOAD, $qr->value);
     }
 
+    public function testAPayloadGivesABuilderThatRebuildsIt(): void
+    {
+        $qr = new MerchantPresentedQr(MerchantPresentedQrTest::BCB_PAYLOAD);
+
+        self::assertSame(MerchantPresentedQrTest::BCB_PAYLOAD, $qr->toBuilder()->build()->value);
+
+        $changed = $qr->toBuilder()->with('54', '1.00')->build();
+
+        self::assertSame('1.00', $changed->writtenAmount());
+        self::assertSame('NOME DO RECEBEDOR', $changed->merchantName());
+        self::assertSame(MerchantPresentedQrTest::BCB_PAYLOAD, $qr->value);
+    }
+
     public function testReproducesTheEmvcoAnnexB7PayloadByteExact(): void
     {
         $qr = new MerchantPresentedQrBuilder()
