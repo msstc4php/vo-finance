@@ -22,8 +22,11 @@ use Override;
  * @see https://www.cusip.com/pdf/fact_sheet/CGS_Private_Placement_Numbers.pdf CGS, the characters `*`, `@`, `#`
  * @see docs/sources/FINANCE.md "CUSIP, CUSIP Global Services"
  */
-final class Cusip extends AbstractStringValueObject
+final class Cusip extends AbstractStringValueObject implements SecurityIdentifier
 {
+    /** The length of every stored value; frozen for 1.x. */
+    public const int MAX_LENGTH = 9;
+
     private const string TYPE = 'CUSIP';
 
     #[Override]
@@ -31,7 +34,7 @@ final class Cusip extends AbstractStringValueObject
     {
         $value = \strtoupper($value);
 
-        SecurityRules::shape($value, self::TYPE, 9, '/^[A-Z0-9*@#]{8}[0-9]$/D', 'uppercase letters, digits, "*", "@", "#", then a digit');
+        SecurityRules::shape($value, self::TYPE, self::MAX_LENGTH, '/^[A-Z0-9*@#]{8}[0-9]$/D', 'uppercase letters, digits, "*", "@", "#", then a digit');
 
         if (\ctype_digit($value) && !CusipCheckDigit::isValid($value)) {
             throw SecurityRules::fail(self::TYPE, 'has a wrong check digit');

@@ -18,8 +18,11 @@ use Override;
  * @see https://www.six-group.com/dam/download/financial-information/data-center/cfi/cfi-20210507-current.xlsx SIX, ISO 10962 CFI list
  * @see docs/sources/FINANCE.md "CFI, ISO 10962"
  */
-final class Cfi extends AbstractStringValueObject
+final class Cfi extends AbstractStringValueObject implements SecurityIdentifier
 {
+    /** The length of every stored value; frozen for 1.x. */
+    public const int MAX_LENGTH = 6;
+
     public function category(): ?CfiCategory
     {
         return CfiCategory::tryFrom($this->value[0]);
@@ -38,7 +41,7 @@ final class Cfi extends AbstractStringValueObject
     {
         $value = \strtoupper($value);
 
-        SecurityRules::shape($value, 'CFI', 6, '/^[A-Z]{6}$/D', 'uppercase letters');
+        SecurityRules::shape($value, 'CFI', self::MAX_LENGTH, '/^[A-Z]{6}$/D', 'uppercase letters');
 
         return $value;
     }

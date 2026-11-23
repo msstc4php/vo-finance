@@ -15,14 +15,17 @@ use Override;
  * @see https://www.iso20022.org/sites/default/files/2023-01/FAQ_ISO_10383_January2023.pdf ISO 10383 Registration Authority, FAQ January 2023
  * @see docs/sources/FINANCE.md "MIC, ISO 10383"
  */
-final class Mic extends AbstractStringValueObject
+final class Mic extends AbstractStringValueObject implements SecurityIdentifier
 {
+    /** The length of every stored value; frozen for 1.x. */
+    public const int MAX_LENGTH = 4;
+
     #[Override]
     protected function parse(string $value): string
     {
         $value = \strtoupper($value);
 
-        SecurityRules::shape($value, 'MIC', 4, '/^[A-Z0-9]{4}$/D', 'uppercase letters or digits');
+        SecurityRules::shape($value, 'MIC', self::MAX_LENGTH, '/^[A-Z0-9]{4}$/D', 'uppercase letters or digits');
 
         return $value;
     }

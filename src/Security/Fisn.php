@@ -21,11 +21,12 @@ use Override;
  * @see https://anna-web.org/wp-content/uploads/2026/06/FISN-Guidelines-Version-1-Jun-2026.pdf ANNA, FISN Guidelines, June 2026, section 3.2
  * @see docs/sources/FINANCE.md "FISN, ISO 18774"
  */
-final class Fisn extends AbstractStringValueObject
+final class Fisn extends AbstractStringValueObject implements SecurityIdentifier
 {
-    private const string TYPE = 'FISN';
+    /** The longest stored value, in characters; frozen for 1.x. */
+    public const int MAX_LENGTH = 35;
 
-    private const int MAX_LENGTH = 35;
+    private const string TYPE = 'FISN';
 
     private const int MAX_DESCRIPTION = 19;
 

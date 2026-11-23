@@ -15,14 +15,17 @@ use Override;
  * @see https://www.wmdatenservice.com/wp-content/uploads/2022/10/Vergaberegeln_WKN.pdf WM Datenservice, "Struktur und Aufbau der deutschen WKN", July 2012
  * @see docs/sources/FINANCE.md "WKN, WM Datenservice"
  */
-final class Wkn extends AbstractStringValueObject
+final class Wkn extends AbstractStringValueObject implements SecurityIdentifier
 {
+    /** The length of every stored value; frozen for 1.x. */
+    public const int MAX_LENGTH = 6;
+
     #[Override]
     protected function parse(string $value): string
     {
         $value = \strtoupper($value);
 
-        SecurityRules::shape($value, 'WKN', 6, '/^[0-9A-HJ-NP-Z]{6}$/D', 'digits or uppercase letters except I and O');
+        SecurityRules::shape($value, 'WKN', self::MAX_LENGTH, '/^[0-9A-HJ-NP-Z]{6}$/D', 'digits or uppercase letters except I and O');
 
         return $value;
     }

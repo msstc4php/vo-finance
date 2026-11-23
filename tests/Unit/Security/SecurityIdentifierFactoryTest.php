@@ -21,6 +21,7 @@ use MSSTC4PHP\ValueObject\Financial\Security\Fisn;
 use MSSTC4PHP\ValueObject\Financial\Security\Isin;
 use MSSTC4PHP\ValueObject\Financial\Security\Lei;
 use MSSTC4PHP\ValueObject\Financial\Security\Mic;
+use MSSTC4PHP\ValueObject\Financial\Security\SecurityIdentifier;
 use MSSTC4PHP\ValueObject\Financial\Security\SecurityIdentifierFactory;
 use MSSTC4PHP\ValueObject\Financial\Security\Sedol;
 use MSSTC4PHP\ValueObject\Financial\Security\Upi;
@@ -60,8 +61,45 @@ final class SecurityIdentifierFactoryTest extends TestCase
         self::assertInstanceOf(Upi::class, SecurityIdentifierFactory::fromString('QZ4TM8GJN9XW'));
         self::assertInstanceOf(Figi::class, SecurityIdentifierFactory::fromString('BBG000BLNQ16'));
         self::assertInstanceOf(Fisn::class, SecurityIdentifierFactory::fromString('APPLE INC/SH'));
-        self::assertInstanceOf(Valor::class, SecurityIdentifierFactory::fromString('ABC'));
         self::assertInstanceOf(Cusip::class, SecurityIdentifierFactory::fromString('12345*AB7'));
+    }
+
+    /**
+     * Valor takes no part, so the types it overlapped are reachable.
+     *
+     * @return iterable<string, array{string, class-string<SecurityIdentifier>}>
+     */
+    public static function formerlyShadowedByValor(): iterable
+    {
+        yield 'WKN' => ['519000', Wkn::class];
+        yield 'WKN of letters and digits' => ['A0D9PT', Wkn::class];
+        yield 'CFI' => ['OCAFPS', Cfi::class];
+        yield 'CUSIP' => ['037833100', Cusip::class];
+        yield 'CUSIP with letters' => ['037833AL4', Cusip::class];
+        yield 'SEDOL' => ['1222171', Sedol::class];
+        yield 'SEDOL with letters' => ['B1F3M59', Sedol::class];
+        yield 'MIC' => ['1234', Mic::class];
+        yield 'MIC with letters' => ['XNAS', Mic::class];
+    }
+
+    /**
+     * @param class-string<SecurityIdentifier> $class
+     */
+    #[DataProvider('formerlyShadowedByValor')]
+    public function testBuildsTheTypeAValorUsedToShadow(string $value, string $class): void
+    {
+        $identifier = SecurityIdentifierFactory::fromString($value);
+
+        self::assertInstanceOf($class, $identifier);
+        self::assertSame($value, (string) $identifier);
+    }
+
+    public function testAValueOnlyAValorAcceptsIsNotRecognised(): void
+    {
+        self::assertInstanceOf(Valor::class, Valor::tryFrom('ABC'));
+
+        $this->expectException(InvalidSecurityIdentifierException::class);
+        SecurityIdentifierFactory::fromString('ABC');
     }
 
     public function testLowercaseIsin(): void
@@ -75,16 +113,7 @@ final class SecurityIdentifierFactoryTest extends TestCase
     public static function ambiguous(): iterable
     {
         yield 'ISIN and FIGI' => ['MWG26Z8NW5M4', [Isin::class, Figi::class]];
-        yield 'WKN and Valor' => ['519000', [Wkn::class, Valor::class]];
-        yield 'WKN (letters and digits) and Valor' => ['A0D9PT', [Wkn::class, Valor::class]];
-        yield 'CFI, WKN and Valor' => ['ESVUFR', [Cfi::class, Wkn::class, Valor::class]];
-        yield 'CFI and Valor' => ['OCAFPS', [Cfi::class, Valor::class]];
-        yield 'CUSIP and Valor' => ['037833100', [Cusip::class, Valor::class]];
-        yield 'CUSIP with letters and Valor' => ['037833AL4', [Cusip::class, Valor::class]];
-        yield 'SEDOL and Valor' => ['1222171', [Sedol::class, Valor::class]];
-        yield 'SEDOL with letters and Valor' => ['B1F3M59', [Sedol::class, Valor::class]];
-        yield 'MIC and Valor' => ['1234', [Mic::class, Valor::class]];
-        yield 'MIC with letters and Valor' => ['XNAS', [Mic::class, Valor::class]];
+        yield 'CFI and WKN' => ['ESVUFR', [Cfi::class, Wkn::class]];
     }
 
     /**
@@ -105,10 +134,5 @@ final class SecurityIdentifierFactoryTest extends TestCase
     {
         $this->expectException(InvalidSecurityIdentifierException::class);
         SecurityIdentifierFactory::fromString('not an identifier!');
-    }
-
-    public function testLetteredShortValueIsAValor(): void
-    {
-        self::assertInstanceOf(Valor::class, SecurityIdentifierFactory::fromString('ABC'));
     }
 }

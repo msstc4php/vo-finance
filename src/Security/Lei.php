@@ -17,8 +17,11 @@ use Override;
  * @see https://cdn.standards.iteh.ai/samples/59771/b4526b6c9dc04897b014c659ed70ad27/ISO-17442-2012.pdf ISO 17442:2012, clauses 4 and 5
  * @see docs/sources/FINANCE.md "LEI, ISO 17442"
  */
-final class Lei extends AbstractStringValueObject
+final class Lei extends AbstractStringValueObject implements SecurityIdentifier
 {
+    /** The length of every stored value; frozen for 1.x. */
+    public const int MAX_LENGTH = 20;
+
     private const string TYPE = 'LEI';
 
     /**
@@ -37,7 +40,7 @@ final class Lei extends AbstractStringValueObject
     {
         $value = \strtoupper($value);
 
-        SecurityRules::shape($value, self::TYPE, 20, '/^[A-Z0-9]{18}[0-9]{2}$/D', '18 uppercase letters or digits, two digits');
+        SecurityRules::shape($value, self::TYPE, self::MAX_LENGTH, '/^[A-Z0-9]{18}[0-9]{2}$/D', '18 uppercase letters or digits, two digits');
 
         if (!Iso7064Mod97::isValid($value)) {
             throw SecurityRules::fail(self::TYPE, 'has a wrong check pair');

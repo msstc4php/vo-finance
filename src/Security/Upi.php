@@ -18,14 +18,17 @@ use Override;
  * @see https://cdn.standards.iteh.ai/samples/80506/11803bc283ce4b6d8c633ca72ef6ab03/ISO-4914-2021.pdf ISO 4914:2021 (preview, contents only)
  * @see docs/sources/FINANCE.md "UPI, ISO 4914"
  */
-final class Upi extends AbstractStringValueObject
+final class Upi extends AbstractStringValueObject implements SecurityIdentifier
 {
+    /** The length of every stored value; frozen for 1.x. */
+    public const int MAX_LENGTH = 12;
+
     #[Override]
     protected function parse(string $value): string
     {
         $value = \strtoupper($value);
 
-        SecurityRules::shape($value, 'UPI', 12, '/^QZ[0-9B-DF-HJ-NP-TV-XZ]{10}$/D', '"QZ" and ten digits or capital consonants except Y');
+        SecurityRules::shape($value, 'UPI', self::MAX_LENGTH, '/^QZ[0-9B-DF-HJ-NP-TV-XZ]{10}$/D', '"QZ" and ten digits or capital consonants except Y');
 
         return $value;
     }

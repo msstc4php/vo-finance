@@ -25,8 +25,11 @@ use Override;
  * @see https://www.cusip.com/identifiers.html CUSIP Global Services, the CUSIP inside a US or CA ISIN
  * @see docs/sources/FINANCE.md "ISIN, ISO 6166"
  */
-final class Isin extends AbstractStringValueObject
+final class Isin extends AbstractStringValueObject implements SecurityIdentifier
 {
+    /** The length of every stored value; frozen for 1.x. */
+    public const int MAX_LENGTH = 12;
+
     private const string TYPE = 'ISIN';
 
     /**
@@ -87,7 +90,7 @@ final class Isin extends AbstractStringValueObject
     protected function parse(string $value): string
     {
         $value = \strtoupper($value);
-        SecurityRules::shape($value, self::TYPE, 12, '/^[A-Z]{2}[A-Z0-9]{9}[0-9]$/D', 'two letters, nine letters or digits, a digit');
+        SecurityRules::shape($value, self::TYPE, self::MAX_LENGTH, '/^[A-Z]{2}[A-Z0-9]{9}[0-9]$/D', 'two letters, nine letters or digits, a digit');
 
         if (!IsinCheckDigit::isValid($value)) {
             throw SecurityRules::fail(self::TYPE, 'has a wrong check digit');

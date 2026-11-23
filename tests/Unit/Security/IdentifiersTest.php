@@ -195,25 +195,28 @@ final class IdentifiersTest extends TestCase
     }
 
     /**
-     * @return iterable<string, array{class-string<ValueObject>, string}>
+     * @return iterable<string, array{class-string<ValueObject>, string, non-empty-string}>
      */
     public static function overLong(): iterable
     {
-        yield 'LEI of 23' => [Lei::class, 'F50EOCWSQFAUVO9Q8Z97123'];
-        yield 'MIC of 13' => [Mic::class, 'XNASXNASXNASX'];
-        yield 'CUSIP of 13' => [Cusip::class, '0378331001234'];
+        yield 'LEI of 23' => [Lei::class, 'F50EOCWSQFAUVO9Q8Z97123', 'LEI must have 20 characters.'];
+        yield 'MIC of 13' => [Mic::class, 'XNASXNASXNASX', 'MIC must have 4 characters.'];
+        yield 'CUSIP of 13' => [Cusip::class, '0378331001234', 'CUSIP must have 9 characters.'];
+        yield 'SEDOL of 13' => [Sedol::class, 'B1F3M59B1F3M5', 'SEDOL must have 7 characters.'];
     }
 
     /**
      * @param class-string<ValueObject> $class
+     * @param non-empty-string $message
      */
     #[DataProvider('overLong')]
-    public function testTheMessageHoldsNoLengthOfTheInput(string $class, string $value): void
+    public function testTheMessageHoldsNoLengthOfTheInput(string $class, string $value, string $message): void
     {
         try {
             new $class($value);
             self::fail('Expected an exception.');
         } catch (InvalidSecurityIdentifierException $e) {
+            self::assertSame($message, $e->getMessage());
             self::assertStringNotContainsString((string) \strlen($value), $e->getMessage());
         }
     }

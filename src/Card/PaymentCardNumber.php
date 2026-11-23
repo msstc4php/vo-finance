@@ -23,6 +23,9 @@ use Override;
  */
 final class PaymentCardNumber extends AbstractStringValueObject implements Maskable
 {
+    /** The longest stored value: 19 digits, separators stripped; frozen for 1.x. */
+    public const int MAX_LENGTH = 19;
+
     private const string TYPE = 'PaymentCardNumber';
 
     /**

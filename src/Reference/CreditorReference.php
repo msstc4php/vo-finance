@@ -19,6 +19,9 @@ use Override;
  */
 final class CreditorReference extends AbstractStringValueObject
 {
+    /** The longest stored value: `RF`, two check digits and 21 characters; frozen for 1.x. */
+    public const int MAX_LENGTH = 25;
+
     /**
      * @return non-empty-string two digits
      */

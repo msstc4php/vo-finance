@@ -18,6 +18,9 @@ use Override;
  */
 final class QrReference extends AbstractStringValueObject
 {
+    /** The length of every stored value; frozen for 1.x. */
+    public const int MAX_LENGTH = 27;
+
     /**
      * @return numeric-string
      */

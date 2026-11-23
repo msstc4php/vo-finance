@@ -17,8 +17,11 @@ use Override;
  * @see https://www.omg.org/spec/FIGI/1.0 OMG Financial Instrument Global Identifier 1.0 (formal/2015-12-01), section 6.1
  * @see docs/sources/FINANCE.md "FIGI, OMG"
  */
-final class Figi extends AbstractStringValueObject
+final class Figi extends AbstractStringValueObject implements SecurityIdentifier
 {
+    /** The length of every stored value; frozen for 1.x. */
+    public const int MAX_LENGTH = 12;
+
     private const string TYPE = 'FIGI';
 
     #[Override]
@@ -29,7 +32,7 @@ final class Figi extends AbstractStringValueObject
         SecurityRules::shape(
             $value,
             self::TYPE,
-            12,
+            self::MAX_LENGTH,
             '/^(?!BS|BM|GG|GB|GH|KY|VG)[BCDFGHJKLMNPQRSTVWXYZ]{2}G[BCDFGHJKLMNPQRSTVWXYZ0-9]{8}[0-9]$/D',
             'two consonants outside the excluded prefixes, G, eight consonants or digits, a digit',
         );

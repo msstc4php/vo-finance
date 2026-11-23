@@ -16,8 +16,11 @@ use Override;
  * @see https://www.lseg.com/content/dam/lseg/en_us/documents/sedol/sedol-masterfile-service-and-technical-guide-v8.8.pdf SEDOL Masterfile Service and Technical Guide v8.8, section 8
  * @see docs/sources/FINANCE.md "SEDOL, London Stock Exchange Group"
  */
-final class Sedol extends AbstractStringValueObject
+final class Sedol extends AbstractStringValueObject implements SecurityIdentifier
 {
+    /** The length of every stored value; frozen for 1.x. */
+    public const int MAX_LENGTH = 7;
+
     private const string TYPE = 'SEDOL';
 
     #[Override]
@@ -25,7 +28,7 @@ final class Sedol extends AbstractStringValueObject
     {
         $value = \strtoupper($value);
 
-        SecurityRules::shape($value, self::TYPE, 7, '/^[0-9BCDFGHJKLMNPQRSTVWXYZ]{6}[0-9]$/D', 'digits or capital consonants, then a digit');
+        SecurityRules::shape($value, self::TYPE, self::MAX_LENGTH, '/^[0-9BCDFGHJKLMNPQRSTVWXYZ]{6}[0-9]$/D', 'digits or capital consonants, then a digit');
 
         if (!SedolCheckDigit::isValid($value)) {
             throw SecurityRules::fail(self::TYPE, 'has a wrong check digit');
