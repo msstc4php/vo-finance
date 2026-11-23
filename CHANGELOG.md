@@ -1,5 +1,89 @@
 # Changelog
 
+## [1.0.0] - unreleased
+
+First stable release: from here on a breaking change needs 2.0.
+
+**Backward compatibility (README, "Backward compatibility").** 1.x covers public classes, methods, parameter names and
+return types; canonical strings, JSON values and the `__serialize()` key; the `MAX_LENGTH` bounds and the bridge's type
+names and column lengths; enum backed values and case names; exception classes and their parents. A minor never refuses
+a value an earlier 1.x release accepted (a check that gets a source later is reported by a `hasValid…()` method), may
+accept more only within `MAX_LENGTH`, may add enum cases (match with a default arm) and IIN table rows, and never
+changes a factory's candidate set. `SecurityIdentifier`, `PaymentPayload` and `EmvcoPayload` are implemented by this
+package only; methods may be added to them in minors. Not covered: exception message wording, `Internal\` and
+`@internal`; `masked()` may hide more, never less.
+
+### Added
+
+- `Security\SecurityIdentifier`, implemented by every identifier and returned by `SecurityIdentifierFactory::fromString()`.
+- `PaymentQr\PaymentPayload`, implemented by every payment payload and returned by `PaymentQrFactory::fromString()` and
+  `fromBytes()`; `PaymentQr\Emvco\EmvcoPayload`, implemented by `MerchantPresentedQr` and the five profiles.
+- On the profiles: `merchantAccounts()`, `postalCode()` (now on `PixBrCode` and `PromptPayQr` too), `writtenAmount()`,
+  `additionalData()`, `additionalDataField()` and `get()`. `writtenAmount()` on `MerchantPresentedQr` and `EpcQr`;
+  `additionalDataField()` on `MerchantPresentedQr`.
+- Public `MAX_LENGTH` on every value object with a stored-value bound (and `JpqrCode::MAX_BYTES`), the bounds the
+  bridge sizes its columns by. `Valor::MAX_LENGTH` is 12, above the nine characters accepted.
+- `fromParts()` on `Lei`, `Figi`, `Sedol`, `Cusip` (all digits only), `CreditorReference` and `QrReference`: the check
+  digits are computed with the algorithm the class enforces.
+- `MerchantPresentedQr::toBuilder()`.
+
+### Changed
+
+- Requires `msstc4php/vo-base ^1.4` (was `^1.3`). `ext-bcmath` is no longer required (nothing here calls it; the 0.1.0
+  entry wrongly said it was dropped then); it is suggested for vo-base `Decimal::compareTo()`.
+- Exception messages hold no part of the input, not even its length: "ISIN must have 12 characters." (was "..., got
+  13."), "FISN must have at most 35 characters.".
+- The exception classes are `final`.
+- `PaymentQrFactory`: when every identified profile refuses a payload that `MerchantPresentedQr` accepts, it returns
+  `MerchantPresentedQr` (a Pix GUI with currency 840 gave the Pix refusal). Otherwise the first refusal is thrown, as
+  before.
+- `SecurityIdentifierFactory` no longer tries `Valor`, so a MIC, WKN, CFI, SEDOL or CUSIP is returned instead of an
+  `AmbiguousValueException` with `Valor`; a value only a `Valor` accepts is refused. Build a `Valor` directly.
+- `additionalData()` returns `list<DataObject>` in payload order, repeats included (was an array keyed by sub-ID, whose
+  keys "10" to "99" PHP turned into integers).
+- `EmvcoPayload` types: `merchantName()` is non-null on the profiles; `merchantCategoryCode()` and `merchantCity()` are
+  nullable on `MerchantPresentedQr` too (always present there); `JpqrCode::postalCode()` is nullable (always present).
+- `PixBrCode::pixKeys()`, `paymentUrls()` and `recurrenceUrls()` give distinct values in payload order.
+- `get()` returns a non-empty string or null everywhere: `Gost56042Payload::get()`, `SbpPaymentLink::get()`,
+  `UpiPaymentUri::get()` and `writtenAmount()` read an empty value as absent.
+- `masked()` also hides names (first character kept, `X***`) and address lines (`***`): EPC beneficiary name, QR-bill
+  creditor and ultimate debtor, EMVCo 59, 60, 61, 64-01 and 64-02, UPI `pn`, GOST names and `PayerAddress`.
+- `QrBillAddress` throws `InvalidPaymentQrException` (a subclass of the `InvalidArgumentException` it threw).
+- `MerchantPresentedQrBuilder` has an argument-less constructor; the `MerchantAccount` constructor is `@internal`.
+- Every enum documents that cases may be added in a minor; backed values are unchanged and pinned by a test.
+
+### Removed
+
+- The `@phpstan-type PaymentPayload` union of `PaymentQrFactory` (replaced by the interface) and
+  `Security\CfiGroups` (now `Internal\CfiGroups`, it was `@internal`).
+
+### Upgrading from 0.x
+
+- Renamed: `EpcQr::information()` to `beneficiaryToOriginatorInformation()`; `Gost56042Payload::bic()` to `bik()`.
+- Moved: `Security\CfiGroups` to `Internal\CfiGroups` (internal; use `Cfi::group()`).
+- Removed: the `MerchantPresentedQrBuilder` constructor argument; start empty or from `MerchantPresentedQr::toBuilder()`.
+- `additionalData()['05']` becomes `additionalDataField('05')`; iterate `additionalData()` as `DataObject`s.
+- Code that typed the factory results with the eleven-class union types them with `PaymentPayload` (or narrows with
+  `instanceof`); `SecurityIdentifierFactory::fromString()` returns `SecurityIdentifier` (was `ValueObject`).
+- Code that caught `InvalidArgumentException` from `QrBillAddress` keeps working; catching `InvalidPaymentQrException`
+  is the 1.x form. Subclasses of the exceptions are no longer possible.
+- Code relying on `AmbiguousValueException` with `Valor` from `SecurityIdentifierFactory` now gets the other type, or
+  `InvalidSecurityIdentifierException` for a value only a `Valor` takes.
+- Log pipelines that read names or addresses from `masked()` get `X***` and `***` instead.
+- Stored data: no canonical string, serialized key or enum backed value changed, so 0.x rows keep loading.
+
+### Upgrading from vo-base `Finance\CreditCardNumber` (deprecated since vo-base 1.3)
+
+- Use `Card\PaymentCardNumber`; it accepts every number `CreditCardNumber` accepts (12 to 19 digits, Luhn) and also 10
+  and 11 digits (ISO/IEC 7812-1). The canonical string is the same (digits, spaces and hyphens stripped).
+- `brand()` (`visa`, `mastercard`, `amex`, `discover`, `unknown`) has no equivalent: `schemes()` decodes only ranges a
+  reached publication assigns (Amex, JCB, UnionPay), so Visa, Mastercard and Discover numbers give an empty list.
+- The exception is `InvalidPaymentCardNumberException` (was `InvalidCreditCardNumberException`); its message holds no
+  length.
+- `masked()` (first six and last four kept) replaces masking by hand; `last4()` is unchanged.
+- Doctrine: the `vo_credit_card_number` type of vo-base-doctrine becomes `fin_payment_card_number` of
+  vo-finance-doctrine (`VARCHAR(19)`); the stored strings are the same, so only the mapping changes.
+
 ## [0.2.0] - 2026-11-23
 
 ### Changed
@@ -59,5 +143,5 @@
   and GOST `masked()` the payer's `PayerINN`.
 - Payment QR value objects serialize as their payload alone and validate it again on `unserialize()`.
 - GOST, SBP and UPI payloads share the EMVCo classes' 7089-character abuse bound.
-- Requires `ext-bcmath`: vo-base 1.2.0's `Iban`, used by `EpcQr` and `QrBill`, calls `bcmod()`. The release switches
-  to `msstc4php/vo-base ^1.3`, whose `Iban` needs no bcmath, and drops the requirement.
+- Requires `ext-bcmath`: vo-base 1.2.0's `Iban`, used by `EpcQr` and `QrBill`, calls `bcmod()`. (The requirement was
+  in fact kept until 1.0.0, which drops it.)

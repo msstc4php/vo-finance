@@ -278,8 +278,8 @@ National Number) and/or ISIN identifiers"
 publication reached states the length, the character set or a check digit. The only bound is an **inference**: ISO
 6166:2021 clause 4.1 b) makes the basic code of an ISIN nine characters with "zeros ... inserted in front of the
 national code", so a national number fits in nine characters. **Outcome:** format only, and the class claims only what
-the inference supports: a non-empty value of at most nine ASCII alphanumerics; it does not claim digits-only. WKN and
-Valor can overlap for six digits (factory ambiguity).
+the inference supports: a non-empty value of at most nine ASCII alphanumerics; it does not claim digits-only. Valor is
+not a candidate of `SecurityIdentifierFactory` (see "Securities classes", Factory).
 
 ## Securities classes
 
@@ -334,10 +334,12 @@ before checking, as `Isin` does. Each class has a lowercase-input test.
 **Test vectors without a source** are marked synthetic in the tests: `QZ4TM8GJN9XW`, the `*`, `@`, `#` CUSIPs, `XNAS`
 and `1234` (MIC), `519000` and `A0D9PT` (WKN), the valor numbers.
 
-**Factory.** Every type takes part (Isin, Lei, Upi, Figi, Cfi, Fisn, Mic, Cusip, Sedol, Wkn, Valor). Overlaps throw
-`AmbiguousValueException` with every accepting type, never a subset: ISIN and FIGI (`MWG26Z8NW5M4`), WKN and Valor (six
-characters), CFI and WKN (six letters without `I`, `O`; Valor too), CUSIP and Valor (nine characters), SEDOL and Valor
-(seven), MIC and Valor (four), and so on: Valor accepts any 1 to 9 alphanumerics, so it joins every such overlap.
+**Factory.** Every type but `Valor` takes part (Isin, Lei, Upi, Figi, Cfi, Fisn, Mic, Cusip, Sedol, Wkn). Overlaps
+throw `AmbiguousValueException` with every accepting type, never a subset: ISIN and FIGI (`MWG26Z8NW5M4`), CFI and WKN
+(six letters without `I`, `O`). Ruling for 1.0 (2026-11-23 UTC): `Valor` accepts any 1 to 9 alphanumerics, a shape
+with no source, so it would join every MIC, WKN, CFI, SEDOL and CUSIP; it is left out of the candidates (nothing is
+picked, the type is not offered) and is built directly. Its stored bound `Valor::MAX_LENGTH` is 12, headroom above the
+inferred nine.
 
 ## ISO/IEC 7812-1, IIN and PAN
 
@@ -519,8 +521,10 @@ For `PaymentQrFactory`.
 An EMVCo payload with no marker of its own goes to the national profiles it identifies: the Pix GUI `br.gov.bcb.pix`
 in a template 26-51, a PromptPay AID in template 29 (credit transfer) or 30 (bill payment), the DuitNow AID
 `A0000006150001` in template 26, a template 29 or 30 with country `KH` (KHQR) and the JPQR GUI `jp.or.paymentsjapan`,
-each the identifier the profile's own section quotes. A payload that identifies a profile its class refuses throws
-that refusal; only a payload that identifies none falls back to the generic class.
+each the identifier the profile's own section quotes. Owner ruling for 1.0 (2026-11-23 UTC): when every identified
+profile refuses, the generic class is the one candidate left and is returned if it accepts the payload (a Pix GUI with
+currency 840 is a valid EMVCo payload); otherwise the first refusal is thrown. A payload that identifies no built
+profile goes to the generic class.
 
 Every payload class refuses more than 7089 characters, the largest QR content (numeric mode, version 40-L). No source
 sets it; it bounds abusive input only.
@@ -782,7 +786,7 @@ and `002` of the payload are both defined by it.
 | Service tag, version, identification | 2.2: "Service Tag: ‘BCD’"; "V1: ‘001’ V2: ‘002’"; "Identification code: ‘SCT’" | enforced |
 | BIC | 2.2: "V1: M ... V2: O/M", "8/11an" | enforced (vo-base `Bic`, ISO 9362 shape); empty only in `002` |
 | Name | 2.2: "1..70an", "AT-21 The name of the Beneficiary", M | enforced (characters) |
-| IBAN | 2.2: "1..34an", "Only IBAN is allowed." | enforced (vo-base `Iban`) |
+| IBAN | 2.2: "1..34an", "Only IBAN is allowed." | enforced (vo-base `Iban`); "an" admits blanks (the name is "an" too), so spaces and lowercase are accepted, unlike the QR-bill's "no spaces allowed" |
 | Amount | 2.2: "3..3an, 1..12n", max. 12, "Amount must be larger than or equal to 0.01, and cannot be larger than 999999999.99"; example `EUR12.3` | enforced: `EUR`, at most 12 digits and decimal point, the bounds; the quoted text gives no number of decimals, so more than two (`EUR1.999`) are accepted |
 | Purpose | 2.2: "1..4an" | enforced (length) |
 | Reference / text | 2.2: "{Or 1..35an" structured, "Or} 1..140an" unstructured, "{Or}: Only one of the elements may be populated."; "Creditor Reference (ISO 11649 RF Creditor Reference may be used)" | enforced; `creditorReference()` decodes an RF reference, never refuses another |

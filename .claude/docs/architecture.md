@@ -1,9 +1,13 @@
 # Architecture
 
-Areas under `src/`: `Security\` (securities and entity identifiers, `SecurityIdentifierFactory`), `Card\`
+Areas under `src/`: `Security\` (securities and entity identifiers, the `SecurityIdentifier` interface,
+`SecurityIdentifierFactory`), `Card\`
 (`PaymentCardNumber`, `CardScheme`), `Reference\` (`QrReference`, `CreditorReference`), `PaymentQr\` (EMVCo, national
 profiles, non-EMVCo payloads, `PaymentQrFactory`), `Exception\` (one family per area) and `Internal\`.
-`src/Internal/` holds `@internal final` helpers: the check digits (Luhn, ISO 7064 MOD 97-10, ISIN, CUSIP, SEDOL, FIGI,
+Public interfaces (G1: implemented by this package only, methods may be added in minors): `Security\SecurityIdentifier`,
+`PaymentQr\PaymentPayload` (every payload, returned by `PaymentQrFactory`), `PaymentQr\Emvco\EmvcoPayload` (the
+generic class and the five profiles; the profiles get it from `Internal\ExposesRootFields`).
+`src/Internal/` holds `@internal final` helpers (also `CfiGroups`, moved from `Security\` for 1.0): the check digits (Luhn, ISO 7064 MOD 97-10, ISIN, CUSIP, SEDOL, FIGI,
 CRC-16/CCITT-FALSE, Swiss recursive modulo 10) and the payload machinery below. `deptrac.yaml` forbids every framework
 namespace; Doctrine lives in `vo-finance-doctrine`.
 
@@ -16,8 +20,9 @@ to it.
 National profiles: `PaymentQr\Brazil\PixBrCode`, `PaymentQr\Thailand\PromptPayQr` (+ `PromptPayProxyType`),
 `PaymentQr\Malaysia\DuitNowQr`, `PaymentQr\Cambodia\KhqrCode`, `PaymentQr\Japan\JpqrCode`, `PaymentQr\Brazil\PixKeyType`
 (decode-only enum behind `PixBrCode::pixKeyType()`), and `PaymentQr\PaymentQrFactory` (the profiles the payload
-identifies by GUI/AID marker; the generic `MerchantPresentedQr` only when none is identified; several accepting
-profiles throw `AmbiguousValueException`, identified profiles that all refuse throw the first one's refusal). Each profile is an `AbstractStringValueObject` that parses through
+identifies by GUI/AID marker; the generic `MerchantPresentedQr` when none is identified, or when every identified one
+refuses and the generic class accepts (owner ruling O3); otherwise the first refusal; several accepting profiles throw
+`AmbiguousValueException`). Each profile is an `AbstractStringValueObject` that parses through
 `Internal\ProfilePayload`, which checks the length bound on the original and runs
 `EmvcoMerchantPresented::validate()` unbounded on a modified copy (format indicator forced to 01, missing category/city
 filled with placeholders when the profile allows, CRC recomputed) while keeping the original objects for `get()`,

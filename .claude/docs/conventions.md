@@ -10,3 +10,9 @@
 - Exception messages hold no part of the input: no value, no excerpt, no length or count (`SecurityRules::shape()` says
   "must have 12 characters", never what it got). Fixed bounds, the type and a fixed reason are fine. A test with an
   over-long input asserts that its length is not in the message (`IdentifiersTest`, `IsinTest`, `FisnTest`).
+- `MAX_LENGTH` (characters) is public on every value object with a stored bound and frozen for 1.x; payload classes
+  reference `PayloadBound::MAX_CHARACTERS`; `JpqrCode::MAX_LENGTH = MAX_BYTES`; `QrBill::MAX_LENGTH` 997 is SIX's
+  maximum, not enforced (Table 8 limits stay below it). `StoredBoundsTest` pins them.
+- `fromParts()` validates the body with its own regex and fixed message before calling the helper's `compute()`
+  (which throws `LogicException` on a foreign alphabet); the constructor validates the result again.
+- Every enum docblock says cases may be added in a minor; `get()` returns `non-empty-string|null` everywhere.

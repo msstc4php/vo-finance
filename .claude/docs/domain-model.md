@@ -10,7 +10,9 @@ two factories.
 
 `Isin` (check digit; `cusip()` for US/CA, `sedol()` for GB/IE, null elsewhere), `Lei`, `Upi` (format only), `Cfi`
 (`category()`/`group()` null for an unknown letter), `Fisn`, `Mic` (format only), `Figi`, `Cusip` (check digit for an
-all-digit value only), `Sedol`, `Wkn`, `Valor` (format only). No `masked()`.
+all-digit value only), `Sedol`, `Wkn`, `Valor` (format only, accepted 1..9, `MAX_LENGTH` 12 as headroom; not a
+factory candidate). No `masked()`. `fromParts()` on `Lei`, `Figi`, `Sedol`, `Cusip` (digits only), and on the two
+references.
 
 ## Payment cards
 
@@ -33,3 +35,7 @@ all-digit value only), `Sedol`, `Wkn`, `Valor` (format only). No `masked()`.
   SBP identifier, UPI `pa` (rest of the URI as written); `Mask::keepEnds` keeps nothing at <= 6 characters, the last 2
   at 7-11, the last 4 at 12-17, first 2 + last 4 from 18; references stay visible. EMVCo `masked()` also hides 62-02
   (mobile number) and 62-06 (customer label).
+- Personal data in `masked()` (owner ruling O4): `Mask::name()` keeps the first character + `***` (length not kept),
+  `Mask::ADDRESS` is `***`. EPC line 5; QR-bill name/street/building/postal/town of creditor and ultimate debtor (empty
+  elements stay empty, type and country stay); EMVCo 59, 60, 61, 64-01, 64-02 (64 not TLV: `***` whole); UPI `pn`;
+  GOST `name`, `lastname`, `firstname`, `middlename`, `childfio`, `payeraddress` (empty values stay empty).
