@@ -101,7 +101,7 @@ final class EmvcoMask
     }
 
     /**
-     * A template that is not TLV is masked whole.
+     * A template that is not TLV, or that its masks would push past 99 characters, is masked whole.
      */
     private static function additionalData(DataObject $template): DataObject
     {
@@ -122,11 +122,11 @@ final class EmvcoMask
 
         \assert($value !== '');
 
-        return new DataObject($template->id, $value);
+        return self::fits($value) ? new DataObject($template->id, $value) : self::asterisks($template);
     }
 
     /**
-     * A template that is not TLV is masked whole.
+     * A template that is not TLV, or that its masks would push past 99 characters, is masked whole.
      */
     private static function languageTemplate(DataObject $template): DataObject
     {
@@ -146,7 +146,16 @@ final class EmvcoMask
 
         \assert($value !== '');
 
-        return new DataObject($template->id, $value);
+        return self::fits($value) ? new DataObject($template->id, $value) : new DataObject($template->id, Mask::TEXT);
+    }
+
+    /**
+     * A mask can be longer than its value (`x` → `***`), so a rebuilt template near the bound may not fit; it is then
+     * masked whole.
+     */
+    private static function fits(string $value): bool
+    {
+        return EmvcoTlv::length($value) <= 99;
     }
 
     private static function isSecret(string $id): bool

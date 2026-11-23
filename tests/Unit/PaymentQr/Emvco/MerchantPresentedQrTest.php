@@ -29,7 +29,7 @@ use PHPUnit\Framework\TestCase;
 #[CoversClass(DataObject::class)]
 #[CoversClass(PointOfInitiation::class)]
 #[CoversClass(InvalidPaymentQrException::class)]
-#[UsesClass(EmvcoMask::class)]
+#[CoversClass(EmvcoMask::class)]
 #[UsesClass(Mask::class)]
 #[CoversClass(EmvcoMerchantPresented::class)]
 #[UsesClass(EmvcoTlv::class)]
@@ -166,6 +166,42 @@ final class MerchantPresentedQrTest extends TestCase
 
         self::assertStringContainsString('5904B***6003***64210002ZH0104最***0203***', $masked);
         self::assertStringContainsString('6103***', new MerchantPresentedQr(self::sealed(self::MINIMAL_BODY . '610512345'))->masked());
+    }
+
+    public function testATemplateItsMasksWouldPushPast99CharactersIsMaskedWhole(): void
+    {
+        $additional = '';
+        for ($id = 12; $id <= 30; $id++) {
+            $additional .= EmvcoTlv::encode(new DataObject((string) $id, 'x'));
+        }
+        $language = EmvcoTlv::encode(new DataObject('00', 'JA'));
+        for ($id = 2; $id <= 19; $id++) {
+            $language .= EmvcoTlv::encode(new DataObject(\sprintf('%02d', $id), 'x'));
+        }
+
+        \assert($additional !== '' && $language !== '');
+
+        $withAdditional = self::sealed(self::MINIMAL_BODY . EmvcoTlv::encode(new DataObject('62', $additional)));
+        $withLanguage = self::sealed(self::MINIMAL_BODY . EmvcoTlv::encode(new DataObject('64', $language)));
+
+        self::assertTrue(MerchantPresentedQr::isValid($withAdditional));
+        self::assertStringContainsString('6295' . \str_repeat('*', 95) . '6304', new MerchantPresentedQr($withAdditional)->masked());
+        self::assertTrue(MerchantPresentedQr::isValid($withLanguage));
+        self::assertStringContainsString('6403***6304', new MerchantPresentedQr($withLanguage)->masked());
+    }
+
+    public function testATemplateMaskedToExactly99CharactersKeepsItsSubFields(): void
+    {
+        // Four 4-character labels (8 -> 9 characters each) and nine 1-character RFU sub-fields (5 -> 7) mask to 99.
+        $additional = '0104ABCD0304ABCD0504ABCD0704ABCD';
+        for ($id = 12; $id <= 20; $id++) {
+            $additional .= EmvcoTlv::encode(new DataObject((string) $id, 'x'));
+        }
+
+        $masked = new MerchantPresentedQr(self::sealed(self::MINIMAL_BODY . '6277' . $additional))->masked();
+
+        self::assertStringContainsString('6299' . \str_repeat('0105A***D', 1), $masked);
+        self::assertStringContainsString('2003***6304', $masked);
     }
 
     public function testALanguageTemplateThatIsNotTlvIsMaskedWhole(): void

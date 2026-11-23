@@ -95,22 +95,6 @@ final readonly class QueryString
     }
 
     /**
-     * The query as written with every value of a named parameter replaced by the result of its mask; other pairs,
-     * pairs without `=` and empty pairs stay as they are.
-     *
-     * @param array<string, Closure(string): string> $masks by parameter name
-     */
-    public function withMasked(array $masks): string
-    {
-        $parts = [];
-        foreach (\explode('&', $this->query) as $pair) {
-            $parts[] = $this->maskPair($pair, $masks);
-        }
-
-        return \implode('&', $parts);
-    }
-
-    /**
      * The query rebuilt pair by pair: each non-empty pair is replaced by what the writer returns for its name and its
      * value (null for a pair without `=`); empty pairs stay empty, so `&&` is kept.
      *
@@ -131,20 +115,5 @@ final readonly class QueryString
         }
 
         return \implode('&', $parts);
-    }
-
-    /**
-     * @param array<string, Closure(string): string> $masks
-     */
-    private function maskPair(string $pair, array $masks): string
-    {
-        foreach ($masks as $name => $mask) {
-            $prefix = $name . '=';
-            if (\str_starts_with($pair, $prefix)) {
-                return $prefix . $mask(\substr($pair, \strlen($prefix)));
-            }
-        }
-
-        return $pair;
     }
 }
