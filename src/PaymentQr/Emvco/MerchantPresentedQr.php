@@ -8,7 +8,6 @@ use MSSTC4PHP\ValueObject\Contract\Maskable;
 use MSSTC4PHP\ValueObject\Finance\Decimal;
 use MSSTC4PHP\ValueObject\Financial\Internal\EmvcoMask;
 use MSSTC4PHP\ValueObject\Financial\Internal\EmvcoMerchantPresented;
-use MSSTC4PHP\ValueObject\Financial\Internal\ReparsesOnUnserialize;
 use MSSTC4PHP\ValueObject\I18n\CountryCode;
 use MSSTC4PHP\ValueObject\I18n\CurrencyCode;
 use MSSTC4PHP\ValueObject\Support\AbstractStringValueObject;
@@ -40,8 +39,6 @@ use Override;
  */
 final class MerchantPresentedQr extends AbstractStringValueObject implements Maskable
 {
-    use ReparsesOnUnserialize;
-
     /** @var list<DataObject> */
     private array $objects;
 

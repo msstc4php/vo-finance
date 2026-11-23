@@ -10,7 +10,6 @@ use MSSTC4PHP\ValueObject\Financial\Exception\InvalidPaymentQrException;
 use MSSTC4PHP\ValueObject\Financial\Internal\Mask;
 use MSSTC4PHP\ValueObject\Financial\Internal\PayloadBound;
 use MSSTC4PHP\ValueObject\Financial\Internal\ProfileRule;
-use MSSTC4PHP\ValueObject\Financial\Internal\ReparsesOnUnserialize;
 use MSSTC4PHP\ValueObject\Financial\Internal\RussianAccountKey;
 use MSSTC4PHP\ValueObject\Financial\Internal\Transcoder;
 use MSSTC4PHP\ValueObject\Support\AbstractStringValueObject;
@@ -40,8 +39,6 @@ use Override;
  */
 final class Gost56042Payload extends AbstractStringValueObject implements Maskable
 {
-    use ReparsesOnUnserialize;
-
     private const string TYPE = 'Gost56042Payload';
 
     private const array ENCODINGS = ['1' => 'Windows-1251', '3' => 'KOI8-R'];

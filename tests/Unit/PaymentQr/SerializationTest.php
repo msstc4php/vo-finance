@@ -6,6 +6,7 @@ namespace MSSTC4PHP\ValueObject\Financial\Tests\Unit\PaymentQr;
 
 use LogicException;
 use MSSTC4PHP\ValueObject\Contract\Maskable;
+use MSSTC4PHP\ValueObject\Exception\InvalidValueObjectException;
 use MSSTC4PHP\ValueObject\Financial\Exception\InvalidPaymentQrException;
 use MSSTC4PHP\ValueObject\Financial\Internal\Crc16CcittFalse;
 use MSSTC4PHP\ValueObject\Financial\Internal\EmvcoMask;
@@ -17,7 +18,6 @@ use MSSTC4PHP\ValueObject\Financial\Internal\PayloadBound;
 use MSSTC4PHP\ValueObject\Financial\Internal\ProfilePayload;
 use MSSTC4PHP\ValueObject\Financial\Internal\ProfileRule;
 use MSSTC4PHP\ValueObject\Financial\Internal\QueryString;
-use MSSTC4PHP\ValueObject\Financial\Internal\ReparsesOnUnserialize;
 use MSSTC4PHP\ValueObject\Financial\Internal\RussianAccountKey;
 use MSSTC4PHP\ValueObject\Financial\Internal\TextLines;
 use MSSTC4PHP\ValueObject\Financial\PaymentQr\Brazil\PixBrCode;
@@ -35,13 +35,11 @@ use MSSTC4PHP\ValueObject\Financial\PaymentQr\Swiss\QrBill;
 use MSSTC4PHP\ValueObject\Financial\PaymentQr\Thailand\PromptPayProxyType;
 use MSSTC4PHP\ValueObject\Financial\PaymentQr\Thailand\PromptPayQr;
 use MSSTC4PHP\ValueObject\Support\AbstractStringValueObject;
-use PHPUnit\Framework\Attributes\CoversTrait;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\UsesClass;
 use PHPUnit\Framework\Attributes\UsesTrait;
 use PHPUnit\Framework\TestCase;
 
-#[CoversTrait(ReparsesOnUnserialize::class)]
 #[UsesClass(Crc16CcittFalse::class)]
 #[UsesClass(DataObject::class)]
 #[UsesClass(DuitNowQr::class)]
@@ -137,25 +135,40 @@ final class SerializationTest extends TestCase
     }
 
     /**
-     * @return iterable<string, array{string}>
+     * @return iterable<string, array{class-string, string}>
      */
     public static function malformed(): iterable
     {
-        $class = UpiPaymentUri::class;
-        $prefix = \sprintf('O:%d:"%s":', \strlen($class), $class);
+        foreach (self::payloads() as $label => [$class]) {
+            $prefix = \sprintf('O:%d:"%s":', \strlen($class), $class);
 
-        yield 'no value' => [$prefix . '0:{}'];
-        yield 'a value that is no string' => [$prefix . '1:{s:5:"value";i:1;}'];
-        yield 'derived state beside the value' => [$prefix . '2:{s:5:"value";s:38:"upi://pay?pa=merchant@bank&pn=Merchant";s:5:"query";N;}'];
+            yield $label . ', no value' => [$class, $prefix . '0:{}'];
+            yield $label . ', a value that is no string' => [$class, $prefix . '1:{s:5:"value";i:1;}'];
+        }
     }
 
+    /**
+     * @param class-string $class
+     */
     #[DataProvider('malformed')]
-    public function testMalformedDataIsRefused(string $serialized): void
+    public function testAPayloadWithoutAStringValueIsRefused(string $class, string $serialized): void
     {
-        $this->expectException(InvalidPaymentQrException::class);
-        $this->expectExceptionMessage('A serialized payment payload must hold only its value, as a string.');
+        $this->expectExceptionObject(new InvalidValueObjectException('A serialized ' . $class . ' must hold its value as a string.'));
 
         \unserialize($serialized);
+    }
+
+    public function testDerivedStateBesideTheValueIsIgnoredAndRebuilt(): void
+    {
+        $class = UpiPaymentUri::class;
+        $serialized = \sprintf('O:%d:"%s":2:{s:5:"value";s:38:"upi://pay?pa=merchant@bank&pn=Merchant";s:5:"query";N;}', \strlen($class), $class);
+
+        $restored = \unserialize($serialized);
+
+        self::assertInstanceOf(UpiPaymentUri::class, $restored);
+        self::assertTrue(UpiPaymentUri::from('upi://pay?pa=merchant@bank&pn=Merchant')->equals($restored));
+        self::assertSame('merchant@bank', $restored->payeeAddress());
+        self::assertSame(['pa', 'pn'], $restored->parameterNames());
     }
 
     /**
@@ -172,7 +185,7 @@ final class SerializationTest extends TestCase
             $object->__unserialize(['value' => 'hello']);
             self::fail('__unserialize() on a built object must throw.');
         } catch (LogicException $e) {
-            self::assertSame('A payment payload is immutable; __unserialize() runs only on a new object.', $e->getMessage());
+            self::assertSame('A value object is immutable; __unserialize() runs only on a new object.', $e->getMessage());
         }
 
         self::assertSame($payload, (string) $object);

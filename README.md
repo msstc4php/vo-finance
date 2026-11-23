@@ -23,7 +23,7 @@ Not on Packagist yet; register the GitHub repositories:
 }
 ```
 
-Runtime requirement: `msstc4php/vo-base ^1.2`. No framework. `ext-mbstring` is suggested: `EpcQr::fromBytes()`,
+Runtime requirement: `msstc4php/vo-base ^1.3`. No framework. `ext-mbstring` is suggested: `EpcQr::fromBytes()`,
 `Gost56042Payload::fromBytes()` and `PaymentQrFactory::fromBytes()` need it for payloads in a single-byte character set
 and throw `LogicException` without it.
 
@@ -98,7 +98,9 @@ the last two at 7 to 11, the last four at 12 to 17, the first two and the last f
 valid payload.
 
 `serialize()` stores only the payload, and `unserialize()` validates it again, so the parsed fields are never restored
-apart from the value they came from; a serialized form that holds anything else throws `InvalidPaymentQrException`.
+apart from the value they came from (vo-base 1.3 runs `parse()` again). A forged payload throws the class's
+`InvalidPaymentQrException`, a serialized form without a string `value` vo-base `InvalidValueObjectException`; other
+keys are ignored.
 
 | Class | Payload |
 |---|---|

@@ -18,7 +18,7 @@ Local install against the sibling `../vo-base`: `COMPOSER=composer-local.json co
 
 `composer-local.json` is gitignored. Create it from `composer-ci.json`: copy the file and replace the VCS repository
 with `{"type": "path", "url": "../vo-base", "options": {"symlink": true}}`, and require `msstc4php/vo-base` as
-`dev-main as 1.2.0`.
+`dev-main as 1.3.0`.
 
 - `COMPOSER=composer-local.json make check`, `make test`, `make infection` (`php -d memory_limit=-1` if the reporter
   runs out of memory), `make fix`.

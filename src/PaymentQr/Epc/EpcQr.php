@@ -13,7 +13,6 @@ use MSSTC4PHP\ValueObject\Financial\Exception\InvalidPaymentQrException;
 use MSSTC4PHP\ValueObject\Financial\Internal\Iso8859;
 use MSSTC4PHP\ValueObject\Financial\Internal\Mask;
 use MSSTC4PHP\ValueObject\Financial\Internal\ProfileRule;
-use MSSTC4PHP\ValueObject\Financial\Internal\ReparsesOnUnserialize;
 use MSSTC4PHP\ValueObject\Financial\Internal\TextLines;
 use MSSTC4PHP\ValueObject\Financial\Internal\Transcoder;
 use MSSTC4PHP\ValueObject\Financial\Reference\CreditorReference;
@@ -39,8 +38,6 @@ use Override;
  */
 final class EpcQr extends AbstractStringValueObject implements Maskable
 {
-    use ReparsesOnUnserialize;
-
     private const string TYPE = 'EpcQr';
 
     private const int MAX_LENGTH = 331;

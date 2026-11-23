@@ -1,5 +1,19 @@
 # Changelog
 
+## [0.2.0] - unreleased
+
+### Changed
+
+- Requires `msstc4php/vo-base ^1.3` (was `^1.2`). vo-base 1.3 runs `parse()` again on `unserialize()`, so
+  `Internal\ReparsesOnUnserialize` is removed and the payment payloads rely on the base. A forged value still throws `InvalidPaymentQrException`. Two changes: a serialized form without a
+  string `value` now throws vo-base `InvalidValueObjectException` ("A serialized <class> must hold its value as a
+  string.") instead of `InvalidPaymentQrException` ("A serialized payment payload must hold only its value, as a
+  string."), and keys beside `value` are ignored instead of refused; the derived state is rebuilt from the value either
+  way. `__unserialize()` on a built object says "A value object is immutable; ..." (was "A payment payload is
+  immutable; ...").
+  `InvalidPaymentQrException` extends `InvalidValueObjectException`: catch the latter to handle both cases.
+- `^1.3` and not `^1.3.1` on purpose: 1.3.1 fixes vo-base's composite value objects, which this package does not use.
+
 ## [0.1.0] - 2026-11-22
 
 ### Added

@@ -30,7 +30,7 @@ references `Reference\QrReference`, `Reference\CreditorReference`. Helpers: `Int
 from the Unicode 8859-N.TXT tables, no extension), `Internal\TextLines` (line split keeping every
 LF/CRLF separator, rebuild with one line replaced), `Internal\QueryString` (raw `name=value` pairs, no decoding),
 `Internal\Transcoder` (mbstring, single-byte charset to UTF-8), `Internal\Mask` (at most about a third kept, by
-length tier), `Internal\PayloadBound` (the shared 7089-character abuse bound), `Internal\ReparsesOnUnserialize`
-(trait: serialize the value only, re-run `parse()` on unserialize; used by every payment payload class),
+length tier), `Internal\PayloadBound` (the shared 7089-character abuse bound); serialization of the value alone with `parse()`
+run again on unserialize comes from vo-base `^1.3` (0.1.0 had its own `Internal\ReparsesOnUnserialize`),
 `Internal\RussianAccountKey` (Order 515). `PaymentQrFactory` dispatches by marker (`BCD`, `SPC`, `ST0001`,
 `https://qr.nspk.ru/` and `upi://` case-insensitive) before the EMVCo profiles; a marked payload never falls back to EMVCo.

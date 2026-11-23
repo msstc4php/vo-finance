@@ -12,7 +12,6 @@ use MSSTC4PHP\ValueObject\Financial\Internal\Mask;
 use MSSTC4PHP\ValueObject\Financial\Internal\PayloadBound;
 use MSSTC4PHP\ValueObject\Financial\Internal\ProfileRule;
 use MSSTC4PHP\ValueObject\Financial\Internal\QueryString;
-use MSSTC4PHP\ValueObject\Financial\Internal\ReparsesOnUnserialize;
 use MSSTC4PHP\ValueObject\Support\AbstractStringValueObject;
 use Override;
 
@@ -30,8 +29,6 @@ use Override;
  */
 final class UpiPaymentUri extends AbstractStringValueObject implements Maskable
 {
-    use ReparsesOnUnserialize;
-
     private const string TYPE = 'UpiPaymentUri';
 
     private QueryString $query;
