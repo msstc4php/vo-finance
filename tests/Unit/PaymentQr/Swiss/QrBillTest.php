@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace MSSTC4PHP\ValueObject\Financial\Tests\Unit\PaymentQr\Swiss;
 
-use InvalidArgumentException;
 use MSSTC4PHP\ValueObject\Financial\Exception\InvalidPaymentQrException;
 use MSSTC4PHP\ValueObject\Financial\Internal\EmvcoTlv;
 use MSSTC4PHP\ValueObject\Financial\Internal\Iso7064Mod97;
@@ -495,11 +494,12 @@ final class QrBillTest extends TestCase
             ['Name', null, null, '8000', '', 'CH'],
             ['Name', null, null, '8000', 'Town', 'ch'],
             ['Name', null, null, '8000', 'Town', "CH\n"],
+            ['Name', null, null, '8000', 'Town', 'xCH'],
         ] as $arguments) {
             try {
                 new QrBillAddress(...$arguments);
                 self::fail('Expected an exception.');
-            } catch (InvalidArgumentException) {
+            } catch (InvalidPaymentQrException) {
                 self::addToAssertionCount(1);
             }
         }

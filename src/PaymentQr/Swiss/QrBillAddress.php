@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace MSSTC4PHP\ValueObject\Financial\PaymentQr\Swiss;
 
-use InvalidArgumentException;
+use MSSTC4PHP\ValueObject\Financial\Exception\InvalidPaymentQrException;
 use MSSTC4PHP\ValueObject\I18n\CountryCode;
 
 /**
@@ -34,21 +34,21 @@ final readonly class QrBillAddress
     public string $country;
 
     /**
-     * @throws InvalidArgumentException for an empty name, postal code or town, an empty (not null) street or building
-     *                                  number, or a country that is not two capital letters
+     * @throws InvalidPaymentQrException for an empty name, postal code or town, an empty (not null) street or building
+     *                                   number, or a country that is not two capital letters
      */
     public function __construct(string $name, ?string $street, ?string $buildingNumber, string $postalCode, string $town, string $country)
     {
         if ($name === '' || $postalCode === '' || $town === '') {
-            throw new InvalidArgumentException('A QR-bill address requires a name, a postal code and a town.');
+            throw new InvalidPaymentQrException('A QR-bill address requires a name, a postal code and a town.');
         }
 
         if ($street === '' || $buildingNumber === '') {
-            throw new InvalidArgumentException('A QR-bill address gives an absent street or building number as null.');
+            throw new InvalidPaymentQrException('A QR-bill address gives an absent street or building number as null.');
         }
 
         if (\preg_match('/^[A-Z]{2}$/D', $country) !== 1) {
-            throw new InvalidArgumentException('A QR-bill address requires a country of two capital letters.');
+            throw new InvalidPaymentQrException('A QR-bill address requires a country of two capital letters.');
         }
 
         $this->name = $name;
