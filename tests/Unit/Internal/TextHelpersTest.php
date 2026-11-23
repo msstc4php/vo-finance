@@ -52,6 +52,17 @@ final class TextHelpersTest extends TestCase
         self::assertSame('***', Mask::name(''));
     }
 
+    public function testAReferenceKeepsItsFirstAndLastCharacterOnly(): void
+    {
+        self::assertSame('A***a', Mask::reference('Anna Ivanova'));
+        self::assertSame('И***в', Mask::reference('Иванов'));
+        self::assertSame("\n***\n", Mask::reference("\nab\n"));
+        self::assertSame('a***d', Mask::reference('abcd'));
+        self::assertSame('***', Mask::reference('abc'));
+        self::assertSame('***', Mask::reference('a'));
+        self::assertSame('', Mask::reference(''));
+    }
+
     public function testFreeTextKeepsNothingAndAnEmptyTextStaysEmpty(): void
     {
         self::assertSame('***', Mask::text('Rent for Anna, anna@example.com'));

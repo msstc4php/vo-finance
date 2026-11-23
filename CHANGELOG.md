@@ -48,22 +48,27 @@ package only; methods may be added to them in minors. Not covered: exception mes
 - `get()` returns a non-empty string or null everywhere: `Gost56042Payload::get()`, `SbpPaymentLink::get()`,
   `UpiPaymentUri::get()` and `writtenAmount()` read an empty value as absent. A repeat with another value, the empty
   one included (`am=&am=10`), still throws `AmbiguousPaymentQrFieldException`.
-- `masked()` hides every field that names or locates a person, and all free text (README, "Payment QR payloads", one
-  list per class): names keep their first character (`X***`), addresses, other personal data and free text become
-  `***`, accounts and identifiers keep at most about a third. Newly hidden since 0.2.0:
-  - EMVCo: 59 and 64-01 (`X***`), 60, 61, 64-02, 62-08 and 64-03 to 64-99 (`***`), 62-04, 62-10 and 62-50 to 62-99
-    (asterisks).
-  - EPC: beneficiary name; remittance text, beneficiary to originator information and a reference that is no RF
-    creditor reference (`***`).
-  - QR-bill: creditor and ultimate debtor name, street, building number, postal code and town; unstructured message,
-    both alternative procedures, billing information outside the Swico S1 syntax, and the S1 invoice number and
-    customer reference (`***`).
-  - GOST: `Name`, `LastName`, `FirstName`, `MiddleName`, `ChildFio`, `SpecFio` (`X***`); `PayerAddress`, `Flat`,
-    `InstNum`, `ClassNum`, `BirthDate`, `Purpose`, `Contract` and any alias outside Annex V table В.1 (`***`); `Phone`,
-    `CounterId`, `ExecId`, `RuleId` (keep ends).
-  - SBP: every query pair except `type`, `bank`, `sum`, `cur` and `crc` in their code shape, its name included
-    (`***=***`, `***=`, `***`); an allowlisted value of another shape becomes `***`.
-  - UPI: `pn` (`X***`) and `tn` (`***`).
+- `masked()` is fail-closed on every payment profile (README, "Payment QR payloads", one table per profile): a field
+  stays visible only on the profile's allowlist and in its shape; every other field, unknown alias, RFU sub-field,
+  bare parameter and unknown parameter name is masked. Names keep their first character (`X***`), references their
+  first and last character, accounts and identifiers at most about a third; the rest becomes `***`. Newly hidden
+  since 0.2.0:
+  - EMVCo: 59 and 64-01 (`X***`); 62-01, 03, 05, 07 (first and last character); 62-02, 04, 06, 10, 50 to 99
+    (asterisks); 60, 61, 62-08, 62-12 to 49, 64-02 to 99, RFU 65 to 79 and any listed object of another shape
+    (`***`).
+  - EPC: beneficiary name (`X***`); remittance text, beneficiary to originator information, a reference that is no RF
+    creditor reference, a BIC not in capitals and a purpose that is not four capitals (`***`).
+  - QR-bill: creditor and ultimate debtor name (`X***`); their street, building number, postal code and town, the
+    unstructured message, both alternative procedures, billing information outside the Swico S1 grammar and the S1
+    invoice number and customer reference (`***`).
+  - GOST: `Name`, `BankName`, `LastName`, `FirstName`, `MiddleName`, `ChildFio`, `SpecFio` (`X***`); `DocNo`, `DocIdx`,
+    `QuittId`, `UIN` (first and last character); `Phone`, `CounterId`, `ExecId`, `RuleId` (keep ends); every other
+    Annex V alias outside its shape, `PayerAddress`, `Flat`, `InstNum`, `ClassNum`, `BirthDate`, `Purpose`,
+    `Contract`, `Category`, `ServiceName` (`***`); an alias outside table В.1 (`***=***`).
+  - SBP: every query pair except `type`, `bank`, `sum`, `cur` and `crc` in their shape, its name included (`***=***`,
+    `***=`, `***`); an allowlisted value of another shape (`***`).
+  - UPI: `pa` (`a***@handle`, was keep ends), `pn` (`X***`), `tr` and `tid` (first and last character), `tn`, `url`,
+    `sign` and codes of another shape (`***`), every other pair, its name included (`***=***`, `***=`, `***`).
 - `QrBillAddress` throws `InvalidPaymentQrException` (a subclass of the `InvalidArgumentException` it threw).
 - `MerchantPresentedQrBuilder` has an argument-less constructor; the `MerchantAccount` constructor is `@internal`.
 - `PaymentQrFactory` and `SecurityIdentifierFactory` have a private constructor; they are static only.

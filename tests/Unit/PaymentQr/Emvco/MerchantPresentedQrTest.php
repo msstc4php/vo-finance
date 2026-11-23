@@ -178,14 +178,14 @@ final class MerchantPresentedQrTest extends TestCase
         $qr = new MerchantPresentedQr(self::sealed(self::MINIMAL_BODY . '62440105BILL10212+601234567890503REF0608Jane Doe'));
 
         self::assertSame('+60123456789', $qr->additionalDataField('02'));
-        self::assertStringContainsString('62440105BILL10212' . \str_repeat('*', 12) . '0503REF0608' . \str_repeat('*', 8) . '6304', $qr->masked());
+        self::assertStringContainsString('62440105B***10212' . \str_repeat('*', 12) . '0503***0608' . \str_repeat('*', 8) . '6304', $qr->masked());
     }
 
     public function testMaskedHidesThePurposeOfTransactionOfTheAdditionalData(): void
     {
         $qr = new MerchantPresentedQr(self::sealed(self::MINIMAL_BODY . '62280105BILL10815Rent for Anna B'));
 
-        self::assertStringEndsWith('62160105BILL10803***6304****', $qr->masked());
+        self::assertStringEndsWith('62160105B***10803***6304****', $qr->masked());
         self::assertStringNotContainsString('Anna', $qr->masked());
     }
 
@@ -285,7 +285,8 @@ final class MerchantPresentedQrTest extends TestCase
         self::assertStringNotContainsString('NOME DO RECEBEDOR', $masked);
         self::assertStringNotContainsString('BRASILIA', $masked);
         self::assertStringNotContainsString('70074900', $masked);
-        self::assertStringContainsString('RP12345678-2019', $masked);
+        self::assertStringNotContainsString('RP12345678-2019', $masked);
+        self::assertStringContainsString('0505R***9', $masked);
         self::assertStringStartsWith('0002010414**************2658' . str_repeat('*', 58) . '2730', $masked);
         self::assertSame(self::BCB_PAYLOAD, $qr->value);
     }

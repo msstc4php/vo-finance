@@ -125,14 +125,20 @@ final class SbpPaymentLinkTest extends TestCase
         yield 'sum as text' => ['sum=Anna-Ivanova', 'sum=***'];
         yield 'bank as e-mail' => ['bank=anna@x.com', 'bank=***'];
         yield 'type of three digits' => ['type=123', 'type=***'];
+        yield 'type other than 01 and 02' => ['type=03', 'type=***'];
+        yield 'type of one digit' => ['type=1', 'type=***'];
         yield 'bank of 13 digits' => ['bank=1000000000011', 'bank=***'];
+        yield 'bank as a phone number' => ['bank=79101234567', 'bank=***'];
+        yield 'sum with three decimals' => ['sum=1.234', 'sum=***'];
+        yield 'sum with a bare point' => ['sum=1.', 'sum=***'];
         yield 'sum of 19 digits' => ['sum=1234567890123456789', 'sum=***'];
         yield 'lowercase currency' => ['cur=rub', 'cur=***'];
         yield 'crc of nine characters' => ['crc=ABCDEF012', 'crc=***'];
         yield 'crc with a non-hex letter' => ['crc=AG', 'crc=***'];
         yield 'bare allowlisted name' => ['sum', '***'];
         yield 'empty allowlisted value' => ['sum=', 'sum='];
-        yield 'all shapes at their bounds' => ['type=1&bank=123456789012&sum=123456789012345678&cur=EUR&crc=abcdef01', 'type=1&bank=123456789012&sum=123456789012345678&cur=EUR&crc=abcdef01'];
+        yield 'all shapes at their bounds' => ['type=01&bank=123456789012&sum=123456789012345678.99&cur=EUR&crc=abcdef01', 'type=01&bank=123456789012&sum=123456789012345678.99&cur=EUR&crc=abcdef01'];
+        yield 'type 02 and a one-decimal sum' => ['type=02&sum=0.5', 'type=02&sum=0.5'];
     }
 
     #[DataProvider('allowlistedValuesWithoutACodeShape')]

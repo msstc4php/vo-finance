@@ -28,18 +28,21 @@ use Override;
  * QR content: a bound against abusive input.
  *
  * {@see __construct()} takes UTF-8 text: a declared set `1` or `3` is accepted only for ASCII text; other text goes
- * through {@see fromBytes()}, which transcodes it and rewrites the character set to `2`. {@see masked()} keeps the
- * ends of the accounts and identifiers of Annex V: the payee's account (`PersonalAcc`), the payer's account with the
- * provider (`PersAcc`), the budget recipient's personal account (`PersonalAccount`), the payer's SNILS (`PensAcc`),
- * identity document number (`PayerIdNum`), taxpayer number (`PayerINN`) and phone number (`Phone`), the meter number
- * at the payer's premises (`CounterId`), the enforcement proceedings number (`ExecId`) and the traffic-fine
- * resolution number (`RuleId`). Of the names (`Name`, `LastName`, `FirstName`, `MiddleName`, `ChildFio`, `SpecFio`)
- * it keeps the first character. These become `***`: what locates a person, the payer's address (`PayerAddress`),
- * flat number (`Flat`) and the institution and class or group numbers (`InstNum`, `ClassNum`); other personal data,
- * the birth date (`BirthDate`); free text, the purpose (`Purpose`) and the free-form contract number (`Contract`);
- * and, failing closed, the value of every alias outside table В.1. An empty value stays empty. The other aliases of
- * table В.1 (amounts, dates, meter readings, codes, the payee's bill and accrual references `QuittId`, `DocNo`,
- * `DocIdx`, `UIN`, ...) stay visible.
+ * through {@see fromBytes()}, which transcodes it and rewrites the character set to `2`. {@see masked()} is
+ * fail-closed over the aliases of Annex V table В.1. Accounts and identifiers keep their ends: `PersonalAcc`,
+ * `PersAcc`, `PersonalAccount`, `PensAcc` (SNILS), `PayerIdNum`, `PayerINN`, `Phone`, `CounterId`, `ExecId` and
+ * `RuleId`. Names keep their first character: `Name`, `BankName`, `LastName`, `FirstName`, `MiddleName`, `ChildFio`
+ * and `SpecFio`. The payee's document, bill and accrual references `DocNo`, `DocIdx`, `QuittId` and `UIN` keep their
+ * first and last character. Codes, dates and amounts stay only in their shape, otherwise `***`: `BIC` (nine digits,
+ * checked by parse), `CorrespAcc` and `CBC` (`0` or 20 digits), `Sum` and `AddAmount` (up to 18 digits), `PayeeINN`
+ * (10 or 12 digits), `DrawerStatus`, `PayerIdType` and `TechCode` (two digits), `KPP` (four digits, two digits or
+ * capitals, three digits), `OKTMO` (`0`, 8 or 11 digits), `PaytReason` and `TaxPaytKind` (one or two digits or
+ * capitals), `TaxPeriod` (`0`, a date or a period such as `МС.02.2014`), `DocDate`, `PaymTerm` and `QuittDate`
+ * (`0` or `DD.MM.YYYY`), `PaymPeriod` (`MMYYYY` or `MM.YYYY`), `CounterVal` (a reading) and `RegType` (up to four
+ * digits). Every other alias of table В.1 becomes `***`: what locates a person (`PayerAddress`, `Flat`, `InstNum`,
+ * `ClassNum`), the birth date and free text (`BirthDate`, `Purpose`, `Contract`, `Category`, `ServiceName`). An
+ * alias outside table В.1 is author-chosen text in its name as in its value and becomes `***=***`. An empty value
+ * stays empty.
  *
  * @see https://files.stroyinf.ru/Data2/1/4293771/4293771168.htm GOST R 56042-2014 (as quoted), sections 5.2 to 5.5, Annexes V and D
  * @see https://pravo.ppt.ru/poryadok/98817 Bank of Russia, Order 515 of 08.09.1997 (as quoted)
@@ -65,18 +68,38 @@ final class Gost56042Payload extends AbstractStringValueObject implements Paymen
 
     private const array MASKED = ['personalacc', 'persacc', 'personalaccount', 'pensacc', 'payeridnum', 'payerinn', 'phone', 'counterid', 'execid', 'ruleid'];
 
-    private const array NAMES = ['name', 'lastname', 'firstname', 'middlename', 'childfio', 'specfio'];
+    private const array NAMES = ['name', 'bankname', 'lastname', 'firstname', 'middlename', 'childfio', 'specfio'];
 
-    /**
-     * The aliases of Annex V table В.1, lowercased, whose values stay visible; every alias in neither this list nor
-     * the two above becomes `***` (the locating `PayerAddress`, `Flat`, `InstNum`, `ClassNum`, the `BirthDate`, the free
-     * text `Purpose` and `Contract`, and any alias outside table В.1).
-     */
-    private const array VISIBLE = [
-        'bankname', 'bic', 'correspacc', 'sum', 'payeeinn', 'drawerstatus', 'kpp', 'cbc', 'oktmo', 'paytreason',
-        'taxperiod', 'docno', 'docdate', 'taxpaytkind', 'docidx', 'payeridtype', 'paymterm', 'paymperiod', 'category',
-        'servicename', 'counterval', 'quittid', 'quittdate', 'addamount', 'regtype', 'uin', 'techcode',
+    private const array REFERENCES = ['docno', 'docidx', 'quittid', 'uin'];
+
+    private const string DATE = '/^(0|\d{2}\.\d{2}\.\d{4})$/D';
+
+    /** The code, date and amount aliases of table В.1 with the shape a visible value must have; null: checked by parse. */
+    private const array SHAPES = [
+        'bic' => null,
+        'correspacc' => '/^(0|\d{20})$/D',
+        'cbc' => '/^(0|\d{20})$/D',
+        'sum' => '/^\d{1,18}$/D',
+        'addamount' => '/^\d{1,18}$/D',
+        'payeeinn' => '/^(\d{10}|\d{12})$/D',
+        'drawerstatus' => '/^\d{2}$/D',
+        'payeridtype' => '/^\d{2}$/D',
+        'techcode' => '/^\d{2}$/D',
+        'kpp' => '/^\d{4}[0-9A-Z]{2}\d{3}$/D',
+        'oktmo' => '/^(0|\d{8}|\d{11})$/D',
+        'paytreason' => '/^[0-9A-ZА-Я]{1,2}$/Du',
+        'taxpaytkind' => '/^[0-9A-ZА-Я]{1,2}$/Du',
+        'taxperiod' => '/^(0|[0-9A-ZА-Я]{2}\.\d{2}\.\d{4}|\d{2}\.\d{2}\.\d{4})$/Du',
+        'docdate' => self::DATE,
+        'paymterm' => self::DATE,
+        'quittdate' => self::DATE,
+        'paymperiod' => '/^\d{2}\.?\d{4}$/D',
+        'counterval' => '/^\d{1,15}([.,]\d{1,6})?$/D',
+        'regtype' => '/^\d{1,4}$/D',
     ];
+
+    /** The remaining aliases of table В.1: known names whose values are always masked. */
+    private const array HIDDEN = ['payeraddress', 'flat', 'instnum', 'classnum', 'birthdate', 'purpose', 'contract', 'category', 'servicename'];
 
     /** @var non-empty-list<array{non-empty-string, string}> */
     private array $pairs;
@@ -186,7 +209,7 @@ final class Gost56042Payload extends AbstractStringValueObject implements Paymen
     {
         $parts = [];
         foreach ($this->pairs as [$alias, $value]) {
-            $parts[] = $alias . '=' . $this->maskValue(\strtolower($alias), $value);
+            $parts[] = $this->maskPair($alias, $value);
         }
 
         return \substr($this->value, 0, 8) . \implode($this->separator(), $parts);
@@ -236,14 +259,18 @@ final class Gost56042Payload extends AbstractStringValueObject implements Paymen
         return $value;
     }
 
-    private function maskValue(string $alias, string $value): string
+    private function maskPair(string $alias, string $value): string
     {
+        $known = \strtolower($alias);
+        $shape = self::SHAPES[$known] ?? null;
+
         return match (true) {
-            $value === '' => '',
-            \in_array($alias, self::MASKED, true) => Mask::keepEnds($value),
-            \in_array($alias, self::NAMES, true) => Mask::name($value),
-            \in_array($alias, self::VISIBLE, true) => $value,
-            default => Mask::TEXT,
+            \in_array($known, self::MASKED, true) => $alias . '=' . ($value === '' ? '' : Mask::keepEnds($value)),
+            \in_array($known, self::NAMES, true) => $alias . '=' . ($value === '' ? '' : Mask::name($value)),
+            \in_array($known, self::REFERENCES, true) => $alias . '=' . Mask::reference($value),
+            \array_key_exists($known, self::SHAPES) => $alias . '=' . ($shape === null || \preg_match($shape, $value) === 1 ? $value : Mask::text($value)),
+            \in_array($known, self::HIDDEN, true) => $alias . '=' . Mask::text($value),
+            default => Mask::TEXT . '=' . Mask::text($value),
         };
     }
 

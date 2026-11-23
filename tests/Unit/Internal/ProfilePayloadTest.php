@@ -187,10 +187,27 @@ final class ProfilePayloadTest extends TestCase
             new DataObject('63', 'ABCD'),
         ]);
 
-        self::assertSame('0002010102120204****2603***5101*5204000062130503REF0202**7903rfu8004****9904****6304****', $masked);
+        self::assertSame('0002010102120204****2603***5101*5204000062130503***0202**7903***8004****9904****6304****', $masked);
         self::assertSame('6204****', EmvcoMask::apply([new DataObject('62', 'keep')]));
-        self::assertSame('62280105BILL10803***0202**0702T1', EmvcoMask::apply([new DataObject('62', '0105BILL10804Rent0202+10702T1')]));
-        self::assertSame('62760304SHOP0404****0503REF1004****1102011203rfu4903rfu5006******9904****0903AME', EmvcoMask::apply([new DataObject('62', '0304SHOP0404L1230503REF1004T1231102011203rfu4903rfu5006001122990412340903AME')]));
+        self::assertSame('62290105B***10803***0202**0703***', EmvcoMask::apply([new DataObject('62', '0105BILL10804Rent0202+10702T1')]));
+        self::assertSame('62780305S***P0404****0503***1004****1103***1203***4903***5006******9904****0903AME', EmvcoMask::apply([new DataObject('62', '0304SHOP0404L1230503REF1004T1231102011203rfu4903rfu5006001122990412340903AME')]));
+        self::assertSame('62210903AME11032110903***', EmvcoMask::apply([new DataObject('62', '0903AME11032110902AX')]));
+    }
+
+    public function testMaskKeepsTheRootCodesInTheirShapeOnly(): void
+    {
+        $visible = [['00', '01'], ['01', '11'], ['01', '12'], ['52', '5812'], ['53', '392'], ['54', '98.'], ['54', '1234567890.12'], ['55', '03'], ['56', '1.5'], ['57', '10.55'], ['58', 'JP']];
+        foreach ($visible as [$id, $value]) {
+            self::assertSame(EmvcoTlv::encode(new DataObject($id, $value)), EmvcoMask::apply([new DataObject($id, $value)]));
+        }
+
+        $hidden = [['00', '1'], ['01', '13'], ['52', '581'], ['53', '3920'], ['54', '1.2.3'], ['54', '12345678901234'], ['54', '.5'], ['55', '04'], ['56', 'a'], ['57', '123456'], ['58', 'jp'], ['58', 'JPN'], ['65', 'x'], ['79', '1']];
+        foreach ($hidden as [$id, $value]) {
+            self::assertSame($id . '03***', EmvcoMask::apply([new DataObject($id, $value)]), $id . '=' . $value);
+        }
+
+        self::assertSame('64130002JA0003***', EmvcoMask::apply([new DataObject('64', '0002JA0001x')]));
+        self::assertSame('64070003***', EmvcoMask::apply([new DataObject('64', '0003JPN')]));
     }
 
     public function testMaskHidesTheNameAndTheAddressOfTheMerchant(): void

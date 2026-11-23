@@ -134,7 +134,7 @@ final class UpiPaymentUriTest extends TestCase
     {
         $masked = UpiPaymentUri::from(self::URI)->masked();
 
-        self::assertSame('upi://pay?pa=*********bank&pn=T***&tr=ORDER123&am=10.50&mam=5&cu=INR&tn=***', $masked);
+        self::assertSame('upi://pay?pa=m***@bank&pn=T***&tr=O***3&am=10.50&mam=5&cu=INR&tn=***', $masked);
         self::assertStringNotContainsString('merchant@bank', $masked);
     }
 
@@ -169,10 +169,34 @@ final class UpiPaymentUriTest extends TestCase
         self::assertFalse(UpiPaymentUri::isValid("upi://pay?pa=a@b&pn=A\n"));
     }
 
+    /**
+     * @return iterable<string, array{string, string}>
+     */
+    public static function maskedPairs(): iterable
+    {
+        yield 'VPA keeps the first character and the handle' => ['pa=anna.ivanova@okaxis&pn=A', 'pa=a***@okaxis&pn=A***'];
+        yield 'VPA starting with a multibyte character' => ['pa=Анна@okaxis&pn=A', 'pa=А***@okaxis&pn=A***'];
+        yield 'VPA without a handle' => ['pa=79101234567&pn=A', 'pa=***&pn=A***'];
+        yield 'VPA with a handle of other characters' => ['pa=a@b_c&pn=A', 'pa=***&pn=A***'];
+        yield 'VPA with an empty local part' => ['pa=@okaxis&pn=A', 'pa=***&pn=A***'];
+        yield 'references keep their ends' => ['pa=a@b&pn=A&tr=ORDER-79101234567&tid=TXN123', 'pa=a***@b&pn=A***&tr=O***7&tid=T***3'];
+        yield 'text parameters keep their name' => ['pa=a@b&pn=A&tn=Rent&url=https://x/anna&sign=abc', 'pa=a***@b&pn=A***&tn=***&url=***&sign=***'];
+        yield 'codes in their shape' => ['pa=a@b&pn=A&am=123456789012345678.99&mam=1&cu=INR&mc=5411&mode=02&purpose=00&qrMedium=04&orgid=000000', 'pa=a***@b&pn=A***&am=123456789012345678.99&mam=1&cu=INR&mc=5411&mode=02&purpose=00&qrMedium=04&orgid=000000'];
+        yield 'codes of another shape' => ['pa=a@b&pn=A&am=1.234&mam=1.&cu=inr&mc=541&mode=2&purpose=Anna&qrMedium=123&orgid=1234567', 'pa=a***@b&pn=A***&am=***&mam=***&cu=***&mc=***&mode=***&purpose=***&qrMedium=***&orgid=***'];
+        yield 'unknown and case-variant names' => ['pa=a@b&pn=A&email=anna@x.com&PN=Anna&p%6E=Anna&x=', 'pa=a***@b&pn=A***&***=***&***=***&***=***&***='];
+        yield 'bare pairs and empty values' => ['pa=a@b&pn=A&anna@x.com&am&am=&tn=&&', 'pa=a***@b&pn=A***&***&***&am=&tn=&&'];
+    }
+
+    #[DataProvider('maskedPairs')]
+    public function testMaskedRebuildsTheQueryFailClosed(string $query, string $expected): void
+    {
+        self::assertSame('upi://pay?' . $expected, UpiPaymentUri::from('upi://pay?' . $query)->masked());
+    }
+
     public function testMaskedKeepsTheUriAsWritten(): void
     {
-        self::assertSame('UPI://PAY?pa=*********bank&&flag&pn=A***', UpiPaymentUri::from('UPI://PAY?pa=merchant@bank&&flag&pn=A')->masked());
-        self::assertSame('upi://pay?pa=*********bank&pn=A***&tn=&tn=***&tn', UpiPaymentUri::from('upi://pay?pa=merchant@bank&pn=A&tn=&tn=Rent%for%Anna&tn')->masked());
+        self::assertSame('UPI://PAY?pa=m***@bank&&***&pn=A***', UpiPaymentUri::from('UPI://PAY?pa=merchant@bank&&flag&pn=A')->masked());
+        self::assertSame('upi://pay?pa=m***@bank&pn=A***&tn=&tn=***&***', UpiPaymentUri::from('upi://pay?pa=merchant@bank&pn=A&tn=&tn=Rent%for%Anna&tn')->masked());
     }
 
     public function testTheUriIsBoundedAtTheLargestQrContent(): void

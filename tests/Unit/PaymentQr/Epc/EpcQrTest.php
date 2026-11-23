@@ -403,6 +403,22 @@ final class EpcQrTest extends TestCase
         self::assertStringNotContainsString('Marie', $masked);
     }
 
+    public function testMaskedKeepsTheBicAndThePurposeOnlyInTheirShape(): void
+    {
+        $lines = self::V1;
+        [$lines[4], $lines[8]] = ['bhbldehhxxx', 'Gd1'];
+        $masked = \explode("\n", EpcQr::from(\implode("\n", $lines))->masked());
+
+        self::assertSame(['***', '***'], [$masked[4], $masked[8]]);
+
+        $lines[4] = 'BHBLDEHH';
+        $lines[8] = 'GDDS';
+        $masked = \explode("\n", EpcQr::from(\implode("\n", $lines))->masked());
+
+        self::assertSame(['BCD', '001', '1', 'SCT', 'BHBLDEHH', 'F***'], \array_slice($masked, 0, 6));
+        self::assertSame(['EUR12.3', 'GDDS'], [$masked[7], $masked[8]]);
+    }
+
     public function testMaskedKeepsTheStructuredReference(): void
     {
         self::assertStringEndsWith("\nRF18539007547034", EpcQr::from(\implode("\n", self::V1))->masked());

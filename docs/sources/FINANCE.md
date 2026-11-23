@@ -576,17 +576,17 @@ values; the characters used in the tests are decoded from the hexadecimal repres
 CRC-16/CCITT-FALSE over the UTF-8 bytes is `A13A`, which also confirms the CRC covers bytes. Every other payload in the
 tests is marked synthetic.
 
-Masking: the BCB manual and Annex B.6 treat the templates `80`-`99` as payment-system data like the accounts, so
-`masked()` hides the values of IDs 02-51 and 80-99 and the CRC (`6304****`, not recomputed). It also hides the mobile
-number (62-02), the loyalty number (62-04), the customer label (62-06) and the merchant tax ID (62-10) of template 62,
-which in a person-to-person code identify a person, and the payment-system templates 62-50 to 62-99 (table 3.7, like
-the root templates 80-99), and it replaces the purpose of transaction (62-08, free text) with `***`. The bill, store,
-reference and terminal labels (01, 03, 05, 07), the consumer data request (09, codes), the merchant channel (11) and
-RFU 12-49 stay visible. On a person-to-person code the merchant is a person, so the merchant name (59) and its
-alternate (64-01) keep only their first character and the city (60), the postal code (61) and the alternate city
-(64-02) become `***`. Template 64 carries only the merchant's identity in another language (String format), so its RFU
-sub-IDs 03-99 become `***` too and only the language preference (64-00) stays (owner rulings O4 and the 1.0 masking
-principle: a field that names or locates a person, or free text, is hidden).
+Masking (the 1.0 fail-closed masking rule: a field stays visible only on the allowlist and in its shape; README,
+"Payment QR payloads", has the per-profile tables). The BCB manual and Annex B.6 treat the templates `80`-`99` as
+payment-system data like the accounts, so `masked()` writes asterisks of the same length for IDs 02-51 and 80-99 and the
+CRC (`6304****`, not recomputed), and for the person data of template 62 (mobile number 02, loyalty number 04, customer
+label 06, merchant tax ID 10) and its payment-system templates 50-99 (table 3.7). Visible only in shape: 00, 01
+(`11`/`12`), 52 (four digits), 53 (three digits), 54 and 56 (digits with an optional decimal part, "98." included, at
+most 13 characters), 55 (`01`-`03`), 57 (at most 5 characters), 58 (two capitals), 62-09 (`A`/`M`/`E`), 62-11 (three
+digits), 64-00 (two letters); the lengths are the "var. up to" maxima of table 3.6, used for masking only. The merchant
+name 59 and its alternate 64-01 keep their first character (on a person-to-person code the merchant is a person); the
+labels 62-01, 03, 05, 07 keep their first and last character; everything else (60, 61, 62-08, 62-12..49, 64-02..99, RFU
+65-79, a listed object of another shape) becomes `***`.
 
 **Format only (not enforced):** the "var. up to" maxima of IDs 54-57, 59, 60, 61 and the sub-IDs of 62 (the BCB manual
 sets the postal code to 99 where EMVCo and HKMA say 10, so national profiles differ); the content of IDs 02-25; the
@@ -826,10 +826,11 @@ Each maps 0x00 to 0x9F to U+0000 to U+009F (checked while generating the tables)
 character classes. 8859-7 leaves 0xAE, 0xD2 and 0xFF unmapped (93 characters) and maps 0xA4 to U+20AC, 0xA5 to U+20AF
 and 0xAA to U+037A (the 2003 additions). ISO 8859-1 needs no table (0x00 to 0xFF map to U+0000 to U+00FF).
 
-Masking (no EPC rule; the 1.0 masking principle): `masked()` hides the IBAN, keeps the first character of the
-beneficiary name and replaces the free text of the unstructured remittance information and of the beneficiary to
-originator information with `***`. BIC, amount and purpose code stay; the reference stays only when it is an ISO 11649
-creditor reference (section 2.3 allows any text of up to 35 characters there, which is masked as free text).
+Masking (the 1.0 fail-closed masking rule: a field stays visible only on the allowlist and in its shape; README,
+"Payment QR payloads", has the per-profile tables): the header lines and the amount, fixed by parse, stay; the BIC only
+in capitals (8 or 11), the purpose only as four capitals and the reference only as an ISO 11649 creditor reference
+(section 2.3 allows any text of up to 35 characters there). The IBAN keeps its ends, the beneficiary name its first
+character, and the unstructured remittance information and the beneficiary to originator information become `***`.
 
 ### SIX QR-bill layout
 
@@ -876,9 +877,14 @@ Information of Swico", version 1.2, tables 28 and 29): prefix `S1`; tags `/10/` 
 voucher date, `/20/` customer reference ("Free text"), `/30/` UID number, `/31/` VAT date or period, `/32/` VAT
 details, `/33/` VAT import tax, `/40/` conditions; "The /nn/ tags must be filled in in ascending order. Each tag must
 only be given once. A tag with no data can be omitted."; "Field content must not contain the characters "/" and "\";
-these must be replaced by "\/" and "\\" (escape)."; "Dates are formatted as YYMMDD". `masked()` keeps an S1 value whose
-tags ascend, each value in its form (11: 6 digits; 30: 9 digits, "without the CHE prefix, separator"; 31: 6 or 12
-digits; 32, 33, 40: digits, `.`, `:`, `;`), and replaces the free-text values of 10 and 20 with `***`. Any other text
+these must be replaced by "\/" and "\\" (escape)."; "Dates are formatted as YYMMDD"; table 30: VAT details are "a single
+percentage ... or a list of the VAT amounts, defined by a percentage rate and a net amount; the colon ":" is used as
+the separator", the import tax "the VAT amount" with its rate, and each discount "a percentage and a deadline (in
+days)". `masked()` keeps an S1 value whose tags ascend, each value in its form (11: a YYMMDD date; 30: 9 digits,
+"without the CHE prefix, separator"; 31: one or two YYMMDD dates; 32: `rate[:amount]` or a `;` list of `rate:amount`;
+33: a list of `rate:amount`; 40: a list of `discount:days`; rates and discounts at most three integer digits, amounts
+at most two decimals, days at most three digits, so a phone number does not fit), and replaces the free-text values
+of 10 and 20 with `***`. Any other text
 there, `//anna@x.com` included, becomes `***` (parsing does not check that syntax).
 
 ### GOST R 56042-2014 and the Bank of Russia account key
@@ -895,7 +901,7 @@ published); read **as quoted** by the database mirror <https://files.stroyinf.ru
 | Mandatory block | 5.2.3: "Обязательные реквизиты располагаются в строго определенном порядке ... Не допускается отсутствие значений"; Table 2: Name "от 1 до 160 знаков", PersonalAcc "Строка цифр строго 20 знаков", BankName "от 1 до 45 знаков", BIC "Строка цифр строго 9 знаков", CorrespAcc "Строка цифр до 20 знаков. При отсутствии ... корр. счета поле заполнять значением "0"" | enforced |
 | Last separator | 5.2.4: "Знак-разделитель после последнего значения последнего элемента этого блока не используется." | enforced (an empty pair has no `=`) |
 | Repeated aliases | 5.2.4: "При включении двух и более реквизитов с одинаковыми псевдонимами при разборе учитываться будет только последнее вхождение"; Table 4 step 6 "без учета регистра" | `get()` gives the last; a repeated mandatory alias must also have its format |
-| Additional aliases | Annex V (Sum "Макс. 18", Purpose "Макс. 210", PayeeINN, PersAcc "Номер лицевого счета плательщика в организации", ...) | decoded only; `masked()` hides the accounts and identifiers `PersonalAcc`, `PersAcc`, `PersonalAccount`, `PensAcc`, `PayerIdNum`, `PayerINN` and `Phone` (first characters starred), hides `CounterId`, `ExecId` and `RuleId` the same way, keeps the first character of `Name`, `LastName`, `FirstName`, `MiddleName`, `ChildFio` and `SpecFio`, and replaces `PayerAddress`, `Flat`, `InstNum`, `ClassNum`, `BirthDate`, `Purpose`, `Contract` and the value of any alias outside table В.1 with `***` |
+| Additional aliases | Annex V (Sum "Макс. 18", Purpose "Макс. 210", PayeeINN, PersAcc "Номер лицевого счета плательщика в организации", ...) | decoded only; `masked()` is fail-closed over table В.1 (see "Masking" below) |
 | Binary string | 5.4.2: "В двумерный символ штрихового кода кодируется строка двоичного типа ... программное обеспечение принимающей организации будет получать информацию об используемом наборе кодируемых знаков из элемента N 3" | `fromBytes()` transcodes 1 and 3 and rewrites the digit to 2 |
 
 Annex D example (declared `1`, WIN1251), the test vector in UTF-8, through `fromBytes()` from WIN1251 and KOI8-R (one
@@ -948,22 +954,27 @@ treasury BIC `004525988` of the Federal Tax Service's Moscow requisites) is numb
 key; it is accepted. The boundary "first digit 0" is an inference: no Federal Treasury text on the numbering was reached
 (nalog.gov.ru memo 403, its archive copy 503, legalacts.ru TLS failure, 2026-11-20 12:58 UTC). The single treasury
 account `40102810545370000003` passes the key and stays checked. Every occurrence of `PersonalAcc` and `CorrespAcc` is
-checked against the BIC that counts (the last). `masked()` hides `PersonalAcc`, `PersAcc`, `PersonalAccount` (Annex V
-"Лицевой счет бюджетного получателя"), `PensAcc` (SNILS), `PayerIdNum` (identity document number) and `PayerINN` (the
-payer's taxpayer number, which identifies a person as well as the SNILS does), `Phone` ("Номер телефона"), and the
-references that point to one payer: `CounterId` ("Номер
-прибора учета", the meter at the payer's premises), `ExecId` ("Номер исполнительного производства", searchable in the
-FSSP database by debtor) and `RuleId` ("Номер постановления (для ГИБДД)", one person's fine). It keeps
-the first character of the names `Name`, `LastName`, `FirstName`, `MiddleName`, `ChildFio` ("ФИО ребенка/учащегося")
-and `SpecFio` ("ФИО преподавателя, специалиста, оказывающего услугу"), and replaces with `***` what locates a person,
-`PayerAddress` ("Адрес плательщика"), `Flat` ("Номер квартиры"), `InstNum` ("Номер учреждения (образовательного,
-медицинского)") and `ClassNum` ("Номер группы детсада/класса школы"), which with the child locate a person; other
-personal data, `BirthDate` ("Дата рождения"); the free text `Purpose` ("Наименование платежа (назначение)", up to 210
-characters) and `Contract` ("Номер договора", free-form, so it may hold a surname); and, failing closed, the value of
-every alias outside table В.1 (parse accepts any alias, 5.2.2; the mirror's own example adds `SomeNewReq`). Annex V aliases read 2026-11-23 21:20 UTC from
-the same mirror (table В.1; it prints `Docldx`, `Payerld...`, `Counterld` with a lowercase L for I). Structured
-references and the payee's bill and accrual numbers (`QuittId`, `DocNo`, `DocIdx`, `UIN`), codes, dates, amounts and
-meter readings stay visible.
+checked against the BIC that counts (the last).
+
+Masking (the 1.0 fail-closed masking rule: a field stays visible only on the allowlist and in its shape; README,
+"Payment QR payloads", has the per-profile tables). Annex V aliases read 2026-11-23 21:20 UTC from the same mirror
+(table В.1; it prints `Docldx`, `Payerld...`, `Counterld` with a lowercase L for I); Annex V gives only maximum lengths
+and leaves the formats to the УФЭБС album, which was not reached, so the shapes below are masking shapes, not
+validation. Keep ends: the accounts and identifiers `PersonalAcc`, `PersAcc`, `PersonalAccount` ("Лицевой счет
+бюджетного получателя"), `PensAcc` (SNILS), `PayerIdNum` (identity document number), `PayerINN`, `Phone` ("Номер
+телефона"), `CounterId` ("Номер прибора учета", the meter at the payer's premises), `ExecId` ("Номер исполнительного
+производства", searchable in the FSSP database by debtor) and `RuleId` ("Номер постановления (для ГИБДД)", one person's
+fine). First character: the names `Name`, `BankName`, `LastName`, `FirstName`, `MiddleName`, `ChildFio` ("ФИО
+ребенка/учащегося") and `SpecFio` ("ФИО преподавателя, специалиста, оказывающего услугу"). First and last character: the
+payee's references `DocNo`, `DocIdx`, `QuittId` and `UIN`. Visible only in shape: `BIC` (9 digits), `CorrespAcc` and
+`CBC` (`0` or 20 digits), `Sum` and `AddAmount` (up to 18 digits, "Макс. 18"), `PayeeINN` (10 or 12 digits),
+`DrawerStatus`, `PayerIdType`, `TechCode` (two digits; Annex Г codes), `KPP` (four digits, two digits or capitals, three
+digits), `OKTMO` (`0`, 8 or 11 digits), `PaytReason`, `TaxPaytKind` (one or two digits or capitals), `TaxPeriod`,
+`DocDate`, `PaymTerm`, `QuittDate`, `PaymPeriod` (dates and periods), `CounterVal` (a reading) and `RegType` (up to four
+digits). Everything else becomes `***`: what locates a person (`PayerAddress` "Адрес плательщика", `Flat` "Номер
+квартиры", `InstNum`, `ClassNum`), `BirthDate` ("Дата рождения"), free text (`Purpose` "Наименование платежа
+(назначение)", `Contract` "Номер договора", `Category`, `ServiceName`) and a value of another shape. An alias outside
+table В.1 (parse accepts any alias, 5.2.2; the mirror's own example adds `SomeNewReq`) becomes `***=***`.
 
 ### NSPK SBP
 
@@ -978,12 +989,11 @@ query field. The only link examples found are third-party (a Habr article with `
 `SbpPaymentLink` checks the host `qr.nspk.ru` over HTTPS, one identifier segment of ASCII letters and digits and a query
 without spaces or fragment, as the plan allows ("otherwise format only (host, id shape)"). Its test link is synthetic.
 
-Masking fails closed: with no published field list, `masked()` hides the identifier and rebuilds the query pair by
-pair. It keeps only `type`, `bank` and `crc` (the fields of the third-party example above: `type=01`/`02`, a 12-digit
-`bank`, a 4-hex `crc`) and `sum` and `cur` (amount and currency, named in the controller's 1.0 ruling; no source reached
-defines them), each only in a loose code shape (1-2 digits, 1-12 digits, 1-18 digits, 3 capital letters, 1-8 hex
-digits); an allowlisted value of another shape becomes `***`. Any other pair is author-chosen text in its name as in
-its value: `***=***`, `***=` for an empty value, `***` without `=`.
+Masking fails closed: with no published field list, `masked()` hides the identifier and rebuilds the query pair by pair.
+It keeps only `type` (`01`, `02`), `bank` (12 digits) and `crc` (one to eight hex digits), the fields of the third-party
+example above, and `sum` (digits with up to two decimals) and `cur` (three capitals), named in the controller's 1.0
+ruling (no source reached defines them); an allowlisted value of another shape becomes `***`. Any other pair is
+author-chosen text in its name as in its value: `***=***`, `***=` for an empty value, `***` without `=`.
 
 ### NPCI UPI linking specification
 
@@ -1007,8 +1017,12 @@ references are commonly alphanumeric and the specification itself was not read);
 space). The scheme `upi://pay` is **not confirmed** from an NPCI text (the plan's and the marker table's); the test URI
 is synthetic.
 
-Masking: `masked()` hides `pa` (account rule), keeps the first character of `pn` and replaces a filled `tn` with
-`***`: D.7's own example `tn=test%transaction` shows it is free text. The other parameters stay as written.
+Masking fails closed, as for SBP: the query is rebuilt pair by pair. `pa` keeps the first character of the VPA's local
+part and the handle (a VPA often embeds a name or a phone number); `pn` its first character; the references `tr` and
+`tid` their first and last character; `tn` (D.7's own example `tn=test%transaction` shows it is free text), `url` and
+`sign` become `***`. The codes `am`, `mam`, `cu`, `mc`, `mode`, `purpose`, `qrMedium` and `orgid` stay only in a code
+shape (the deep-linking specification itself was not reached, so these are masking shapes). Any other pair, a name in
+other case included, becomes `***=***`, `***=` or `***`.
 
 ### Search log: non-EMVCo payment payloads
 

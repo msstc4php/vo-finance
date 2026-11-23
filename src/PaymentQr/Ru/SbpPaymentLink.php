@@ -19,7 +19,8 @@ use Override;
  * and its query fields only in the SBP OPKTs standards on its closed participant portal, so neither the identifier
  * length nor any query field is checked. Scheme and host are compared case-insensitively; the link is kept as given.
  * {@see masked()} hides the identifier and fails closed on the query: it keeps only the codes and amounts `type`,
- * `bank`, `sum`, `cur` and `crc` (names compared exactly) whose value has a code shape (`sum=Anna` gives `sum=***`).
+ * `bank`, `sum`, `cur` and `crc` (names compared exactly) in their code shape (`sum=Anna` and a phone number as
+ * `bank` give `***`).
  * With no published field list, any other pair may hold free text in its name as in its value, so it becomes
  * `***=***`, `***=` for an empty value and `***` without `=`; an empty pair stays empty. At most 7089 characters, the
  * largest QR content: a bound against abusive input.
@@ -35,14 +36,14 @@ final class SbpPaymentLink extends AbstractStringValueObject implements PaymentP
     private const string TYPE = 'SbpPaymentLink';
 
     /**
-     * The query fields kept visible, with the shape a code must have: `type`, `bank` and `crc` from the only link
-     * examples found (third-party; NSPK publishes none), `sum` and `cur` by ruling. Loose on purpose: the shapes only
-     * keep prose out.
+     * The query fields kept visible, with the shape a value must have: `type` (`01`, `02`), `bank` (12 digits) and
+     * `crc` (hex) as in the only link examples found (third-party; NSPK publishes none), `sum` (digits with up to two
+     * decimals) and `cur` (three capital letters) by ruling.
      */
     private const array VISIBLE_PARAMETERS = [
-        'type' => '/^\d{1,2}$/D',
-        'bank' => '/^\d{1,12}$/D',
-        'sum' => '/^\d{1,18}$/D',
+        'type' => '/^0[12]$/D',
+        'bank' => '/^\d{12}$/D',
+        'sum' => '/^\d{1,18}(\.\d{1,2})?$/D',
         'cur' => '/^[A-Z]{3}$/D',
         'crc' => '/^[0-9A-Fa-f]{1,8}$/D',
     ];

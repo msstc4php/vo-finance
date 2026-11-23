@@ -108,22 +108,105 @@ All implement `PaymentQr\PaymentPayload` (vo-base `ValueObject`, `StringConverti
 factory methods return; the EMVCo classes implement `PaymentQr\Emvco\EmvcoPayload` too. Both interfaces are implemented
 by this package only, and methods may be added to them in minor releases.
 
-`masked()` is for logs and screens; `__toString()` and the JSON form still give the full payload. It hides every field
-that names or locates a person, and all free text, which can carry names, e-mail addresses or phone numbers.
-Machine-structured codes stay visible: amounts, currency, structured references, MCC and country codes; a slot meant
-for a code that holds other text is masked as free text. Accounts and identifiers keep at most about a third (`keep
-ends`): nothing at six characters or fewer, the last two at 7 to 11, the last four at 12 to 17, the first two and the
-last four from 18. Names keep their first character (`X***`); addresses, other personal data and free text become
-`***`. An empty field stays empty. A masked string is not a valid payload. A minor release may hide more, never less.
+`masked()` is for logs and screens; `__toString()` and the JSON form still give the full payload. It is fail-closed
+on every payment profile: a field stays visible only when it is on the profile's allowlist below **and** its value
+has the listed shape. Everything else is masked: a listed field of another shape, every other field, an unknown alias,
+an RFU sub-field, a parameter without `=` and the name of an unknown parameter. The masks: accounts and identifiers
+keep at most about a third (*keep ends*: nothing at six characters or fewer, the last two at 7 to 11, the last four
+at 12 to 17, the first two and the last four from 18); names keep their first character (`X***`); references keep
+their first and last character (`R***9`, `***` at three characters or fewer); everything else becomes `***`. An empty
+field stays empty. A masked string is not a valid payload. A minor release may hide more, never less. A phone number
+written as an amount or a numeric code of that length (an 11-digit `Sum`, say) cannot be told apart and stays.
 
-| Class | Masked |
+**EMVCo** (`MerchantPresentedQr`, `PixBrCode`, `PromptPayQr`, `DuitNowQr`, `KhqrCode`, `JpqrCode`)
+
+| Visible | Shape |
 |---|---|
-| EMVCo (`MerchantPresentedQr` and the five profiles) | Asterisks of the same length: merchant accounts 02 to 51, templates 80 to 99, the CRC, and in 62 the mobile number (02), loyalty number (04), customer label (06), merchant tax ID (10) and the payment-system templates 50 to 99. `X***`: merchant name 59 and 64-01. `***`: city 60 and 64-02, postal code 61, purpose of transaction 62-08, RFU 64-03 to 64-99. Visible: 62-01, 03, 05, 07, 09, 11, 12 to 49, 64-00 and all other objects |
-| `EpcQr` | Keep ends: IBAN. `X***`: beneficiary name. `***`: remittance text, beneficiary to originator information, and a reference that is no ISO 11649 creditor reference. Visible: BIC, amount, purpose, RF reference |
-| `QrBill` | Keep ends: IBAN. `X***`: creditor and ultimate debtor names. `***`: their street, building number, postal code and town; the unstructured message; both alternative procedures; billing information outside the Swico S1 syntax (SIX IG 2.3 Annex D), and in S1 the free-text invoice number (10) and customer reference (20). Visible: address type, country, amount, currency, reference, the S1 prefix and its coded tags 11, 30, 31, 32, 33, 40 |
-| `Gost56042Payload` | Keep ends: `PersonalAcc`, `PersAcc`, `PersonalAccount`, `PensAcc`, `PayerIdNum`, `PayerINN`, `Phone`, `CounterId`, `ExecId`, `RuleId`. `X***`: `Name`, `LastName`, `FirstName`, `MiddleName`, `ChildFio`, `SpecFio`. `***`: `PayerAddress`, `Flat`, `InstNum`, `ClassNum` (they locate a person), `BirthDate` (other personal data), `Purpose`, `Contract` (free text), and the value of any alias outside Annex V table В.1. Visible: the service block, the other aliases of table В.1 (`BankName`, `BIC`, `CorrespAcc`, amounts, dates, codes, `QuittId`, `DocNo`, `DocIdx`, `UIN`, ...) |
-| `SbpPaymentLink` | Keep ends: the identifier. Visible: `type`, `bank`, `sum`, `cur` and `crc` whose value has a code shape (1-2 digits, 1-12 digits, 1-18 digits, 3 capital letters, 1-8 hex digits); another value of theirs becomes `***`. Any other pair, its name included, fails closed: `***=***`, `***=` when empty, `***` without `=` (NSPK publishes no field list); an empty pair stays empty |
-| `UpiPaymentUri` | Keep ends: `pa`. `X***`: `pn`. `***`: the note `tn`. Visible: all other parameters |
+| 00 payload format indicator | two digits |
+| 01 point of initiation | `11` or `12` |
+| 52 MCC | four digits |
+| 53 currency | three digits |
+| 54 amount, 56 fixed fee | digits with an optional decimal part, at most 13 characters |
+| 55 tip indicator | `01` to `03` |
+| 57 percentage fee | digits with an optional decimal part, at most 5 characters |
+| 58 country | two capital letters |
+| 62-09 consumer data request | `A`, `M`, `E`, up to three |
+| 62-11 merchant channel | three digits |
+| 64-00 language preference | two letters |
+
+Masked by rule: 02 to 51, 80 to 99, the CRC and 62-02, 04, 06, 10, 50 to 99 as asterisks of the same length; 59 and
+64-01 `X***`; the labels 62-01, 03, 05, 07 first and last character; all other objects and sub-fields `***`.
+
+**`EpcQr`**
+
+| Visible | Shape |
+|---|---|
+| service tag, version, character set, identification, amount | as parse enforces them |
+| BIC | capitals, 8 or 11 characters |
+| purpose | four capital letters |
+| reference | an ISO 11649 creditor reference |
+
+Masked by rule: the IBAN keep ends, the beneficiary name `X***`, the remittance text and the beneficiary to
+originator information `***`.
+
+**`QrBill`**
+
+| Visible | Shape |
+|---|---|
+| header, address types, countries, amount, currency, reference type, reference, trailer | as parse enforces them |
+| billing information | Swico S1 (SIX IG 2.3 Annex D): `//S1` and ascending tags 11 (YYMMDD), 30 (nine digits), 31 (one or two YYMMDD), 32 (`rate[:amount]` list), 33 (`rate:amount` list), 40 (`discount:days` list), rates and discounts at most three integer digits, days at most three digits; tags 10 and 20 (free text) become `***` |
+
+Masked by rule: the IBAN keep ends, creditor and ultimate debtor names `X***`, their street, building number, postal
+code and town, the unstructured message, the alternative procedures and any other billing text `***`.
+
+**`Gost56042Payload`**
+
+| Visible | Shape |
+|---|---|
+| `BIC` | nine digits (parse) |
+| `CorrespAcc`, `CBC` | `0` or 20 digits |
+| `Sum`, `AddAmount` | up to 18 digits |
+| `PayeeINN` | 10 or 12 digits |
+| `DrawerStatus`, `PayerIdType`, `TechCode` | two digits |
+| `KPP` | four digits, two digits or capitals, three digits |
+| `OKTMO` | `0`, 8 or 11 digits |
+| `PaytReason`, `TaxPaytKind` | one or two digits or capitals |
+| `TaxPeriod` | `0`, `DD.MM.YYYY` or a period such as `МС.02.2014` |
+| `DocDate`, `PaymTerm`, `QuittDate` | `0` or `DD.MM.YYYY` |
+| `PaymPeriod` | `MMYYYY` or `MM.YYYY` |
+| `CounterVal` | up to 15 digits, up to six decimals after `.` or `,` |
+| `RegType` | up to four digits |
+
+Masked by rule: keep ends for `PersonalAcc`, `PersAcc`, `PersonalAccount`, `PensAcc`, `PayerIdNum`, `PayerINN`,
+`Phone`, `CounterId`, `ExecId`, `RuleId`; `X***` for `Name`, `BankName`, `LastName`, `FirstName`, `MiddleName`,
+`ChildFio`, `SpecFio`; first and last character for `DocNo`, `DocIdx`, `QuittId`, `UIN`; `***` for every other alias
+of Annex V table В.1; `***=***` for an alias outside table В.1.
+
+**`SbpPaymentLink`**
+
+| Visible | Shape |
+|---|---|
+| `type` | `01` or `02` |
+| `bank` | 12 digits |
+| `sum` | digits with up to two decimals |
+| `cur` | three capital letters |
+| `crc` | one to eight hex digits |
+
+Masked by rule: the identifier keep ends; any other pair `***=***` (`***=` when empty, `***` without `=`).
+
+**`UpiPaymentUri`**
+
+| Visible | Shape |
+|---|---|
+| `am`, `mam` | up to 18 digits with up to two decimals |
+| `cu` | three capital letters |
+| `mc` | four digits |
+| `mode`, `purpose`, `qrMedium` | two digits |
+| `orgid` | six digits |
+
+Masked by rule: `pa` keeps the first character of its local part and its handle (`a***@okaxis`; `***` without a
+handle of letters, digits, `.` and `-`); `pn` `X***`; `tr` and `tid` first and last character; `tn`, `url`, `sign`
+`***`; any other pair, a name in other case included, `***=***` (`***=` when empty, `***` without `=`).
 
 `serialize()` stores only the payload, and `unserialize()` validates it again, so the parsed fields are never restored
 apart from the value they came from (vo-base 1.3 runs `parse()` again). A forged payload throws the class's

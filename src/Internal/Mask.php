@@ -8,7 +8,7 @@ namespace MSSTC4PHP\ValueObject\Financial\Internal;
  * Masks an account identifier so that at most about a third of it stays visible: six characters or fewer are masked
  * whole, 7 to 11 keep the last two, 12 to 17 the last four, and 18 or more the first two and the last four (an IBAN's
  * country code and its end). Every other character becomes an asterisk, so the length is kept. Names keep their first
- * character, address lines and free text nothing; none keeps its length.
+ * character, references their first and last, address lines and free text nothing; none keeps its length.
  *
  * @internal
  */
@@ -24,6 +24,26 @@ final class Mask
     public static function name(string $name): string
     {
         return (\preg_match('/./su', $name, $first) === 1 ? $first[0] : '') . '***';
+    }
+
+    /**
+     * A reference that may embed a name or a number: the first and the last character around `***`; three characters
+     * or fewer become `***`, an empty one stays empty.
+     *
+     * @return ($reference is '' ? '' : non-empty-string)
+     */
+    public static function reference(string $reference): string
+    {
+        if ($reference === '') {
+            return '';
+        }
+
+        $characters = \preg_split('//u', $reference, -1, \PREG_SPLIT_NO_EMPTY);
+        if ($characters === false || \count($characters) <= 3) {
+            return self::TEXT;
+        }
+
+        return $characters[0] . self::TEXT . $characters[\count($characters) - 1];
     }
 
     /**

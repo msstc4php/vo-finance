@@ -440,6 +440,19 @@ final class QrBillTest extends TestCase
         yield 'conditions as text' => ['//S1/40/Anna', '***'];
         yield 'an unescaped backslash' => ['//S1/10/a\\b', '***'];
         yield 'two-digit tag of three' => ['//S1/100/1', '***'];
+        yield 'table 28 VAT details list' => ['//S1/32/8:1000;2.5:51.80;7.7:250', '//S1/32/8:1000;2.5:51.80;7.7:250'];
+        yield 'table 28 import tax list' => ['//S1/33/7.7:48.37;2.5:12.4', '//S1/33/7.7:48.37;2.5:12.4'];
+        yield 'table 28 conditions list' => ['//S1/40/3:15;0.5:45;0:90', '//S1/40/3:15;0.5:45;0:90'];
+        yield 'VAT details as a phone number' => ['//S1/32/79101234567', '***'];
+        yield 'conditions with a phone number as days' => ['//S1/40/0:79101234567', '***'];
+        yield 'rate of four integer digits' => ['//S1/32/1234:1', '***'];
+        yield 'amount with three decimals' => ['//S1/32/7.7:1.234', '***'];
+        yield 'bare import tax rate' => ['//S1/33/7.7', '***'];
+        yield 'list item without an amount' => ['//S1/32/7.7;2.5', '***'];
+        yield 'month 13' => ['//S1/11/201321', '***'];
+        yield 'day 32' => ['//S1/11/201232', '***'];
+        yield 'day 00' => ['//S1/11/201200', '***'];
+        yield 'second VAT date of month 00' => ['//S1/31/180226180027', '***'];
     }
 
     #[DataProvider('billingInformation')]

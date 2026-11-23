@@ -213,7 +213,7 @@ final class Gost56042PayloadTest extends TestCase
     {
         $masked = Gost56042Payload::from('ST00012|' . self::MANDATORY . '|Phone=79101234567|Flat=15|BirthDate=01.02.2010|SpecFio=Сидорова Анна|InstNum=1234|ClassNum=5А|QuittId=987654|UIN=18810177220110012345|Sum=100000')->masked();
 
-        self::assertStringEndsWith('|Phone=*********67|Flat=***|BirthDate=***|SpecFio=С***|InstNum=***|ClassNum=***|QuittId=987654|UIN=18810177220110012345|Sum=100000', $masked);
+        self::assertStringEndsWith('|Phone=*********67|Flat=***|BirthDate=***|SpecFio=С***|InstNum=***|ClassNum=***|QuittId=9***4|UIN=1***5|Sum=100000', $masked);
         self::assertStringEndsWith('|Purpose=|Phone=', Gost56042Payload::from('ST00012|' . self::MANDATORY . '|Purpose=|Phone=')->masked());
     }
 
@@ -227,16 +227,42 @@ final class Gost56042PayloadTest extends TestCase
 
     public function testMaskedHidesTheValueOfEveryAliasOutsideAnnexV(): void
     {
-        $masked = Gost56042Payload::from('ST00012|' . self::MANDATORY . '|Comment=Анна Иванова, тел 79101234567|SomeNewReq=100|Empty=|DocNo=12|TechCode=02|Sum=100')->masked();
+        $masked = Gost56042Payload::from('ST00012|' . self::MANDATORY . '|Comment=Анна Иванова, тел 79101234567|SomeNewReq=100|Empty=|Anna=1|DocNo=12|TechCode=02|Sum=100')->masked();
 
-        self::assertStringEndsWith('|Comment=***|SomeNewReq=***|Empty=|DocNo=12|TechCode=02|Sum=100', $masked);
+        self::assertStringEndsWith('|***=***|***=***|***=|***=***|DocNo=***|TechCode=02|Sum=100', $masked);
     }
 
-    public function testMaskedKeepsTheOtherAnnexVAliases(): void
+    public function testMaskedKeepsTheCodeAliasesInTheirShape(): void
     {
-        $visible = 'BankName=Б|BIC=044525225|CorrespAcc=0|Sum=1|PayeeINN=2|DrawerStatus=3|KPP=4|CBC=5|OKTMO=6|PaytReason=7|TaxPeriod=8|DocNo=9|DocDate=10|TaxPaytKind=11|DocIdx=12|PayerIdType=13|PaymTerm=14|PaymPeriod=15|Category=16|ServiceName=17|CounterVal=18|QuittId=19|QuittDate=20|AddAmount=21|RegType=22|UIN=23|TechCode=24';
+        $visible = 'BIC=044525225|CorrespAcc=0|CBC=18210102010011000110|Sum=123456789012345678|AddAmount=1|PayeeINN=7707083893|DrawerStatus=01|PayerIdType=01|TechCode=02|KPP=7736AB001|OKTMO=45000000|PaytReason=ТП|TaxPaytKind=0|TaxPeriod=МС.02.2014|DocDate=01.02.2014|PaymTerm=0|QuittDate=31.12.2024|PaymPeriod=12.2024|CounterVal=1234,5|RegType=12';
 
         self::assertStringEndsWith('|' . $visible, Gost56042Payload::from('ST00012|' . self::MANDATORY . '|' . $visible)->masked());
+        self::assertStringEndsWith('|PayeeINN=770708389312|OKTMO=45000000001|TaxPeriod=01.02.2014|PaymPeriod=122024|CounterVal=7', Gost56042Payload::from('ST00012|' . self::MANDATORY . '|PayeeINN=770708389312|OKTMO=45000000001|TaxPeriod=01.02.2014|PaymPeriod=122024|CounterVal=7')->masked());
+    }
+
+    /**
+     * @return iterable<string, array{string}>
+     */
+    public static function codeAliasesOfAnotherShape(): iterable
+    {
+        foreach (['CorrespAcc=79101234567', 'CBC=7910123456', 'Sum=1.5', 'Sum=1234567890123456789', 'AddAmount=Анна', 'PayeeINN=79101234567', 'DrawerStatus=1', 'PayerIdType=Анна', 'TechCode=123', 'KPP=7736ab001', 'KPP=77360100', 'OKTMO=7910123', 'PaytReason=Тп', 'PaytReason=ТПП', 'TaxPaytKind=a', 'TaxPeriod=МС.02.201', 'TaxPeriod=Мс.02.2014', 'DocDate=1.02.2014', 'PaymTerm=01-02-2014', 'QuittDate=Анна', 'PaymPeriod=12.202', 'PaymPeriod=12..2024', 'CounterVal=1.', 'CounterVal=1234567890123456', 'CounterVal=1.1234567', 'RegType=12345', 'RegType=Анна'] as $pair) {
+            yield $pair => [$pair];
+        }
+    }
+
+    #[DataProvider('codeAliasesOfAnotherShape')]
+    public function testMaskedHidesACodeAliasOfAnotherShape(string $pair): void
+    {
+        $alias = \explode('=', $pair)[0];
+
+        self::assertStringEndsWith('|' . $alias . '=***', Gost56042Payload::from('ST00012|' . self::MANDATORY . '|' . $pair)->masked());
+    }
+
+    public function testMaskedHidesTheFreeTextAliasesAndShortensNamesAndReferences(): void
+    {
+        $masked = Gost56042Payload::from('ST00012|' . self::MANDATORY . '|BankName=Анна|Category=Анна|ServiceName=Анна|DocNo=Анна Иванова|DocIdx=79101234567|QuittId=12|UIN=anna@x.com|Contract=|DocNo=')->masked();
+
+        self::assertStringEndsWith('|BankName=А***|Category=***|ServiceName=***|DocNo=А***а|DocIdx=7***7|QuittId=***|UIN=a***m|Contract=|DocNo=', $masked);
     }
 
     public function testMaskedHidesThePayeeAndPayerAccounts(): void
@@ -246,7 +272,7 @@ final class Gost56042PayloadTest extends TestCase
         $masked = $gost->masked();
 
         self::assertSame(
-            'ST00012|Name=О***|PersonalAcc=40**************3017|BankName=ОАО "БАНК"|BIC=044525225|CorrespAcc=30101810400000000225'
+            'ST00012|Name=О***|PersonalAcc=40**************3017|BankName=О***|BIC=044525225|CorrespAcc=30101810400000000225'
             . '|PersAcc=********90|PersonalAccount=*********89|PensAcc=*********95|payerIdNum=********56|PayerINN=********2259|Sum=100',
             $masked,
         );

@@ -8,17 +8,19 @@ use MSSTC4PHP\ValueObject\Financial\Exception\InvalidPaymentQrException;
 use MSSTC4PHP\ValueObject\Financial\PaymentQr\Emvco\DataObject;
 
 /**
- * Writes root data objects with the values of the account-bearing IDs replaced by asterisks of the same character
- * count: merchant accounts 02 to 51, unreserved templates 80 to 99 and the CRC. In the Additional Data Field Template
- * (62) the mobile number (62-02), the loyalty number (62-04), the customer label (62-06) and the merchant tax ID
- * (62-10), which identify a person in a person-to-person code, and the payment-system templates (62-50 to 62-99) are
- * masked the same way, and the free-text purpose of transaction (62-08) becomes `***`; the bill, store, reference and
- * terminal labels (01, 03, 05, 07), the consumer data request codes (09), the merchant channel (11) and RFU 12 to 49
- * stay. The merchant name (59), on a person-to-person code a person's name, keeps its first character; the city (60)
- * and the postal code (61) become `***`. In the language template (64), which carries only the merchant's identity in
- * another language, the language preference (64-00) stays, the alternate name (64-01) keeps its first character, the
- * alternate city (64-02) becomes `***` and so does any RFU sub-field (64-03 to 64-99), String-format text. Headers and
- * all other objects stay visible; the result is no valid payload.
+ * Masks root data objects fail-closed: an object stays only on the allowlist and in its shape, everything else is
+ * hidden. Visible: payload format indicator (00, two digits), point of initiation (01, 11 or 12), MCC (52, four
+ * digits), currency (53, three digits), amount and fixed fee (54, 56, digits with an optional decimal part, at most 13
+ * characters), tip indicator (55, 01 to 03), percentage fee (57, at most 5 characters) and country (58, two capital
+ * letters). Asterisks of the same character count: merchant accounts 02 to 51, templates 80 to 99 and the CRC. The
+ * merchant name (59) keeps its first character; city (60), postal code (61), RFU 65 to 79 and a visible ID of another
+ * shape become `***`. In the Additional Data Field Template (62) the bill, store, reference and terminal labels (01,
+ * 03, 05, 07) keep their first and last character; the consumer data request (09, `A`, `M`, `E`) and the merchant
+ * channel (11, three digits) stay in their shape; the mobile number, loyalty number, customer label and merchant tax
+ * ID (02, 04, 06, 10) and the payment-system templates (50 to 99) become asterisks; everything else, the purpose of
+ * transaction (08) and RFU 12 to 49 included, becomes `***`. In the language template (64) the language preference
+ * (00, two letters) stays, the alternate name (01) keeps its first character and everything else becomes `***`. A 62
+ * or 64 that is not TLV is masked whole. The result is no valid payload.
  *
  * @internal
  *
@@ -33,13 +35,29 @@ final class EmvcoMask
 
     private const string NAME = '59';
 
+    private const string AMOUNT = '/^(?=[0-9.]{1,13}$)\d+(\.\d*)?$/D';
+
+    /** @var array<array-key, non-empty-string> numeric IDs become integer keys */
+    private const array ROOT_SHAPES = [
+        '00' => '/^\d{2}$/D',
+        '01' => '/^1[12]$/D',
+        '52' => '/^\d{4}$/D',
+        '53' => '/^\d{3}$/D',
+        '54' => self::AMOUNT,
+        '55' => '/^0[1-3]$/D',
+        '56' => self::AMOUNT,
+        '57' => '/^(?=[0-9.]{1,5}$)\d+(\.\d*)?$/D',
+        '58' => '/^[A-Z]{2}$/D',
+    ];
+
     /** @var non-empty-list<non-empty-string> */
-    private const array ADDRESS = ['60', '61'];
+    private const array LABELS = ['01', '03', '05', '07'];
 
     /** @var non-empty-list<non-empty-string> */
     private const array PERSONAL_ADDITIONAL_DATA = ['02', '04', '06', '10'];
 
-    private const string PURPOSE_OF_TRANSACTION = '08';
+    /** @var array<array-key, non-empty-string> */
+    private const array ADDITIONAL_SHAPES = ['09' => '/^[AME]{1,3}$/D', '11' => '/^\d{3}$/D'];
 
     /**
      * @param list<DataObject> $objects the root data objects of a payload
@@ -53,10 +71,9 @@ final class EmvcoMask
             $masked .= EmvcoTlv::encode(match (true) {
                 self::isSecret($object->id) => self::asterisks($object),
                 $object->id === self::NAME => new DataObject($object->id, Mask::name($object->value)),
-                \in_array($object->id, self::ADDRESS, true) => new DataObject($object->id, Mask::ADDRESS),
                 $object->id === self::ADDITIONAL_DATA => self::additionalData($object),
                 $object->id === self::LANGUAGE_TEMPLATE => self::languageTemplate($object),
-                default => $object,
+                default => self::shaped($object, self::ROOT_SHAPES),
             });
         }
 
@@ -74,6 +91,16 @@ final class EmvcoMask
     }
 
     /**
+     * @param array<array-key, non-empty-string> $shapes
+     */
+    private static function shaped(DataObject $object, array $shapes): DataObject
+    {
+        $shape = $shapes[$object->id] ?? null;
+
+        return $shape !== null && \preg_match($shape, $object->value) === 1 ? $object : new DataObject($object->id, Mask::TEXT);
+    }
+
+    /**
      * A template that is not TLV is masked whole.
      */
     private static function additionalData(DataObject $template): DataObject
@@ -87,9 +114,9 @@ final class EmvcoMask
         $value = '';
         foreach ($subFields as $subField) {
             $value .= EmvcoTlv::encode(match (true) {
+                \in_array($subField->id, self::LABELS, true) => new DataObject($subField->id, Mask::reference($subField->value)),
                 \in_array($subField->id, self::PERSONAL_ADDITIONAL_DATA, true), $subField->id >= '50' => self::asterisks($subField),
-                $subField->id === self::PURPOSE_OF_TRANSACTION => new DataObject($subField->id, Mask::TEXT),
-                default => $subField,
+                default => self::shaped($subField, self::ADDITIONAL_SHAPES),
             });
         }
 
@@ -106,15 +133,14 @@ final class EmvcoMask
         try {
             $subFields = EmvcoTlv::parse($template->value);
         } catch (InvalidPaymentQrException) {
-            return new DataObject($template->id, Mask::ADDRESS);
+            return new DataObject($template->id, Mask::TEXT);
         }
 
         $value = '';
         foreach ($subFields as $subField) {
             $value .= EmvcoTlv::encode(match ($subField->id) {
                 '01' => new DataObject($subField->id, Mask::name($subField->value)),
-                '00' => $subField,
-                default => new DataObject($subField->id, Mask::TEXT),
+                default => self::shaped($subField, ['00' => '/^[A-Za-z]{2}$/D']),
             });
         }
 

@@ -30,13 +30,13 @@ use Override;
  * to 25 letters or digits, or `NON` and no reference; message and billing information together at most 140
  * characters; the character set of section 4.1.1. One kind of line separator, LF or CRLF, is used throughout, and every
  * separator ends an element, so a final separator counts as one more (empty) element within the 34; the payload is
- * kept byte for byte. {@see masked()} hides the IBAN, keeps the first character of the creditor's and the ultimate
- * debtor's name and replaces their street, building number, postal code and town with `***`; the address type and
- * the country stay. The free text of a filled unstructured message (`Ustrd`) and of both alternative procedures
- * (`AltPmt`) becomes `***` too. The reference stays. The billing information (`StrdBkgInf`) stays only in the Swico
- * S1 syntax of Annex D (`//S1` and `/<tag>/<value>` groups of the tags 10, 11, 20, 30, 31, 32, 33 and 40 in
- * ascending order, each value in its form), with the free-text invoice number (10) and customer reference (20) as
- * `***`; any other billing text becomes `***` (parsing still accepts it).
+ * kept byte for byte. {@see masked()} is fail-closed: the elements parse fixes (header, address types, countries,
+ * amount, currency, reference type, reference, trailer) stay; the IBAN keeps its ends, the creditor's and the ultimate
+ * debtor's names their first character, and their street, building number, postal code and town, the unstructured
+ * message (`Ustrd`) and both alternative procedures (`AltPmt`) become `***`. The billing information (`StrdBkgInf`)
+ * stays only in the Swico S1 grammar of Annex D (`//S1` and the tags 10, 11, 20, 30, 31, 32, 33 and 40 in ascending
+ * order, each value in its form, see {@see SWICO_TAGS}), with the free-text invoice number (10) and customer
+ * reference (20) as `***`; any other billing text becomes `***` (parsing still accepts it).
  *
  * @see https://www.six-group.com/dam/download/banking-services/standardization/qr-bill/ig-qr-bill-v2.3-en.pdf SIX Swiss Implementation Guidelines for the QR-bill 2.3, sections 2.8, 4.1 to 4.4 and Annex A
  * @see https://github.com/msstc4php/vo-finance/blob/main/docs/sources/FINANCE.md "SIX QR-bill layout"
@@ -51,24 +51,25 @@ final class QrBill extends AbstractStringValueObject implements PaymentPayload
 
     private const string TYPE = 'QrBill';
 
-    /** Section 4.1.1: Basic Latin, Latin-1 Supplement, Latin Extended-A, Ș ș Ț ț and €. */
     /**
      * Swico S1 tags (SIX IG 2.3 Annex D, tables 28 and 29) with the form of their value; null marks free text. A value
-     * escapes `/` and `\` with `\`.
+     * escapes `/` and `\` with `\`. Dates are YYMMDD; rates and discounts have at most three integer digits, VAT
+     * details and import tax are `rate:amount` lists (32 also a bare rate), conditions `discount:days` lists.
      */
     private const array SWICO_TAGS = [
         '10' => null,
-        '11' => '/^\d{6}$/D',
+        '11' => '/^\d{2}(0[1-9]|1[0-2])(0[1-9]|[12]\d|3[01])$/D',
         '20' => null,
         '30' => '/^\d{9}$/D',
-        '31' => '/^\d{6}(\d{6})?$/D',
-        '32' => '/^[0-9.:;]+$/D',
-        '33' => '/^[0-9.:;]+$/D',
-        '40' => '/^[0-9.:;]+$/D',
+        '31' => '/^\d{2}(0[1-9]|1[0-2])(0[1-9]|[12]\d|3[01])(\d{2}(0[1-9]|1[0-2])(0[1-9]|[12]\d|3[01]))?$/D',
+        '32' => '/^\d{1,3}(\.\d+)?(:\d+(\.\d{1,2})?)?(;\d{1,3}(\.\d+)?:\d+(\.\d{1,2})?)*$/D',
+        '33' => '/^\d{1,3}(\.\d+)?:\d+(\.\d{1,2})?(;\d{1,3}(\.\d+)?:\d+(\.\d{1,2})?)*$/D',
+        '40' => '/^\d{1,3}(\.\d+)?:\d{1,3}(;\d{1,3}(\.\d+)?:\d{1,3})*$/D',
     ];
 
     private const string SWICO_GROUP = '\/(\d{2})\/((?:[^\/\\\\]|\\\\[\/\\\\])*)';
 
+    /** Section 4.1.1: Basic Latin, Latin-1 Supplement, Latin Extended-A, Ș ș Ț ț and €. */
     private const string CHARACTERS = '/^[\x{20}-\x{7E}\x{A0}-\x{17F}\x{218}-\x{21B}\x{20AC}]*$/Du';
 
     private TextLines $lines;

@@ -31,12 +31,11 @@ references.
 - GOST: last occurrence of an alias wins (standard); every occurrence of a mandatory alias must have its format;
   20-digit accounts in Order 515's scope (first digit 1-9; treasury `0...` exempt), every occurrence, must pass the key
   with either the RKC (`0`+BIC[5..6]) or credit-institution (BIC[7..9]) number.
-- `masked()` (1.0 masking principle, fix10/fix11): hide what names or locates a person and all free text; keep
-  machine codes. The per-class list is the README table "Payment QR payloads" (single source; keep code, README,
-  CHANGELOG and FINANCE.md in step). Helpers: `Mask::keepEnds` (accounts/identifiers: nothing at <= 6, last 2 at 7-11,
-  last 4 at 12-17, first 2 + last 4 from 18), `Mask::name` (first char + `***`), `Mask::ADDRESS` (locating data),
-  `Mask::TEXT`/`text()` (free text; empty stays empty). A slot meant for a code (EPC reference, QR-bill billing
-  information) stays visible only when it holds that code (RF creditor reference / Swico S1, free-text tags 10 and 20
-  starred); parse is not stricter. SBP fails closed on names and values: only `type`, `bank`, `sum`, `cur`, `crc` in a
-  code shape stay. GOST: aliases outside table В.1 are `***`. EMVCo 62: 02/04/06/10 and 50-99 asterisks, 08 `***`;
-  64: 00 stays, 01 `X***`, 02-99 `***`.
+- `masked()` (1.0 rule, fix10..fix11 round 4): fail-closed on every payment profile. A field is visible only on the
+  profile's allowlist AND in its shape; everything else (unknown alias, RFU, bare pair, unknown parameter name) is
+  masked. The per-profile tables in the README ("Payment QR payloads") are the single source; keep code, README,
+  CHANGELOG and FINANCE.md in step. Masks: `Mask::keepEnds` (accounts/identifiers), `Mask::name` (`X***`),
+  `Mask::reference` (first + `***` + last, `***` at <= 3 characters: EMVCo 62-01/03/05/07, GOST DocNo/DocIdx/QuittId/
+  UIN, UPI tr/tid), `Mask::TEXT`/`text()` (`***`, empty stays empty). SBP and UPI rebuild the query with
+  `QueryString::rewritten()`. `MaskedLeakTest` probes every slot of every profile with a name, an e-mail and a phone
+  number; update its pinned counts when parse or the slot list changes.

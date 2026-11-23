@@ -28,7 +28,7 @@ use Override;
  * recommendation, the content of IDs 02 to 25, and the amount beyond its character set; {@see amount()} gives null for
  * a non-decimal.
  *
- * {@see masked()} replaces with asterisks the values of IDs 02 to 51, 80 to 99 and the CRC; the CRC is not recomputed.
+ * {@see masked()} is fail-closed as `Internal\EmvcoMask` describes; the CRC is not recomputed.
  *
  * @see https://www.hkma.gov.hk/media/chi/doc/key-functions/financial-infrastructure/infrastructure/retail-payment-initiatives/Common_QR_Code_Specification.pdf HKMA Common QR Code Specification 1.0, sections 2 and 4
  * @see https://www.bcb.gov.br/content/estabilidadefinanceira/spb_docs/ManualBRCode.pdf Banco Central do Brasil, Manual do BR Code 2.0.1, sections 2.1 and 2.2
