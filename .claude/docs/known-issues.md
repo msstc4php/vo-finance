@@ -70,3 +70,5 @@
 - Masking residual (fix11 round 4): a phone number written as an amount or a numeric code of the same length (EMVCo 54/56, GOST `Sum`/`AddAmount`/`OKTMO`/`CounterVal`, SBP `sum`, UPI `am`/`mam`) is indistinguishable and stays visible; `MaskedLeakTest` skips exactly those pairs.
 - EMVCo root shapes live in `EmvcoMask::ROOT_SHAPES`; numeric-string IDs (`'52'`) become integer array keys, hence `array<array-key, ...>`. The 54/56/57 length bounds (13/13/5) are the table 3.6 "var. up to" maxima used for masking only; parse does not enforce them.
 - GOST masking shapes (`Gost56042Payload::SHAPES`) are masking shapes, not validation: Annex V leaves formats to the unreached УФЭБС album.
+
+- `EmvcoMask`: a mask can be longer than its value (`x` -> `***`, a 4-character label -> `A***D`), so a rebuilt template 62 or 64 can exceed the 99-character data-object bound; `fits()` then masks the template whole (`masked()` must never throw for a value `isValid()` accepts). Pinned at exactly 99 and above in `MerchantPresentedQrTest`.
