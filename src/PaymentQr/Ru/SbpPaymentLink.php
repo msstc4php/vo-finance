@@ -20,9 +20,9 @@ use Override;
  * identifier 32 characters and the query fields `type`, `bank`, `sum`, `cur` and `crc` their formats, and 1.0 accepted
  * links outside them, so {@see hasValidFunctionalLinkStructure()} reports them instead. Scheme and host are compared
  * case-insensitively; the link is kept as given. {@see masked()} hides the identifier and fails closed on the query:
- * it keeps only `type` (`01` or `02`, and `03` on `sub.nspk.ru` only, as NSPK pairs them), `bank` (12 digits), `sum` (1 to 12 digits, kopecks), `cur` (three capital
- * letters) and `crc` (four hex digits), names compared exactly; another value of these becomes `***`, so `sum=Anna`
- * and a phone number as `bank` give `***`.
+ * it keeps only `type` (`01` or `02`, and `03` on `sub.nspk.ru` only, as NSPK pairs them), `bank` (12 digits), `sum`
+ * (1 to 12 digits, kopecks), `cur` (three capital letters) and `crc` (four hex digits), names compared exactly;
+ * another value of these becomes `***`, so `sum=Anna` and a phone number as `bank` give `***`.
  * Any other pair may hold free text in its name as in its value, so it becomes `***=***`, `***=` for an empty value
  * and `***` without `=`; an empty pair stays empty. At most 7089 characters, the largest QR content: a bound against
  * abusive input.
@@ -182,6 +182,7 @@ final class SbpPaymentLink extends AbstractStringValueObject implements PaymentP
             return false;
         }
 
+        // NSPK: `sum` is "Отсутствует" for type 03, so even its name or an empty value breaks the structure.
         if ($qrType === SbpQrType::Subscription && $query->all('sum') !== []) {
             return false;
         }
@@ -195,7 +196,9 @@ final class SbpPaymentLink extends AbstractStringValueObject implements PaymentP
 
     private function maskedPair(string $name, ?string $value): string
     {
-        $shape = $name === 'type' && $this->host === self::SUB_HOST ? self::SUBSCRIPTION_TYPE : self::VISIBLE_PARAMETERS[$name] ?? null;
+        $shape = $name === 'type' && $this->host === self::SUB_HOST
+            ? self::SUBSCRIPTION_TYPE
+            : self::VISIBLE_PARAMETERS[$name] ?? null;
 
         return match (true) {
             $value === null => Mask::TEXT,
