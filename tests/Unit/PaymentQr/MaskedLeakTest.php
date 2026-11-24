@@ -45,7 +45,7 @@ use PHPUnit\Framework\TestCase;
 /**
  * Puts a name, an e-mail address and a phone number into every slot of every payment profile that parse() accepts
  * them in, and checks that masked() shows none of them. A phone number in an amount or a numeric code slot (EMVCo 54
- * and 56, GOST `Sum`, `AddAmount`, `OKTMO`, `CounterVal`, SBP `sum`, UPI `am` and `mam`) is a valid amount or code and
+ * and 56, GOST `Sum`, `AddAmount`, `CounterVal`, SBP `sum`, UPI `am` and `mam`) is a valid amount or code and
  * stays visible by design, so those pairs are not probed.
  */
 #[CoversClass(EmvcoMask::class)]
@@ -200,7 +200,7 @@ final class MaskedLeakTest extends TestCase
         $accepted = 0;
         foreach ($aliases as $alias) {
             foreach (self::PERSONAL as $personal) {
-                if ($personal === self::PHONE && \in_array($alias, ['Sum', 'AddAmount', 'OKTMO', 'CounterVal'], true)) {
+                if ($personal === self::PHONE && \in_array($alias, ['Sum', 'AddAmount', 'CounterVal'], true)) {
                     continue;
                 }
 
@@ -212,7 +212,8 @@ final class MaskedLeakTest extends TestCase
             }
         }
 
-        self::assertSame(144, $accepted);
+        // 145 since 1.2.0: OKTMO is `0` or 8 digits, so the 11-digit phone probe is masked and no longer skipped.
+        self::assertSame(145, $accepted);
     }
 
     public function testSbpMaskedShowsNoPersonalData(): void

@@ -5,11 +5,13 @@
 ### Added
 
 - `PaymentQr\Ru\SbpQrType` (`Static` `01`, `Dynamic` `02`, `Subscription` `03`) and `SbpPaymentLink::qrType()`: the
-  decoded `type`, null when absent, empty or unknown.
+  decoded `type`, null when absent, empty or unknown; it throws `AmbiguousPaymentQrFieldException` when `type` repeats
+  with distinct values, like every single-value accessor.
 - `SbpPaymentLink::hasValidFunctionalLinkStructure()`: reports NSPK's link table (identifier of 32 characters, the
   `type`/host pairing, `bank`, `sum`, `cur`, `crc`); never refuses.
 - `Gost56042Payload::hasValidBudgetPaymentDetails()`: reports the field formats of the Bank of Russia УФЭБС 2026.09
-  budget-payment checks (fields 101, 103-108, payee and payer INN); never refuses.
+  budget-payment checks (fields 101, 103-108, payee and payer INN; for payer status 27 only field 106, as item 1.1
+  says); never refuses.
 
 ### Changed
 
@@ -17,7 +19,8 @@
   `PaymentQrFactory` routes them to `SbpPaymentLink`; such links were refused before. `MAX_LENGTH` is unchanged.
 - `Gost56042Payload` accepts an account (`PersonalAcc`, a 20-character `CorrespAcc`) with a Latin letter of the УФЭБС
   album in the sixth place; the control key of such an account is not verified (Bank of Russia 579-П not reached).
-- `masked()` hides more, from the official sources: SBP `type` `01`-`03`, `sum` 1 to 12 digits, `crc` four hex digits;
+- `masked()` hides more, from the official sources: SBP `sum` 1 to 12 digits, `crc` four hex digits (`type` stays
+  `01` or `02` on `qr.nspk.ru` as before, `01` or `02` on `b2b.cbrpay.ru`, and only `03` on the new `sub.nspk.ru`);
   UPI `cu` only `INR`, and `mode`, `purpose`, `orgid`, `qrMedium` (not in NPCI's Linking Specifications 1.5.1) become
   `***`; GOST `PayeeINN` 10 digits, `OKTMO` `0` or 8 digits, `DrawerStatus` and `PaytReason` only from the УФЭБС code
   lists.

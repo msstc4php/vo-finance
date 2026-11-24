@@ -418,6 +418,32 @@ final class Gost56042PayloadTest extends TestCase
         self::assertFalse(Gost56042Payload::from(\str_replace('|' . $pair, '', self::BUDGET))->hasValidBudgetPaymentDetails());
     }
 
+    public function testStatus27IsWaivedFromTheBudgetChecksExceptThePaymentReason(): void
+    {
+        // УФЭБС budget checks 1.1: no item 1 check for status 27 except 1.11, which then requires 106 = "0".
+        $payload = 'ST00012|Name=A|PersonalAcc=40702810138250123017|BankName=B|BIC=044525225|CorrespAcc=0|DrawerStatus=27';
+
+        self::assertTrue(Gost56042Payload::from($payload . '|PaytReason=0')->hasValidBudgetPaymentDetails());
+        self::assertTrue(Gost56042Payload::from($payload . '|PaytReason=0|PayeeINN=1|KPP=1|OKTMO=1|TaxPeriod=МС.02.2014|PayerINN=1')->hasValidBudgetPaymentDetails());
+        self::assertFalse(Gost56042Payload::from($payload . '|PaytReason=ПК')->hasValidBudgetPaymentDetails());
+        self::assertFalse(Gost56042Payload::from($payload)->hasValidBudgetPaymentDetails());
+        self::assertFalse(Gost56042Payload::from(self::BUDGET . '|DrawerStatus=28|PayeeINN=1')->hasValidBudgetPaymentDetails());
+    }
+
+    public function testAnOlderTaxPeriodFormIsReportedAgainstThe2026Checks(): void
+    {
+        // Field 107 holds the customs authority code in the УФЭБС 2026.09 checks (1.12); GOST's 2014 period form fails.
+        self::assertFalse(Gost56042Payload::from(\str_replace('TaxPeriod=0', 'TaxPeriod=МС.02.2014', self::BUDGET))->hasValidBudgetPaymentDetails());
+    }
+
+    public function testALetterAccountIsAcceptedBesideACorrespondentAccountThatStaysKeyChecked(): void
+    {
+        $head = 'ST00012|Name=A|PersonalAcc=40702A10238250123017|BankName=B|BIC=044525225|CorrespAcc=';
+
+        self::assertTrue(Gost56042Payload::isValid($head . '30101810400000000225'));
+        self::assertFalse(Gost56042Payload::isValid($head . '30101810500000000225'));
+    }
+
     public function testEveryOccurrenceOfAnAccountMustCarryAValidKey(): void
     {
         // The last PersonalAcc counts; an earlier one with a wrong key is still refused.

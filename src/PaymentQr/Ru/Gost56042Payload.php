@@ -76,11 +76,48 @@ final class Gost56042Payload extends AbstractStringValueObject implements Paymen
 
     private const array REFERENCES = ['docno', 'docidx', 'quittid', 'uin'];
 
-    /** УФЭБС budget checks 1.3: the payer statuses of field 101. */
+    /**
+     * УФЭБС budget checks 1.3: the payer statuses of field 101.
+     *
+     * @var non-empty-list<non-empty-string>
+     */
     private const array DRAWER_STATUSES = ['01', '03', '04', '05', '06', '07', '08', '13', '15', '16', '17', '19', '20', '23', '24', '27', '28', '29', '30', '31', '32', '33', '34'];
 
-    /** УФЭБС budget checks 1.11: the payment reasons of field 106. */
+    /**
+     * УФЭБС budget checks 1.11: the payment reasons of field 106.
+     *
+     * @var non-empty-list<non-empty-string>
+     */
     private const array PAYMENT_REASONS = ['0', 'ПК', 'КЭ', 'УВ', 'ИЛ', 'ПБ', 'ПР', 'ТГ', 'ТБ', 'ТД', 'ПВ', 'ИН', '00'];
+
+    /** УФЭБС budget checks 1.1: the payer status for which the checks of item 1 other than 1.11 are not made. */
+    private const string EXEMPT_DRAWER_STATUS = '27';
+
+    /**
+     * The requisites of a budget payment that УФЭБС budget checks 1.2, 1.3, 1.6 and 1.8 to 1.12 require, with their form.
+     *
+     * @var non-empty-array<non-empty-string, non-empty-string|non-empty-list<non-empty-string>>
+     */
+    private const array REQUIRED_BUDGET_REQUISITES = [
+        'DrawerStatus' => self::DRAWER_STATUSES,
+        'PayeeINN' => '/^(?!00)\d{10}$/D',
+        'KPP' => '/^(?!00).{9}$/Du',
+        'CBC' => '/^(0|(?!0{20})\d{20})$/D',
+        'OKTMO' => '/^(0|(?!0{8})\d{8})$/D',
+        'PaytReason' => self::PAYMENT_REASONS,
+        'TaxPeriod' => '/^(0|\d{8})$/D',
+    ];
+
+    /**
+     * The requisites checked only when present: `DocNo` (1.13 "может") and the payer INN (1.5), which the payer's bank
+     * may fill.
+     *
+     * @var non-empty-array<non-empty-string, non-empty-string>
+     */
+    private const array OPTIONAL_BUDGET_REQUISITES = [
+        'DocNo' => '/^.{1,15}$/Du',
+        'PayerINN' => '/^(0|(?!0{5})\d{5}|(?!00)\d{10}|(?!00)\d{12})$/D',
+    ];
 
     private const string DATE = '/^(0|\d{2}\.\d{2}\.\d{4})$/D';
 
@@ -224,30 +261,28 @@ final class Gost56042Payload extends AbstractStringValueObject implements Paymen
      * (105) `0` or 8 digits not all zero (1.10), `PaytReason` (106) `0` or a code of 1.11 and `TaxPeriod` (107, now the
      * customs authority code) `0` or 8 digits (1.12), each present; `DocNo` (108) of 1 to 15 characters (1.13) and
      * `PayerINN` `0`, 5 digits not all zero, or 10 or 12 digits not starting with `00` (1.5) when present, since the
-     * payer's bank may fill them. The checks that depend on the payee's account and on combinations of fields are not
+     * payer's bank may fill them. For `DrawerStatus` `27` item 1.1 waives these checks except 1.11, which then asks
+     * for `PaytReason` `0`. The checks that depend on the payee's account and on other combinations of fields are not
      * applied. Report only: a payload that fails is still accepted.
      */
     public function hasValidBudgetPaymentDetails(): bool
     {
-        $optional = ['DocNo' => '/^.{1,15}$/Du', 'PayerINN' => '/^(0|(?!0{5})\d{5}|(?!00)\d{10}|(?!00)\d{12})$/D'];
-        foreach ($optional as $alias => $shape) {
+        if ($this->get('DrawerStatus') === self::EXEMPT_DRAWER_STATUS) {
+            return $this->get('PaytReason') === '0';
+        }
+
+        foreach (self::OPTIONAL_BUDGET_REQUISITES as $alias => $shape) {
             $value = $this->get($alias);
-            if ($value !== null && \preg_match($shape, $value) !== 1) {
+            if ($value !== null && !$this->hasShape($value, $shape)) {
                 return false;
             }
         }
 
-        $required = [
-            'DrawerStatus' => self::DRAWER_STATUSES,
-            'PayeeINN' => '/^(?!00)\d{10}$/D',
-            'KPP' => '/^(?!00).{9}$/Du',
-            'CBC' => '/^(0|(?!0{20})\d{20})$/D',
-            'OKTMO' => '/^(0|(?!0{8})\d{8})$/D',
-            'PaytReason' => self::PAYMENT_REASONS,
-            'TaxPeriod' => '/^(0|\d{8})$/D',
-        ];
-
-        return \array_all($required, fn (array|string $shape, string $alias): bool => $this->hasShape($this->get($alias), $shape));
+        return \array_all(
+            self::REQUIRED_BUDGET_REQUISITES,
+            /** @param non-empty-list<non-empty-string>|non-empty-string $shape */
+            fn (array|string $shape, string $alias): bool => $this->hasShape($this->get($alias), $shape),
+        );
     }
 
     #[Override]
@@ -321,7 +356,7 @@ final class Gost56042Payload extends AbstractStringValueObject implements Paymen
     }
 
     /**
-     * @param list<string>|string|null $shape a pattern or a code list; null accepts any value
+     * @param non-empty-list<non-empty-string>|non-empty-string|null $shape a pattern or a code list; null accepts any value
      */
     private function hasShape(?string $value, array|string|null $shape): bool
     {

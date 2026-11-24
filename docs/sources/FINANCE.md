@@ -1008,6 +1008,10 @@ characters."; OKTMO "Text, from 8 to 11 characters."; `DepartmentalInfo` "Depart
 From `Doc/УФЭБС_2026_09_0_Проверки_в_ПС_БР_платежей_в_бюджет (с 21.09.2026).pdf`, section 1 "Проверки с 21.09.2026"
 (budget payments only):
 
+- 1.1 "Предусмотренные п. 1 контроли не осуществляются также для распоряжений, в которых в {Статус плательщика (101)}
+  указано значение «27», за исключением контроля по п.1.11 (Основание платежа) и п.1.15 (проверка УПНО)"; 1.11 adds
+  "В ЭС {Платежное поручение} {Основание платежа (106)} должен содержать значения, состоящие из 1 знака, принимающего
+  значение ноль («0») при указании в {Статус плательщика (101)} значения «27»".
 - 1.2 "{Статус плательщика (101)} должен быть заполнен"; 1.3 "может принимать одно из следующих значений «01», «03»,
   «04», «05», «06», «07», «08», «13», «15», «16», «17», «19», «20», «23», «24», «27», «28», «29», «30», «31», «32», «33»,
   «34»".
@@ -1041,7 +1045,8 @@ Outcome:
 - **Masking shapes**: as listed under "Masking" above.
 - **`Gost56042Payload::hasValidBudgetPaymentDetails()`** (report only, never refuses): 101 present and in 1.3; payee
   INN 1.6; KPP 1.8 (9 characters); CBC 1.9; OKTMO 1.10; 106 present and in 1.11; 107 present, `0` or 8 digits (1.12);
-  108 (1.13: "может") and the payer INN (1.5; the payer's bank may fill it) checked only when present. Not applied: the
+  108 (1.13: "может") and the payer INN (1.5; the payer's bank may fill it) checked only when present. Status 27
+  (1.1): only 106, which must then be `0` (1.11); 1.15 (УПНО) concerns no GOST alias. Not applied: the
   checks that depend on the payee's account or on other fields (the 101 subsets per account, 1.4 UIN and its check
   digit, 1.7 payer KPP against the payer INN, the "must not be 0" cases of 1.13), and 109 and 110, which section 1 does
   not list in this form. A GOST payload of an older practice (a period such as `МС.02.2014` in field 107) reports false.
@@ -1083,11 +1088,12 @@ Outcome (controller ruling 2026-11-24 UTC):
   fields are stricter than what 1.0 accepted, so they are **reported** by `hasValidFunctionalLinkStructure()`, never
   enforced in 1.x: identifier of 32 characters; no query, or on `qr.nspk.ru`/`sub.nspk.ru` only: `type` `01`/`02` on
   `qr.nspk.ru` and `03` on `sub.nspk.ru`, `bank` 12 characters, `crc` 4 characters, `sum` 1 to 12 digits mandatory for
-  `02` and absent for `03`, `cur` 3 characters whenever `sum` is present (the table does not forbid `cur` without
+  `02` and absent for `03` ("Отсутствует": no `sum` pair at all, an empty `sum=` included), `cur` 3 characters whenever `sum` is present (the table does not forbid `cur` without
   `sum`, so that is not reported). Other parameters are not judged; a repeated field with distinct values reports false.
 - `qrType()` decodes `type` into `SbpQrType` (`Static`, `Dynamic`, `Subscription`, the table's names); null for an
   absent, empty or unknown code.
-- Masking (stricter in 1.2.0): `type` `01`-`03`, `bank` 12 digits, `sum` 1 to 12 digits, `cur` three capitals, `crc`
+- Masking (stricter in 1.2.0): `type` `01` or `02` on `qr.nspk.ru` (as in 1.1.0) and `b2b.cbrpay.ru`, only `03` on
+  `sub.nspk.ru` (the table's pairing; `type=03` on `qr.nspk.ru` stays `***`, as 1.1.0 masked it), `bank` 12 digits, `sum` 1 to 12 digits, `cur` three capitals, `crc`
   four hex digits. The table types `bank`, `cur` and `crc` only as "String" of a length; only the digits, capitals
   and hex digits of the examples stay visible (fail-closed: a 12-character `bank` with letters is `***`). Until 1.1.0
   `sum` allowed decimals and 18 digits and `crc` one to eight hex digits, from the third-party Habr example and the

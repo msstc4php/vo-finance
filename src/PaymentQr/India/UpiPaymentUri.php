@@ -17,19 +17,21 @@ use Override;
 
 /**
  * UPI payment URI `upi://pay?` with its query parameters, the deep-linking URL of NPCI's UPI Linking Specifications
- * 1.5.1. Enforced from NPCI's circular OC 18 (which quotes that specification): the payee address `pa` and the payee
- * name `pn` are present and filled, and a transaction reference `tr` has 1 to 35 characters; no other parameter, the
- * VPA shape or the amount format is checked. Values are kept as written: 1.5.1 writes a space as `%20` and requires
- * PSPs to read the legacy bare `%` too, so nothing is percent-decoded. A repeated parameter makes its single-value
- * accessor throw. {@see masked()} rebuilds the query fail-closed: the payee address `pa` keeps the first character of.
+ * 1.5.1.
  *
- * its local part and its handle (`a***@okaxis`; `***` without a handle of letters, digits, `.` and `-`), the payee name
- * `pn` its first character, the transaction reference `tr` and the transaction ID `tid` their first and last character,
- * and the note `tn` and `url` become `***`, as do `mode`, `purpose`, `orgid`, `qrMedium` and `sign`, which 1.5.1 does
- * not define; the codes `am` and `mam` (digits with up to two decimals), `cu` (`INR`, the one value 1.5.1 allows) and
- * `mc` (four digits) stay only in that shape, otherwise `***`. Any other pair, a name that differs in case included,
- * becomes `***=***`, `***=` when empty, and every pair without `=` becomes `***`; an empty value of a known parameter
- * and an empty pair stay empty. At most 7089 characters, the largest QR content: a bound against abusive input.
+ * Enforced from NPCI's circular OC 18 (which quotes that specification): the payee address `pa` and the payee name `pn`
+ * are present and filled, and a transaction reference `tr` has 1 to 35 characters; no other parameter, the VPA shape or
+ * the amount format is checked. Values are kept as written: 1.5.1 writes a space as `%20` and requires PSPs to read the
+ * legacy bare `%` too, so nothing is percent-decoded. A repeated parameter makes its single-value accessor throw.
+ * {@see masked()} rebuilds the query fail-closed: the payee address `pa` keeps the first character of its local part
+ * and its handle (`anna@okaxis` gives `a`, `***` and `@okaxis`; `***` without a handle of letters, digits, `.` and
+ * `-`), the payee name `pn` its first character, the transaction reference `tr` and the transaction ID `tid` their
+ * first and last character, and the note `tn` and `url` become `***`, as do `mode`, `purpose`, `orgid`, `qrMedium` and
+ * `sign`, which 1.5.1 does not define; the codes `am` and `mam` (digits with up to two decimals), `cu` (`INR`, the one
+ * value 1.5.1 allows) and `mc` (four digits) stay only in that shape, otherwise `***`. Any other pair, a name that
+ * differs in case included, becomes `***=***`, `***=` when empty, and every pair without `=` becomes `***`; an empty
+ * value of a known parameter and an empty pair stay empty. At most 7089 characters, the largest QR content: a bound
+ * against abusive input.
  *
  * @see https://web.archive.org/web/20190917070533id_/https://www.npci.org.in/sites/all/themes/npcl/images/PDF/UPI_Linking_Specs_ver_1.5.1.pdf NPCI, UPI Linking Specifications 1.5.1, section 1.2 and notes
  * @see https://www.npci.org.in/PDF/npci/upi/circular/2017/Circular18_BankCompliances_to_enbaleUPIMerchantecosystem_0.pdf NPCI, UPI OC No. 18/2016-17, Annexure A Table 1 and D.7

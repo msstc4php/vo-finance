@@ -20,7 +20,7 @@ use Override;
  * identifier 32 characters and the query fields `type`, `bank`, `sum`, `cur` and `crc` their formats, and 1.0 accepted
  * links outside them, so {@see hasValidFunctionalLinkStructure()} reports them instead. Scheme and host are compared
  * case-insensitively; the link is kept as given. {@see masked()} hides the identifier and fails closed on the query:
- * it keeps only `type` (`01`, `02`, `03`), `bank` (12 digits), `sum` (1 to 12 digits, kopecks), `cur` (three capital
+ * it keeps only `type` (`01` or `02`, and `03` on `sub.nspk.ru` only, as NSPK pairs them), `bank` (12 digits), `sum` (1 to 12 digits, kopecks), `cur` (three capital
  * letters) and `crc` (four hex digits), names compared exactly; another value of these becomes `***`, so `sum=Anna`
  * and a phone number as `bank` give `***`.
  * Any other pair may hold free text in its name as in its value, so it becomes `***=***`, `***=` for an empty value
@@ -40,10 +40,11 @@ final class SbpPaymentLink extends AbstractStringValueObject implements PaymentP
     /**
      * The query fields kept visible, with the shape a value must have. NSPK's table gives `bank` "String 12 символов",
      * `cur` "String 3 символа" and `crc` "String 4 символа"; only the digits, capitals and hex digits of its examples
-     * stay visible.
+     * stay visible. `type` is the shape on `qr.nspk.ru` and `b2b.cbrpay.ru`; on `sub.nspk.ru` it is
+     * {@see SUBSCRIPTION_TYPE}.
      */
     private const array VISIBLE_PARAMETERS = [
-        'type' => '/^0[123]$/D',
+        'type' => '/^0[12]$/D',
         'bank' => '/^\d{12}$/D',
         'sum' => self::SUM,
         'cur' => '/^[A-Z]{3}$/D',
@@ -55,7 +56,12 @@ final class SbpPaymentLink extends AbstractStringValueObject implements PaymentP
 
     private const string PATTERN = '~^(https://(qr\.nspk\.ru|sub\.nspk\.ru|b2b\.cbrpay\.ru)/)([A-Za-z0-9]+)(?:\?([\x21-\x22\x24-\x7E]*))?$~Di';
 
-    private const string B2B_HOST = 'b2b.cbrpay.ru';
+    /** QR_TYPE 03, the one NSPK serves from `sub.nspk.ru`. */
+    private const string SUBSCRIPTION_TYPE = '/^03$/D';
+
+    private const string QR_HOST = 'qr.nspk.ru';
+
+    private const string SUB_HOST = 'sub.nspk.ru';
 
     /** @var non-empty-string */
     private string $prefix;
@@ -101,9 +107,10 @@ final class SbpPaymentLink extends AbstractStringValueObject implements PaymentP
     /**
      * Whether the link has the structure of NSPK's table, which parse does not enforce: an identifier of 32
      * characters, and either no query or, on `qr.nspk.ru` and `sub.nspk.ru` only, `type` `01` or `02` on `qr.nspk.ru`
-     * and `03` on `sub.nspk.ru`, `bank` of 12 characters, `sum` of 1 to 12 digits mandatory for `02` and absent for
-     * `03`, `cur` of three characters whenever `sum` is present, and `crc` of four characters. A repeated parameter
-     * with distinct values, or an empty one where a value is mandatory, gives false. Never refuses anything.
+     * and `03` on `sub.nspk.ru`, `bank` of 12 characters, `crc` of four characters, `sum` of 1 to 12 digits mandatory
+     * for `02` and absent for `03` (no `sum` pair at all, not even an empty one), and `cur` of three characters,
+     * mandatory whenever `sum` is present. A repeated parameter with distinct values, or an empty one where a value is
+     * mandatory, gives false. Never refuses anything.
      */
     public function hasValidFunctionalLinkStructure(): bool
     {
@@ -111,28 +118,11 @@ final class SbpPaymentLink extends AbstractStringValueObject implements PaymentP
             return false;
         }
 
-        if (!$this->query instanceof QueryString) {
-            return true;
-        }
-
         try {
-            [$type, $bank, $sum, $cur, $crc] = \array_map($this->get(...), ['type', 'bank', 'sum', 'cur', 'crc']);
+            return !$this->query instanceof QueryString || $this->hasValidQuery($this->query);
         } catch (AmbiguousPaymentQrFieldException) {
             return false;
         }
-
-        return $this->host !== self::B2B_HOST
-            && \in_array($type, ['01', '02', '03'], true)
-            && $this->host === ($type === '03' ? 'sub.nspk.ru' : 'qr.nspk.ru')
-            && \strlen($bank ?? '') === 12
-            && \strlen($crc ?? '') === 4
-            && match ($type) {
-                '02' => $sum !== null,
-                '03' => $sum === null,
-                default => true,
-            }
-        && ($sum === null || (\preg_match(self::SUM, $sum) === 1 && $cur !== null))
-        && ($cur === null || \strlen($cur) === 3);
     }
 
     /**
@@ -170,9 +160,42 @@ final class SbpPaymentLink extends AbstractStringValueObject implements PaymentP
         return $value;
     }
 
+    /**
+     * B2B links have no query in NSPK's table, so no type maps to `b2b.cbrpay.ru`.
+     *
+     * @throws AmbiguousPaymentQrFieldException when a field repeats with distinct values
+     */
+    private function hasValidQuery(QueryString $query): bool
+    {
+        [$type, $bank, $sum, $cur, $crc] = \array_map($this->get(...), ['type', 'bank', 'sum', 'cur', 'crc']);
+        $qrType = SbpQrType::tryFrom($type ?? '');
+        $host = match ($qrType) {
+            SbpQrType::Static, SbpQrType::Dynamic => self::QR_HOST,
+            SbpQrType::Subscription => self::SUB_HOST,
+            default => null,
+        };
+        if ($host !== $this->host || \strlen($bank ?? '') !== 12 || \strlen($crc ?? '') !== 4) {
+            return false;
+        }
+
+        if ($qrType === SbpQrType::Dynamic && $sum === null) {
+            return false;
+        }
+
+        if ($qrType === SbpQrType::Subscription && $query->all('sum') !== []) {
+            return false;
+        }
+
+        if ($sum !== null && (\preg_match(self::SUM, $sum) !== 1 || $cur === null)) {
+            return false;
+        }
+
+        return $cur === null || \strlen($cur) === 3;
+    }
+
     private function maskedPair(string $name, ?string $value): string
     {
-        $shape = self::VISIBLE_PARAMETERS[$name] ?? null;
+        $shape = $name === 'type' && $this->host === self::SUB_HOST ? self::SUBSCRIPTION_TYPE : self::VISIBLE_PARAMETERS[$name] ?? null;
 
         return match (true) {
             $value === null => Mask::TEXT,

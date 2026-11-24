@@ -120,6 +120,8 @@ final class SbpPaymentLinkTest extends TestCase
         yield 'crc of 5 characters' => ['https://qr.nspk.ru/' . $id . '?type=01&bank=100000000001&crc=C08BA'];
         yield 'dynamic without sum' => ['https://qr.nspk.ru/' . $id . '?type=02&bank=100000000001&crc=C08B'];
         yield 'dynamic with an empty sum' => ['https://qr.nspk.ru/' . $id . '?type=02&bank=100000000001&sum=&cur=RUB&crc=C08B'];
+        yield 'subscription with an empty sum' => ['https://sub.nspk.ru/' . $id . '?type=03&bank=100000000001&sum=&crc=C08B'];
+        yield 'subscription with a bare sum' => ['https://sub.nspk.ru/' . $id . '?type=03&bank=100000000001&sum&crc=C08B'];
         yield 'subscription with sum' => ['https://sub.nspk.ru/' . $id . '?type=03&bank=100000000001&sum=100&cur=RUB&crc=C08B'];
         yield 'sum without cur' => ['https://qr.nspk.ru/' . $id . '?type=01&bank=100000000001&sum=100&crc=C08B'];
         yield 'sum with decimals' => ['https://qr.nspk.ru/' . $id . '?type=02&bank=100000000001&sum=1.00&cur=RUB&crc=C08B'];
@@ -250,13 +252,33 @@ final class SbpPaymentLinkTest extends TestCase
         yield 'empty allowlisted value' => ['sum=', 'sum='];
         yield 'all shapes at their bounds' => ['type=01&bank=123456789012&sum=123456789012&cur=EUR&crc=abcd', 'type=01&bank=123456789012&sum=123456789012&cur=EUR&crc=abcd'];
         yield 'type 02 and a one-digit sum' => ['type=02&sum=0', 'type=02&sum=0'];
-        yield 'type 03' => ['type=03', 'type=03'];
+        yield 'type 03 outside sub.nspk.ru, masked as in 1.1.0' => ['type=03', 'type=***'];
     }
 
     #[DataProvider('allowlistedValuesWithoutACodeShape')]
     public function testMaskedKeepsAnAllowlistedValueOnlyInItsCodeShape(string $query, string $expected): void
     {
         self::assertSame($expected, \substr(SbpPaymentLink::from('https://qr.nspk.ru/AD10006M?' . $query)->masked(), 28));
+    }
+
+    /**
+     * @return iterable<string, array{string, string}>
+     */
+    public static function typesPerHost(): iterable
+    {
+        yield 'subscription on sub.nspk.ru' => ['https://sub.nspk.ru/AD10006M?type=03', 'https://sub.nspk.ru/******6M?type=03'];
+        yield 'static on sub.nspk.ru' => ['https://sub.nspk.ru/AD10006M?type=01', 'https://sub.nspk.ru/******6M?type=***'];
+        yield 'dynamic on sub.nspk.ru' => ['https://sub.nspk.ru/AD10006M?type=02', 'https://sub.nspk.ru/******6M?type=***'];
+        yield 'subscription on b2b.cbrpay.ru' => ['https://b2b.cbrpay.ru/AD10006M?type=03', 'https://b2b.cbrpay.ru/******6M?type=***'];
+        yield 'dynamic on b2b.cbrpay.ru' => ['https://b2b.cbrpay.ru/AD10006M?type=02', 'https://b2b.cbrpay.ru/******6M?type=02'];
+        yield 'subscription on qr.nspk.ru in capitals' => ['HTTPS://QR.NSPK.RU/AD10006M?type=03', 'HTTPS://QR.NSPK.RU/******6M?type=***'];
+        yield 'subscription on sub.nspk.ru in capitals' => ['HTTPS://SUB.NSPK.RU/AD10006M?type=03', 'HTTPS://SUB.NSPK.RU/******6M?type=03'];
+    }
+
+    #[DataProvider('typesPerHost')]
+    public function testMaskedKeepsTheTypeOnlyOnTheHostNspkPairsItWith(string $link, string $expected): void
+    {
+        self::assertSame($expected, SbpPaymentLink::from($link)->masked());
     }
 
     public function testMaskedKeepsALinkWithoutAQueryOrWithAnEmptyOne(): void

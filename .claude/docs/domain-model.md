@@ -33,7 +33,7 @@ references.
   with either the RKC (`0`+BIC[5..6]) or credit-institution (BIC[7..9]) number. Since 1.2.0 an account may carry an
   УФЭБС album letter (`ABCEHKMPTX`) in place 6; it is outside the key scope (unverified key).
 - SBP (1.2.0): hosts `qr.nspk.ru`, `sub.nspk.ru`, `b2b.cbrpay.ru`; `qrType(): ?SbpQrType`; NSPK's table (QR_ID 32,
-  type/host pairing, bank 12, sum 1-12 digits for 02 / absent for 03, cur with sum, crc 4) is report-only via
+  type/host pairing, bank 12, sum 1-12 digits for 02 / no sum pair for 03, cur with sum, crc 4) is report-only via
   `hasValidFunctionalLinkStructure()`. GOST `hasValidBudgetPaymentDetails()` is report-only (УФЭБС budget checks).
 - `masked()` (1.0 rule, fix10..fix11 round 4): fail-closed on every payment profile. A field is visible only on the
   profile's allowlist AND in its shape; everything else (unknown alias, RFU, bare pair, unknown parameter name) is

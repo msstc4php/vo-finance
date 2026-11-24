@@ -188,7 +188,7 @@ of Annex V table В.1; `***=***` for an alias outside table В.1.
 
 | Visible | Shape |
 |---|---|
-| `type` | `01`, `02` or `03` |
+| `type` | `01` or `02`; on `sub.nspk.ru` only `03` (NSPK's host for QR_TYPE 03) |
 | `bank` | 12 digits |
 | `sum` | 1 to 12 digits (kopecks) |
 | `cur` | three capital letters |
@@ -326,9 +326,11 @@ Checked for length and character set, never for a check digit or a range no offi
   hides `PersonalAcc`, `PersAcc`, `PersonalAccount`, `PensAcc`, `PayerIdNum` and `PayerINN`. The separator must be an
   ASCII graphic character (inferred from the eight-byte service block). From 1.2.0 an account with a Latin letter of
   the Bank of Russia УФЭБС album in the sixth place (`\d{5}[0-9ABCEHKMPTX]\d{14}`) is accepted; its control key is
-  **not verified**, because the letter's digit value (Bank of Russia 579-П) was not reached.
-  `hasValidBudgetPaymentDetails()` reports the field formats of the УФЭБС budget checks (2026.09, section 1); the
-  checks that depend on the payee's account or on other fields are not applied.
+  **not verified**, because the letter's digit value (Bank of Russia 579-П) was not reached. Such a `CorrespAcc`
+  masks as `***` (its visible shape stays `0` or 20 digits).
+  `hasValidBudgetPaymentDetails()` reports the field formats of the УФЭБС budget checks (2026.09, section 1), and for
+  payer status 27 only field 106 (`0`), as item 1.1 waives the rest; the checks that depend on the payee's account or
+  on other fields are not applied.
 - `Gost56042Payload`, `SbpPaymentLink`, `UpiPaymentUri`: at most 7089 characters, the largest QR content and, as on the
   EMVCo classes, only a bound against abusive input.
 - `SbpPaymentLink`: parse checks the host, one identifier of letters and digits and a query without spaces or
