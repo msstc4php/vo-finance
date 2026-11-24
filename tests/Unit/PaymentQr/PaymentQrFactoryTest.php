@@ -585,6 +585,58 @@ final class PaymentQrFactoryTest extends TestCase
         PaymentQrFactory::fromBytes("upi://pay?pa=a@b&pn=\xE9");
     }
 
+    public function testTryFromStringBuildsWhatFromStringBuilds(): void
+    {
+        $qr = PaymentQrFactory::tryFromString(self::PIX);
+
+        self::assertInstanceOf(PixBrCode::class, $qr);
+        self::assertEquals(PaymentQrFactory::fromString(self::PIX), $qr);
+    }
+
+    public function testTryFromStringIsNullWhenTheMarkedClassRefuses(): void
+    {
+        self::assertNull(PaymentQrFactory::tryFromString('BCD'));
+        self::assertNull(PaymentQrFactory::tryFromString('not a payment payload'));
+    }
+
+    public function testTryFromStringIsNullWhenSeveralProfilesMatch(): void
+    {
+        $payload = self::sealed(
+            self::tlv('00', '01'),
+            self::tlv('01', '11'),
+            self::tlv('29', self::tlv('00', 'A000000677010111') . self::tlv('01', '0066812345678')),
+            self::tlv('30', self::tlv('00', 'shop@bank') . self::tlv('01', '42')),
+            self::tlv('52', '5999'),
+            self::tlv('53', '116'),
+            self::tlv('58', 'KH'),
+            self::tlv('59', 'Shop'),
+            self::tlv('60', 'Phnom Penh'),
+        );
+
+        self::assertNull(PaymentQrFactory::tryFromString($payload));
+    }
+
+    public function testTryFromBytesBuildsWhatFromBytesBuilds(): void
+    {
+        $bytes = \mb_convert_encoding("BCD\n002\n2\nSCT\n\nFrançois D'Alsace S.A.\nFR1420041010050500013M02606\nEUR12.3\n\n\nClient:Marie Louise La Lune", 'ISO-8859-1', 'UTF-8');
+
+        $qr = PaymentQrFactory::tryFromBytes($bytes);
+
+        self::assertInstanceOf(EpcQr::class, $qr);
+        self::assertEquals(PaymentQrFactory::fromBytes($bytes), $qr);
+        self::assertInstanceOf(PixBrCode::class, PaymentQrFactory::tryFromBytes(self::PIX));
+    }
+
+    public function testTryFromBytesIsNullForNonUtf8BytesOutsideEpcAndGost(): void
+    {
+        self::assertNull(PaymentQrFactory::tryFromBytes("upi://pay?pa=a@b&pn=\xE9"));
+    }
+
+    public function testTryFromBytesIsNullWhenAnEpcPayloadIsInvalidInItsCharacterSet(): void
+    {
+        self::assertNull(PaymentQrFactory::tryFromBytes("BCD\n002\n2\nSCT\n"));
+    }
+
     private function promptPay(): string
     {
         return self::sealed(

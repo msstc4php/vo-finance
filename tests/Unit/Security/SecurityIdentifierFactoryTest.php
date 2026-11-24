@@ -135,4 +135,27 @@ final class SecurityIdentifierFactoryTest extends TestCase
         $this->expectException(InvalidSecurityIdentifierException::class);
         SecurityIdentifierFactory::fromString('not an identifier!');
     }
+
+    public function testTryFromStringBuildsWhatFromStringBuilds(): void
+    {
+        $identifier = SecurityIdentifierFactory::tryFromString('US0378331005');
+
+        self::assertInstanceOf(Isin::class, $identifier);
+        self::assertEquals(SecurityIdentifierFactory::fromString('US0378331005'), $identifier);
+    }
+
+    public function testTryFromStringIsNullWhenNothingMatches(): void
+    {
+        self::assertNull(SecurityIdentifierFactory::tryFromString('not an identifier!'));
+    }
+
+    /**
+     * @param list<class-string> $candidates
+     */
+    #[DataProvider('ambiguous')]
+    public function testTryFromStringIsNullWhenSeveralTypesMatch(string $value, array $candidates): void
+    {
+        self::assertGreaterThan(1, \count($candidates));
+        self::assertNull(SecurityIdentifierFactory::tryFromString($value));
+    }
 }

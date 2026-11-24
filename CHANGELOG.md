@@ -1,5 +1,14 @@
 # Changelog
 
+## [1.1.0] - unreleased
+
+### Added
+
+- `SecurityIdentifierFactory::tryFromString()`, `PaymentQrFactory::tryFromString()` and `tryFromBytes()`: null where
+  the `from…()` twin throws a value refusal (vo-base `InvalidValueObjectException`, including
+  `AmbiguousValueException`). Anything else still propagates, such as the `LogicException` of `fromBytes()` without
+  ext-mbstring.
+
 ## [1.0.0] - 2026-11-23
 
 First stable release: from here on a breaking change needs 2.0.

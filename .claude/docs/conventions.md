@@ -16,3 +16,7 @@
 - `fromParts()` validates the body with its own regex and fixed message before calling the helper's `compute()`
   (which throws `LogicException` on a foreign alphabet); the constructor validates the result again.
 - Every enum docblock says cases may be added in a minor; `get()` returns `non-empty-string|null` everywhere.
+- Factories (`SecurityIdentifierFactory`, `PaymentQrFactory`) have `tryFrom…()` twins since 1.1.0: they catch only
+  vo-base `InvalidValueObjectException` (`AmbiguousValueException` and every `Invalid…Exception` here extend it);
+  `PaymentQrFactory::fromBytes()`'s `LogicException` (no ext-mbstring) is deliberately not swallowed. It cannot be
+  tested with the extension loaded: `Transcoder::toUtf8()` is covered through its `$mbstring` parameter only.

@@ -6,6 +6,7 @@ namespace MSSTC4PHP\ValueObject\Financial\PaymentQr;
 
 use LogicException;
 use MSSTC4PHP\ValueObject\Exception\AmbiguousValueException;
+use MSSTC4PHP\ValueObject\Exception\InvalidValueObjectException;
 use MSSTC4PHP\ValueObject\Financial\Exception\InvalidPaymentQrException;
 use MSSTC4PHP\ValueObject\Financial\Internal\EmvcoTlv;
 use MSSTC4PHP\ValueObject\Financial\Internal\PayloadBound;
@@ -91,6 +92,21 @@ final class PaymentQrFactory
     }
 
     /**
+     * Null when the bytes are not UTF-8 (outside an EPC or GOST payload), no class accepts the payload or several
+     * profiles do; fromBytes() says which.
+     *
+     * @throws LogicException without ext-mbstring, for an EPC or GOST payload in a single-byte character set
+     */
+    public static function tryFromBytes(string $bytes): ?PaymentPayload
+    {
+        try {
+            return self::fromBytes($bytes);
+        } catch (InvalidValueObjectException) {
+            return null;
+        }
+    }
+
+    /**
      * @throws AmbiguousValueException when several profiles accept the payload
      * @throws InvalidPaymentQrException when the marked class does not accept it, or neither an identified profile nor
      *                                   the generic format does
@@ -134,6 +150,16 @@ final class PaymentQrFactory
             1 => $matches[0],
             default => throw new AmbiguousValueException('payment QR profile', self::classesOf($matches)),
         };
+    }
+
+    /** Null when no class accepts the payload or several profiles do; fromString() says which. */
+    public static function tryFromString(string $payload): ?PaymentPayload
+    {
+        try {
+            return self::fromString($payload);
+        } catch (InvalidValueObjectException) {
+            return null;
+        }
     }
 
     /**

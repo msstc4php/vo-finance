@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace MSSTC4PHP\ValueObject\Financial\Security;
 
 use MSSTC4PHP\ValueObject\Exception\AmbiguousValueException;
+use MSSTC4PHP\ValueObject\Exception\InvalidValueObjectException;
 use MSSTC4PHP\ValueObject\Financial\Exception\InvalidSecurityIdentifierException;
 use MSSTC4PHP\ValueObject\Support\AbstractStringValueObject;
 
@@ -56,6 +57,16 @@ final class SecurityIdentifierFactory
             1 => $matches[0],
             default => throw new AmbiguousValueException('securities identifier', self::classesOf($matches)),
         };
+    }
+
+    /** Null when no type or several accept the value; fromString() says which. */
+    public static function tryFromString(string $value): ?SecurityIdentifier
+    {
+        try {
+            return self::fromString($value);
+        } catch (InvalidValueObjectException) {
+            return null;
+        }
     }
 
     /**
