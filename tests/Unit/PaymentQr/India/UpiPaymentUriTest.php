@@ -44,6 +44,18 @@ final class UpiPaymentUriTest extends TestCase
         self::assertSame(['pa', 'pn', 'tr', 'am', 'mam', 'cu', 'tn'], $uri->parameterNames());
     }
 
+    public function testTheOfficialExampleParses(): void
+    {
+        // NPCI UPI Linking Specifications 1.5.1, sections 2.1 and 2.2 (printed with line breaks inside values).
+        $uri = UpiPaymentUri::from('upi://pay?pa=nadeem@npci&pn=nadeem%20chinna&mc=0000&tid=cxnkjcnkjdfdvjndkjfvn&tr=4894398cndhcd23&tn=Pay%20to%20mystar%20store&am=10&mam=null&cu=INR&url=https://mystar.com/orderid=9298yw89e8973e87389e78923ue892');
+
+        self::assertSame('nadeem@npci', $uri->payeeAddress());
+        self::assertSame('nadeem%20chinna', $uri->payeeName());
+        self::assertSame('4894398cndhcd23', $uri->transactionReference());
+        self::assertSame('10', $uri->amount()?->value);
+        self::assertSame('upi://pay?pa=n***@npci&pn=n***&mc=0000&tid=c***n&tr=4***3&tn=***&am=10&mam=***&cu=INR&url=***', $uri->masked());
+    }
+
     public function testTheMinimalUriParses(): void
     {
         $uri = UpiPaymentUri::from('upi://pay?pa=a@b&pn=A');
@@ -181,7 +193,9 @@ final class UpiPaymentUriTest extends TestCase
         yield 'VPA with an empty local part' => ['pa=@okaxis&pn=A', 'pa=***&pn=A***'];
         yield 'references keep their ends' => ['pa=a@b&pn=A&tr=ORDER-79101234567&tid=TXN123', 'pa=a***@b&pn=A***&tr=O***7&tid=T***3'];
         yield 'text parameters keep their name' => ['pa=a@b&pn=A&tn=Rent&url=https://x/anna&sign=abc', 'pa=a***@b&pn=A***&tn=***&url=***&sign=***'];
-        yield 'codes in their shape' => ['pa=a@b&pn=A&am=123456789012345678.99&mam=1&cu=INR&mc=5411&mode=02&purpose=00&qrMedium=04&orgid=000000', 'pa=a***@b&pn=A***&am=123456789012345678.99&mam=1&cu=INR&mc=5411&mode=02&purpose=00&qrMedium=04&orgid=000000'];
+        yield 'codes in their shape' => ['pa=a@b&pn=A&am=123456789012345678.99&mam=1&cu=INR&mc=5411', 'pa=a***@b&pn=A***&am=123456789012345678.99&mam=1&cu=INR&mc=5411'];
+        yield 'parameters 1.5.1 does not define keep only their name' => ['pa=a@b&pn=A&mode=02&purpose=00&qrMedium=04&orgid=000000&sign=', 'pa=a***@b&pn=A***&mode=***&purpose=***&qrMedium=***&orgid=***&sign='];
+        yield 'a currency other than INR' => ['pa=a@b&pn=A&cu=USD', 'pa=a***@b&pn=A***&cu=***'];
         yield 'codes of another shape' => ['pa=a@b&pn=A&am=1.234&mam=1.&cu=inr&mc=541&mode=2&purpose=Anna&qrMedium=123&orgid=1234567', 'pa=a***@b&pn=A***&am=***&mam=***&cu=***&mc=***&mode=***&purpose=***&qrMedium=***&orgid=***'];
         yield 'unknown and case-variant names' => ['pa=a@b&pn=A&email=anna@x.com&PN=Anna&p%6E=Anna&x=', 'pa=a***@b&pn=A***&***=***&***=***&***=***&***='];
         yield 'bare pairs and empty values' => ['pa=a@b&pn=A&anna@x.com&am&am=&tn=&&', 'pa=a***@b&pn=A***&***&***&am=&tn=&&'];

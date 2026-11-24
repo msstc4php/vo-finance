@@ -31,6 +31,10 @@ final class Gost56042PayloadTest extends TestCase
 
     private const string ADDITIONAL = '|PayeeINN=6200098765|LastName=Иванов|FirstName=Иван|MiddleName=Иванович|Purpose=Оплата членского взноса|PayerAddress=г.Рязань ул.Ленина д.10 кв.15|Sum=100000';
 
+    // Synthetic from the Federal Tax Service's published Moscow requisites (see testATreasuryAccountIsOutsideTheKeyRule).
+    private const string BUDGET = 'ST00012|Name=UFK|PersonalAcc=03100643000000017300|BankName=GU|BIC=004525988|CorrespAcc=40102810545370000003'
+        . '|PayeeINN=7727406020|KPP=770801001|CBC=18210102010011000110|OKTMO=45000000|DrawerStatus=01|PaytReason=0|TaxPeriod=0';
+
     public function testTheAnnexExampleParsesInUtf8(): void
     {
         $payload = 'ST00012|' . self::MANDATORY . self::ADDITIONAL;
@@ -174,7 +178,7 @@ final class Gost56042PayloadTest extends TestCase
         yield 'empty name' => ['ST00012|Name=|PersonalAcc=40702810138250123017|BankName=B|BIC=044525225|CorrespAcc=0'];
         yield 'name of 161 characters' => ['ST00012|Name=' . \str_repeat('Я', 161) . '|PersonalAcc=40702810138250123017|BankName=B|BIC=044525225|CorrespAcc=0'];
         yield 'account of 19 digits' => ['ST00012|Name=A|PersonalAcc=4070281013825012301|BankName=B|BIC=044525225|CorrespAcc=0'];
-        yield 'account with a letter' => ['ST00012|Name=A|PersonalAcc=4070281013825012301A|BankName=B|BIC=044525225|CorrespAcc=0'];
+        yield 'account with a letter in the last place' => ['ST00012|Name=A|PersonalAcc=4070281013825012301A|BankName=B|BIC=044525225|CorrespAcc=0'];
         yield 'account with a wrong key' => ['ST00012|Name=A|PersonalAcc=40702810238250123017|BankName=B|BIC=044525225|CorrespAcc=0'];
         yield 'empty bank name' => ['ST00012|Name=A|PersonalAcc=40702810138250123017|BankName=|BIC=044525225|CorrespAcc=0'];
         yield 'bank name of 46 characters' => ['ST00012|Name=A|PersonalAcc=40702810138250123017|BankName=' . \str_repeat('Б', 46) . '|BIC=044525225|CorrespAcc=0'];
@@ -234,10 +238,10 @@ final class Gost56042PayloadTest extends TestCase
 
     public function testMaskedKeepsTheCodeAliasesInTheirShape(): void
     {
-        $visible = 'BIC=044525225|CorrespAcc=0|CBC=18210102010011000110|Sum=123456789012345678|AddAmount=1|PayeeINN=7707083893|DrawerStatus=01|PayerIdType=01|TechCode=02|KPP=7736AB001|OKTMO=45000000|PaytReason=ТП|TaxPaytKind=0|TaxPeriod=МС.02.2014|DocDate=01.02.2014|PaymTerm=0|QuittDate=31.12.2024|PaymPeriod=12.2024|CounterVal=1234,5|RegType=12';
+        $visible = 'BIC=044525225|CorrespAcc=0|CBC=18210102010011000110|Sum=123456789012345678|AddAmount=1|PayeeINN=7707083893|DrawerStatus=01|PayerIdType=01|TechCode=02|KPP=7736AB001|OKTMO=45000000|PaytReason=ПК|TaxPaytKind=0|TaxPeriod=МС.02.2014|DocDate=01.02.2014|PaymTerm=0|QuittDate=31.12.2024|PaymPeriod=12.2024|CounterVal=1234,5|RegType=12';
 
         self::assertStringEndsWith('|' . $visible, Gost56042Payload::from('ST00012|' . self::MANDATORY . '|' . $visible)->masked());
-        self::assertStringEndsWith('|PayeeINN=770708389312|OKTMO=45000000001|TaxPeriod=01.02.2014|PaymPeriod=122024|CounterVal=7', Gost56042Payload::from('ST00012|' . self::MANDATORY . '|PayeeINN=770708389312|OKTMO=45000000001|TaxPeriod=01.02.2014|PaymPeriod=122024|CounterVal=7')->masked());
+        self::assertStringEndsWith('|DrawerStatus=34|PaytReason=0|PaytReason=00|TaxPeriod=01.02.2014|PaymPeriod=122024|CounterVal=7', Gost56042Payload::from('ST00012|' . self::MANDATORY . '|DrawerStatus=34|PaytReason=0|PaytReason=00|TaxPeriod=01.02.2014|PaymPeriod=122024|CounterVal=7')->masked());
     }
 
     /**
@@ -245,7 +249,7 @@ final class Gost56042PayloadTest extends TestCase
      */
     public static function codeAliasesOfAnotherShape(): iterable
     {
-        foreach (['CorrespAcc=79101234567', 'CBC=7910123456', 'Sum=1.5', 'Sum=1234567890123456789', 'AddAmount=Анна', 'PayeeINN=79101234567', 'DrawerStatus=1', 'PayerIdType=Анна', 'TechCode=123', 'KPP=7736ab001', 'KPP=77360100', 'OKTMO=7910123', 'PaytReason=Тп', 'PaytReason=ТПП', 'TaxPaytKind=a', 'TaxPeriod=МС.02.201', 'TaxPeriod=Мс.02.2014', 'DocDate=1.02.2014', 'PaymTerm=01-02-2014', 'QuittDate=Анна', 'PaymPeriod=12.202', 'PaymPeriod=12..2024', 'CounterVal=1.', 'CounterVal=1234567890123456', 'CounterVal=1.1234567', 'RegType=12345', 'RegType=Анна'] as $pair) {
+        foreach (['CorrespAcc=79101234567', 'CBC=7910123456', 'Sum=1.5', 'Sum=1234567890123456789', 'AddAmount=Анна', 'PayeeINN=79101234567', 'PayeeINN=770708389312', 'DrawerStatus=1', 'DrawerStatus=02', 'DrawerStatus=35', 'OKTMO=45000000001', 'PaytReason=ТП', 'TaxPeriod=10702000', 'PayerIdType=Анна', 'TechCode=123', 'KPP=7736ab001', 'KPP=77360100', 'OKTMO=7910123', 'PaytReason=Тп', 'PaytReason=ТПП', 'TaxPaytKind=a', 'TaxPeriod=МС.02.201', 'TaxPeriod=Мс.02.2014', 'DocDate=1.02.2014', 'PaymTerm=01-02-2014', 'QuittDate=Анна', 'PaymPeriod=12.202', 'PaymPeriod=12..2024', 'CounterVal=1.', 'CounterVal=1234567890123456', 'CounterVal=1.1234567', 'RegType=12345', 'RegType=Анна'] as $pair) {
             yield $pair => [$pair];
         }
     }
@@ -332,6 +336,86 @@ final class Gost56042PayloadTest extends TestCase
             . '|BIC=004525988|CorrespAcc=40102810545370000003';
 
         self::assertSame('03100643000000017300', Gost56042Payload::from($payload)->personalAccount());
+    }
+
+    public function testAnAccountWithALetterOfTheAlbumInTheSixthPlaceIsAcceptedWithoutItsKey(): void
+    {
+        // УФЭБС 2026.09 leaf type of an account: \d{5}[0-9ABCEHKMPTX]\d{14}. The key of such an account needs the
+        // letter table of 579-П, which was not reached, so it is not checked.
+        $payload = 'ST00012|Name=A|PersonalAcc=40702C10238250123017|BankName=B|BIC=044525225|CorrespAcc=30101X10400000000225';
+        $gost = Gost56042Payload::from($payload);
+
+        self::assertSame('40702C10238250123017', $gost->personalAccount());
+        self::assertSame('30101X10400000000225', $gost->correspondentAccount());
+        self::assertStringStartsWith('ST00012|Name=A***|PersonalAcc=40**************3017|BankName=B***|BIC=044525225|CorrespAcc=***', $gost->masked());
+    }
+
+    /**
+     * @return iterable<string, array{string}>
+     */
+    public static function accountsWithALetterOutsideTheAlbum(): iterable
+    {
+        yield 'letter outside the album list' => ['PersonalAcc=40702D10238250123017|BankName=B|BIC=044525225|CorrespAcc=0'];
+        yield 'lowercase letter' => ['PersonalAcc=40702c10238250123017|BankName=B|BIC=044525225|CorrespAcc=0'];
+        yield 'letter in the fifth place' => ['PersonalAcc=4070C810238250123017|BankName=B|BIC=044525225|CorrespAcc=0'];
+        yield 'letter in a correspondent account under 20 characters' => ['PersonalAcc=40702810138250123017|BankName=B|BIC=044525225|CorrespAcc=30101X'];
+    }
+
+    #[DataProvider('accountsWithALetterOutsideTheAlbum')]
+    public function testAnAccountWithALetterElsewhereIsRefused(string $tail): void
+    {
+        self::assertFalse(Gost56042Payload::isValid('ST00012|Name=A|' . $tail));
+    }
+
+    public function testBudgetPaymentDetailsMeetingTheUfebsChecksAreReported(): void
+    {
+        self::assertTrue(Gost56042Payload::from(self::BUDGET)->hasValidBudgetPaymentDetails());
+        self::assertTrue(Gost56042Payload::from(self::BUDGET . '|DocNo=0|PayerINN=500100732259|TaxPeriod=10702000|PaytReason=ТД|OKTMO=0|CBC=0|KPP=7708AB001|DrawerStatus=34')->hasValidBudgetPaymentDetails());
+        self::assertTrue(Gost56042Payload::from(self::BUDGET . '|DocNo=' . \str_repeat('Я', 15) . '|PayerINN=0')->hasValidBudgetPaymentDetails());
+        self::assertTrue(Gost56042Payload::from(self::BUDGET . '|PayerINN=12345|PayerINN=7707083893')->hasValidBudgetPaymentDetails());
+    }
+
+    /**
+     * @return iterable<string, array{string}>
+     */
+    public static function budgetDetailsFailingTheUfebsChecks(): iterable
+    {
+        foreach (['DrawerStatus', 'PayeeINN', 'KPP', 'CBC', 'OKTMO', 'PaytReason', 'TaxPeriod'] as $alias) {
+            yield 'empty ' . $alias => ['|' . $alias . '='];
+        }
+
+        foreach ([
+            'DrawerStatus=02', 'DrawerStatus=1', 'PayeeINN=0027406020', 'PayeeINN=772740602', 'PayeeINN=772740602012',
+            'KPP=007708010', 'KPP=77080100', 'KPP=7708010011', 'CBC=00000000000000000000', 'CBC=1821010201001100011',
+            'CBC=1821010201001100011A', 'OKTMO=00000000', 'OKTMO=45000000001', 'OKTMO=4500000', 'PaytReason=ТП',
+            'PaytReason=пк', 'TaxPeriod=МС.02.2014', 'TaxPeriod=1070200', 'TaxPeriod=107020001', 'DocNo=' . \str_repeat('Я', 16),
+            'PayerINN=00000', 'PayerINN=0012345678', 'PayerINN=001234567890', 'PayerINN=1234', 'PayerINN=12345678901',
+            'PayerINN=1234567', 'PayerINN=00',
+        ] as $pair) {
+            yield $pair => ['|' . $pair];
+        }
+    }
+
+    #[DataProvider('budgetDetailsFailingTheUfebsChecks')]
+    public function testBudgetPaymentDetailsFailingTheUfebsChecksAreReportedButAccepted(string $pair): void
+    {
+        self::assertFalse(Gost56042Payload::from(self::BUDGET . $pair)->hasValidBudgetPaymentDetails());
+    }
+
+    /**
+     * @return iterable<string, array{string}>
+     */
+    public static function missingBudgetRequisites(): iterable
+    {
+        foreach (['PayeeINN=7727406020', 'KPP=770801001', 'CBC=18210102010011000110', 'OKTMO=45000000', 'DrawerStatus=01', 'PaytReason=0', 'TaxPeriod=0'] as $pair) {
+            yield $pair => [$pair];
+        }
+    }
+
+    #[DataProvider('missingBudgetRequisites')]
+    public function testAMissingBudgetRequisiteIsReported(string $pair): void
+    {
+        self::assertFalse(Gost56042Payload::from(\str_replace('|' . $pair, '', self::BUDGET))->hasValidBudgetPaymentDetails());
     }
 
     public function testEveryOccurrenceOfAnAccountMustCarryAValidKey(): void

@@ -30,7 +30,7 @@ filled with placeholders when the profile allows, CRC recomputed) while keeping 
 trait; checks use `Internal\ProfileRule`.
 
 Non-EMVCo payloads: `PaymentQr\Epc\EpcQr`, `PaymentQr\Swiss\QrBill` (+ `QrBillAddress` readonly DTO,
-`QrBillReferenceType` enum), `PaymentQr\Ru\Gost56042Payload`, `PaymentQr\Ru\SbpPaymentLink`, `PaymentQr\India\UpiPaymentUri`;
+`QrBillReferenceType` enum), `PaymentQr\Ru\Gost56042Payload`, `PaymentQr\Ru\SbpPaymentLink` (`SbpQrType` enum), `PaymentQr\India\UpiPaymentUri`;
 references `Reference\QrReference`, `Reference\CreditorReference`. Helpers: `Internal\Iso8859` (whether text fits one ISO 8859 set of EPC069-12 section 2.1; PCRE classes generated
 from the Unicode 8859-N.TXT tables, no extension), `Internal\TextLines` (line split keeping every
 LF/CRLF separator, rebuild with one line replaced), `Internal\QueryString` (raw `name=value` pairs, no decoding),
@@ -38,4 +38,4 @@ LF/CRLF separator, rebuild with one line replaced), `Internal\QueryString` (raw 
 length tier), `Internal\PayloadBound` (the shared 7089-character abuse bound); serialization of the value alone with `parse()`
 run again on unserialize comes from vo-base `^1.3` (0.1.0 had its own `Internal\ReparsesOnUnserialize`),
 `Internal\RussianAccountKey` (Order 515). `PaymentQrFactory` dispatches by marker (`BCD`, `SPC`, `ST0001`,
-`https://qr.nspk.ru/` and `upi://` case-insensitive) before the EMVCo profiles; a marked payload never falls back to EMVCo.
+`https://qr.nspk.ru/`, `https://sub.nspk.ru/`, `https://b2b.cbrpay.ru/` (`SBP_PREFIXES`, since 1.2.0) and `upi://` case-insensitive) before the EMVCo profiles; a marked payload never falls back to EMVCo.

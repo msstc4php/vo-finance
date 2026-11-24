@@ -13,7 +13,7 @@ Outcome per rule:
 | ISIN check digit | enforced: three worked examples of a numbering agency (SET), the formula named by ANNA and ISO 6166 |
 | ISIN prefix | format only: two letters (alpha-2 country codes, reserved codes, `XS`, `EZ`, `ZZ` or other RA-determined prefixes per ISO 6166:2021 clause 4.1); never refused for being outside ISO 3166 |
 | LEI check pair | enforced (ISO 17442:2012, text reached) |
-| UPI | format enforced (ROC: `QZ`, 12 characters, no vowels or `Y`); check character not verified (ISO 4914 Annex C and the ANNA DSB guidance unreachable) |
+| UPI | format enforced (ROC: `QZ`, 12 characters, no vowels or `Y`); check character not verified (CPMI-IOSCO guidance reached: a check character exists, no algorithm; ISO 4914 Annex C and the ANNA DSB guidance unreachable) |
 | CFI | six letters; decoding from SIX's list |
 | FISN, MIC, FIGI, SEDOL, WKN | as quoted below |
 | CUSIP check digit | enforced for an all-digit CUSIP only; **format only for any CUSIP with a letter, `*`, `@` or `#`** (no official value table) |
@@ -22,7 +22,8 @@ Outcome per rule:
 | PAN length | 10 to 19 digits (ISO/IEC 7812-1:2017 preview) |
 | Card schemes | only what a reached publication states (Discover's summary); no no-Luhn range exists in any reached publication |
 
-Research date: 2026-11-20 (UTC). Scope of this file: the sources of the check-digit helpers, of the
+Research date: 2026-11-20 (UTC); the SBP, UPI linking, УФЭБС and CPMI-IOSCO sources were read 2026-11-24 between
+05:00Z and 05:40Z (UTC). Scope of this file: the sources of the check-digit helpers, of the
 securities and card classes, of the EMVCo QR body and the national profiles, and of EPC069-12, the QR-bill layout,
 GOST R 56042, NSPK and NPCI.
 
@@ -38,7 +39,7 @@ statement).
 | ISIN prefixes | ANNA, RA list of ISIN prefixes, January 2024 | reached | `XS`, `EU`, `EZ`, `XA`-`XD` and `XT` exist beside ISO 3166 codes: the prefix is never refused |
 | ISIN check digit | Stock Exchange of Thailand "ISIN calculation" (three worked examples); ANNA; ISO 6166 Annex C | reached (examples); Annex C text paywalled | the doubling position and the letter values T, H, B, Z; the formula name |
 | LEI | ISO 17442:2012 preview (full text of clauses 4 to 5 and Annex A); GLEIF; ISO 17442-1:2020 not reached | preview, reached | 20 characters, check pair by ISO/IEC 7064 MOD 97-10, examples |
-| UPI (ISO 4914) | ISO 4914:2021 preview (iteh); ANNA DSB | preview reached (contents only); rest **unreachable** | the preview lists Annex C "Check character calculation" as normative; no format or algorithm text |
+| UPI (ISO 4914) | ISO 4914:2021 preview (iteh); CPMI-IOSCO technical guidance (2017); ANNA DSB | preview reached (contents only); guidance reached; rest **unreachable** | Annex C "Check character calculation" is normative; the guidance asks for 12 alphanumerics with a check character; no algorithm text |
 | CFI | ISO 10962:2021 preview; ISO 10962:1997 preview; SIX CFI page | preview, reached | six letters, `X` is "not applicable"; the code list is a SIX download |
 | FISN | ANNA FISN Guidelines, June 2026 (ISO 18774 2nd edition) | reached | at most 35 characters, issuer name at most 15, `/`, description |
 | MIC | ISO 10383 RA FAQ (January 2023) and Release 2.0 factsheet | reached | four alphanumeric characters, `[A-Z0-9]{4}` |
@@ -57,9 +58,10 @@ statement).
 | EPC QR | EPC069-12 v3.0 (13 September 2022) | reached | line layout, character sets, limits, examples V1 and V2 |
 | Swiss QR-bill | SIX IG QR-bill 2.3 (21 November 2025) | reached | data elements, separators, character set, reference rules, Annex A examples (example 4's RF72 fails ISO 11649) |
 | GOST R 56042-2014 | text as quoted by files.stroyinf.ru | as quoted | service block, pairs, mandatory requisites, Annex D example |
+| УФЭБС 2026.09 | Bank of Russia, album of formats (XSD) and budget-payment checks | reached | account pattern with a letter in place 6; field formats; `hasValidBudgetPaymentDetails()` |
 | Russian account key | Bank of Russia Order 515 (1997) as quoted by pravo.ppt.ru | as quoted | 7-1-3 weights, RKC or credit institution number, annex examples |
-| SBP link | NSPK Rules P.235 v4.0 (archive) | archive; layout **unreachable** | format only |
-| UPI URI | NPCI OC 18 (2017) and OC 37 (archive); linking specification not reached | archive | `pa`, `pn` mandatory, `tr` up to 35; scheme not confirmed |
+| SBP link | NSPK "СБП API" (OpenAPI document of sbp.nspk.ru) | reached | hosts, QR_ID 32, query field formats (reported, not enforced), official examples |
+| UPI URI | NPCI UPI Linking Specifications 1.5.1 (archive); NPCI OC 18 (2017) and OC 37 (archive) | archive | `upi://pay` confirmed, `pa`, `pn` mandatory, `tr` up to 35, `cu` only `INR`, `%20` space, official example |
 
 ## ISIN, ISO 6166
 
@@ -140,7 +142,16 @@ ISO 4914:2021 preview, <https://cdn.standards.iteh.ai/samples/80506/11803bc283ce
 contents "4 UPI code structure", "5 UPI reference data library", "Annex C (normative) Check character calculation". The
 preview stops before clause 4: no length, character set or algorithm text. The ANNA DSB site
 (<https://www.anna-dsb.com/>) links "UPI Technical Guidance" at cosp.anna-dsb.com, which is not reachable without an
-account; the pages reached carry no format or check rule. **Outcome:** `Upi` is format only; a check helper would be
+account; the pages reached carry no format or check rule.
+
+CPMI-IOSCO, "Technical Guidance: Harmonisation of the Unique Product Identifier", September 2017,
+<https://www.bis.org/publications/harmonisation-unique-product-identifier-technical-guidance.pdf> (1075581 bytes, SHA-256
+`10516fccb2a316a578daa28a673cc9b90120a4a1d3d9391b8fb9377e517b6d01`, read 2026-11-24 UTC), status **reached**, section
+6.2: "A 12-character code (including a check character or digit) would be consistent with this guidance."; "The
+semantically meaningless UPI code should be constructed of alphanumerical characters only."; "The UPI code should
+include a check digit, or another means, in order to provide a check against errors such as those introduced during
+transcription." No algorithm is given, and the footer defers to the Regulatory Oversight Committee ("This publication
+may not be the most updated technical reference"). **Outcome:** `Upi` is format only; a check helper would be
 added only if the DSB's own publication defined the check character and were reached. (An unmerged python-stdnum pull
 request describing a `QZ` prefix and ISO 7064 MOD 31,30 is an aggregator and is not used.)
 
@@ -515,8 +526,8 @@ For `PaymentQrFactory`.
 | EPC QR | line 1 `BCD`, version `001` or `002`, identification `SCT` | EPC069-12 v3.0, <https://europeanpaymentscouncil.eu/sites/default/files/kb/file/2022-09/EPC069-12%20v3.0%20Quick%20Response%20Code%20-%20Guidelines%20to%20Enable%20the%20Data%20Capture%20for%20the%20Initiation%20of%20an%20SCT_0.pdf> "Service Tag: ‘BCD’", "V1: ‘001’ V2: ‘002’" | reached |
 | Swiss QR-bill | `SPC` ("Swiss Payments Code") | SIX IG QR-bill 2.3, section 4.2 data structure, "QRType" `"SPC" (Swiss Payments Code)`; Annex A examples | reached |
 | GOST R 56042-2014 | `ST0001` followed by the charset digit | text of the standard as mirrored at <https://files.stroyinf.ru/Data2/1/4293771/4293771168.htm> (Table 3: "ST0001") | as quoted (Rosstandart's own text unreachable) |
-| SBP link | `https://qr.nspk.ru/` | NSPK documentation | **unreachable**: NSPK Rules P.235 v4.0 put the QR standards on the closed portal; format only |
-| UPI | `upi://pay?` | NPCI UPI Linking Specification; a third-party copy of version 1.6 and NPCI circulars OC 18 and OC 37 were found | **not confirmed** (the NPCI document itself was not read; OC 18 gives the parameters, not the scheme) |
+| SBP link | `https://qr.nspk.ru/`, `https://sub.nspk.ru/`, `https://b2b.cbrpay.ru/` | NSPK "СБП API", "HOST: qr.nspk.ru - для QR_TYPE = 01 и 02; sub.nspk.ru - для QR_TYPE = 03" and the B2B table "HOST: b2b.cbrpay.ru" (see "NSPK SBP") | reached; the two later hosts route to `SbpPaymentLink` from 1.2.0 (controller ruling 2026-11-24 UTC: payloads that the factory refused before, same candidate) |
+| UPI | `upi://pay?` | NPCI UPI Linking Specifications 1.5.1, 1.2: "UPI Deep linking URL spec must be as follows ... upi://pay?parm-name=param-value&..." | archive (see "NPCI UPI linking specification") |
 
 An EMVCo payload with no marker of its own goes to the national profiles it identifies: the Pix GUI `br.gov.bcb.pix`
 in a template 26-51, a PromptPay AID in template 29 (credit transfer) or 30 (bill payment), the DuitNow AID
@@ -735,7 +746,7 @@ obsolete and points to that page. Test vectors: the examples of the API table (`
 |---|---|
 | SGQR (MAS/IMDA) | Not reached: the MAS/IMDA publications reached carry no data-object rule. MAS's pages, the IMDA 2018 fact sheet ("The SGQR specifications are based on the "QR Code Specification for Payment System – Merchant-Presented Mode" issued by EMVCo ... customised it for the Singapore market") and the 2022 MAS/IMDA consultation paper ("SGQR is based on internationally recognised EMVCo merchant-presented QR code specifications") give no data-object rule |
 | QRIS (Bank Indonesia) | PADG 21/18/PADG/2019 article 5(1): "Penyelenggara Jasa Sistem Pembayaran dan pihak lain yang bermaksud memperoleh salinan dokumen QRIS ... harus mengajukan permohonan tertulis kepada Lembaga Standar" (the QRIS document is given on written request only); the PADG has no technical annex |
-| VietQR (NAPAS) | SBV Decision 1928/QĐ-NHNN (5 Oct 2018, TCCS 03:2018/NHNNVN, the merchant-presented base standard) was not reached; Decision 2525/QĐ-NHNN is TCCS 04:2024, the customer-presented standard; NAPAS's VietQR specification is found only on third-party sites |
+| VietQR (NAPAS) | The 2018 merchant-presented base standard TCCS 03:2018 was not reached, and no source reached confirms its decision number (cited elsewhere as 1928/QĐ-NHNN of 5 Oct 2018; one legal database lists 1927/QĐ-NHNN of 05/10/2018 as ten card standards; search 2026-11-24 UTC); Decision 2525/QĐ-NHNN is TCCS 04:2024, the customer-presented standard; NAPAS's VietQR specification is found only on third-party sites |
 | HK FPS (HKMA/HKICL) | Not reached: the HKICL/HKMA publications reached carry no data-object rule for the FPS template (HKMA: the common template and an implementation guideline; HKICL: the QR page and scheme documents) |
 | Bharat QR (NPCI) | NPCI circular NPCI/2017-18/PD/004: "NPCI had released technical specifications (Merchant QR Code Specification V 4.0) ... to all RuPay acquiring member banks"; no copy among NPCI's archived public files |
 | QR Ph (BSP) | none found |
@@ -944,8 +955,9 @@ Annex examples, tests of `Internal\RussianAccountKey`: `30101810800000000746` at
 `40102810100000010001` at BIC `040305000` (both with the RKC number 005). A payment payload does not say whether the
 account is opened at an RKC or a credit institution, so either number gives a valid key (the GOST example account
 `40702810138250123017` passes with the credit institution number 225, its correspondent account with the RKC number
-045). Item 8 (a letter in the sixth digit for clearing currency) does not arise: GOST requires 20 digits. Accounts
-shorter than 20 digits (`CorrespAcc=0`) have no key.
+045). Item 8 (a letter in the sixth digit for clearing currency) arises from 1.2.0: the УФЭБС account pattern allows
+that letter (see below), and such an account is accepted without a key check, because the letter's digit value is in
+the 579-П chart of accounts, which was not reached. Accounts shorter than 20 digits (`CorrespAcc=0`) have no key.
 
 **Scope.** The order's preamble ties the key to "Схема обозначения лицевых счетов, приведенная в
 Правилах ведения бухгалтерского учета в кредитных организациях", and item 2 to accounts opened "в РКЦ" or "в кредитной
@@ -959,74 +971,183 @@ checked against the BIC that counts (the last).
 Masking (the 1.0 fail-closed masking rule: a field stays visible only on the allowlist and in its shape; README,
 "Payment QR payloads", has the per-profile tables). Annex V aliases read 2026-11-23 21:20 UTC from the same mirror
 (table В.1; it prints `Docldx`, `Payerld...`, `Counterld` with a lowercase L for I); Annex V gives only maximum lengths
-and leaves the formats to the УФЭБС album, which was not reached, so the shapes below are masking shapes, not
-validation. Keep ends: the accounts and identifiers `PersonalAcc`, `PersAcc`, `PersonalAccount` ("Лицевой счет
-бюджетного получателя"), `PensAcc` (SNILS), `PayerIdNum` (identity document number), `PayerINN`, `Phone` ("Номер
-телефона"), `CounterId` ("Номер прибора учета", the meter at the payer's premises), `ExecId` ("Номер исполнительного
-производства", searchable in the FSSP database by debtor) and `RuleId` ("Номер постановления (для ГИБДД)", one person's
-fine). First character: the names `Name`, `BankName`, `LastName`, `FirstName`, `MiddleName`, `ChildFio` ("ФИО
-ребенка/учащегося") and `SpecFio` ("ФИО преподавателя, специалиста, оказывающего услугу"). First and last character: the
-payee's references `DocNo`, `DocIdx`, `QuittId` and `UIN`. Visible only in shape: `BIC` (9 digits), `CorrespAcc` and
-`CBC` (`0` or 20 digits), `Sum` and `AddAmount` (up to 18 digits, "Макс. 18"), `PayeeINN` (10 or 12 digits),
-`DrawerStatus`, `PayerIdType`, `TechCode` (two digits; Annex Г codes), `KPP` (four digits, two digits or capitals, three
-digits), `OKTMO` (`0`, 8 or 11 digits), `PaytReason`, `TaxPaytKind` (one or two digits or capitals), `TaxPeriod`,
-`DocDate`, `PaymTerm`, `QuittDate`, `PaymPeriod` (dates and periods), `CounterVal` (a reading) and `RegType` (up to four
-digits). Everything else becomes `***`: what locates a person (`PayerAddress` "Адрес плательщика", `Flat` "Номер
-квартиры", `InstNum`, `ClassNum`), `BirthDate` ("Дата рождения"), free text (`Purpose` "Наименование платежа
-(назначение)", `Contract` "Номер договора", `Category`, `ServiceName`) and a value of another shape. An alias outside
-table В.1 (parse accepts any alias, 5.2.2; the mirror's own example adds `SomeNewReq`) becomes `***=***`.
+and leaves the formats to the УФЭБС album (see "Bank of Russia УФЭБС" below), so the shapes below are masking shapes,
+cited from the album where it gives one, not validation. Keep ends: the accounts and identifiers `PersonalAcc`,
+`PersAcc`, `PersonalAccount` ("Лицевой счет бюджетного получателя"), `PensAcc` (SNILS), `PayerIdNum` (identity document
+number), `PayerINN`, `Phone` ("Номер телефона"), `CounterId` ("Номер прибора учета", the meter at the payer's premises),
+`ExecId` ("Номер исполнительного производства", searchable in the FSSP database by debtor) and `RuleId` ("Номер
+постановления (для ГИБДД)", one person's fine). First character: the names `Name`, `BankName`, `LastName`, `FirstName`,
+`MiddleName`, `ChildFio` ("ФИО ребенка/учащегося") and `SpecFio` ("ФИО преподавателя, специалиста, оказывающего
+услугу"). First and last character: the payee's references `DocNo`, `DocIdx`, `QuittId` and `UIN`. Visible only in
+shape: `BIC` (9 digits), `CorrespAcc` and `CBC` (`0` or 20 digits, УФЭБС checks 1.9), `Sum` and `AddAmount` (up to 18
+digits, "Макс. 18"), `PayeeINN` (10 digits, checks 1.6; 12 digits until 1.1.0), `DrawerStatus` (the 23 codes of checks
+1.3; any two digits until 1.1.0), `PayerIdType`, `TechCode` (two digits; Annex Г codes), `KPP` (four digits, two digits
+or capitals, three digits: a subset of the 9 characters of checks 1.8), `OKTMO` (`0` or 8 digits, checks 1.10; 11 digits
+until 1.1.0), `PaytReason` (`0` or the codes of checks 1.11; any one or two digits or capitals until 1.1.0),
+`TaxPaytKind` (one or two digits or capitals; no code list quoted), `TaxPeriod` (field 107: `0`, a date or a period; the
+8-digit customs authority code that checks 1.12 now put there stays `***`, since a GOST payload of 2014 also carries the
+older period form), `DocDate`, `PaymTerm`, `QuittDate`, `PaymPeriod` (dates and periods), `CounterVal` (a reading) and
+`RegType` (up to four digits). Everything else becomes `***`: what locates a person (`PayerAddress` "Адрес плательщика",
+`Flat` "Номер квартиры", `InstNum`, `ClassNum`), `BirthDate` ("Дата рождения"), free text (`Purpose` "Наименование
+платежа (назначение)", `Contract` "Номер договора", `Category`, `ServiceName`) and a value of another shape. An alias
+outside table В.1 (parse accepts any alias, 5.2.2; the mirror's own example adds `SomeNewReq`) becomes `***=***`.
+
+### Bank of Russia УФЭБС
+
+Bank of Russia, "Официальное описание УФЭБС", <https://cbr.ru/development/formats/>, album
+<https://cbr.ru/Content/Document/File/123129/UFEBS_v2026_09_0.zip> (25831143 bytes, SHA-256
+`3ca5333743462c7ccce34914765c15d45b1f26e3ca227f75f04bce01062e3566`, read 2026-11-24 UTC), status **reached**. These are
+the formats of the payment order (ED1xx) that GOST Annex V refers to; the GOST QR text itself is not an ED message.
+
+From `XMLSchemas/ed/cbr_ed_leaftypes_v2026.09.0.xsd`: Account "Text, 20 characters", pattern
+`\d{5}[0-9ABCEHKMPTX]\d{14}`; BIC "Numeric, 9 digits" `\d{9}`; INN "Text, up to 12 characters."; KPP "Text, up to 9
+characters."; OKTMO "Text, from 8 to 11 characters."; `DepartmentalInfo` "Departmental Information (fields 101,
+104-110)" with DrawerStatus "Field 101. Text, 1-2 characters.", CBC "Field 104. Text, up to 20 characters.", PaytReason
+"Field 106. String, 1-2", TaxPeriod "Field 107. String from 1 to 10", DocNo "Field 108. String, up to 15".
+
+From `Doc/УФЭБС_2026_09_0_Проверки_в_ПС_БР_платежей_в_бюджет (с 21.09.2026).pdf`, section 1 "Проверки с 21.09.2026"
+(budget payments only):
+
+- 1.2 "{Статус плательщика (101)} должен быть заполнен"; 1.3 "может принимать одно из следующих значений «01», «03»,
+  «04», «05», «06», «07», «08», «13», «15», «16», «17», «19», «20», «23», «24», «27», «28», «29», «30», «31», «32», «33»,
+  «34»".
+- 1.5 "{ИНН плательщика} должен содержать значения, состоящие из 1 знака (цифры), принимающего значение ноль («0»), либо
+  5 знаков (цифр), при этом все знаки (цифры) одновременно не могут принимать значение ноль («0»), либо 10 или 12 знаков
+  (цифр), при этом первые два знака (цифры) не могут одновременно принимать значение ноль («0»)".
+- 1.6 "{ИНН получателя средств} должен содержать значение, состоящее из 10 знаков (цифры), при этом первые два знака не
+  могут одновременно принимать значение ноль («0»)".
+- 1.8 "{КПП получателя средств (103)} должен содержать значения, состоящие из 9 знаков, при этом первый и второй знаки
+  не могут одновременно принимать значение ноль («0»)".
+- 1.9 "{КБК (104)} должен содержать значения, состоящие из 1 знака (цифры), принимающего значение ноль («0»), либо 20
+  знаков (цифр), при этом все знаки (цифры) одновременно не могут принимать значение ноль («0»)".
+- 1.10 "{ОКТМО (105)} должен содержать значения, состоящие из 1 знака (цифры), принимающего значение ноль («0»), либо 8
+  знаков (цифр), при этом все знаки (цифры) одновременно не могут принимать значение ноль («0»)".
+- 1.11 "{Основание платежа (106)} должен содержать значения, состоящие из 1 знака, принимающего значение ноль («0»), либо
+  2 знаков, принимающих одно из следующих значений: «ПК», «КЭ», «УВ», «ИЛ», «ПБ», «ПР», «ТГ», «ТБ», «ТД», «ПВ», «ИН»,
+  «00»".
+- 1.12 "{Код таможенного органа (107)} должен содержать значения, состоящие из 1 знака, принимающего значение ноль
+  («0»), либо заполнен значением кода таможенного органа, состоящего из 8 цифр".
+- 1.13 "{Номер документа основания платежа/Идентификатор сведений о физическом лице (108)} может содержать значения,
+  состоящие из 1 знака, принимающего значение ноль («0»), либо заполнен значением от 1 до 15 знаков".
+
+Outcome:
+
+- **Account letter (widening, 1.2.0).** `PersonalAcc` and a 20-character `CorrespAcc` accept the album's letter in place
+  6 (controller ruling 2026-11-24 UTC, owner rule "never refuse a valid value"). The Order 515 key of such an account
+  is **not verified**: item 8 replaces the letter by a digit from the 579-П chart of accounts, which was not reached.
+  A letter elsewhere, a lowercase letter or one outside `ABCEHKMPTX` is still refused. The class exposes no key
+  accessor, so nothing reports the unverified key; `masked()` keeps the ends of `PersonalAcc` and masks such a
+  `CorrespAcc` `***`.
+- **Masking shapes**: as listed under "Masking" above.
+- **`Gost56042Payload::hasValidBudgetPaymentDetails()`** (report only, never refuses): 101 present and in 1.3; payee
+  INN 1.6; KPP 1.8 (9 characters); CBC 1.9; OKTMO 1.10; 106 present and in 1.11; 107 present, `0` or 8 digits (1.12);
+  108 (1.13: "может") and the payer INN (1.5; the payer's bank may fill it) checked only when present. Not applied: the
+  checks that depend on the payee's account or on other fields (the 101 subsets per account, 1.4 UIN and its check
+  digit, 1.7 payer KPP against the payer INN, the "must not be 0" cases of 1.13), and 109 and 110, which section 1 does
+  not list in this form. A GOST payload of an older practice (a period such as `МС.02.2014` in field 107) reports false.
 
 ### NSPK SBP
 
-**Format only.** NSPK's Rules P.235 "Правила информационно-технологического взаимодействия Агента ТСП, Банка, АО «НСПК»
-при использовании QR-кодов в целях оплаты товаров (работ, услуг) в СБП", version 4.0 (in force 12.09.2024), Internet
-Archive copy
-<https://web.archive.org/web/20251221101611id_/https://sbp.nspk.ru/file/pravila-informacionno-tekhnologicheskogo-vzaimodejstviya_v.4.0.pdf>
-(SHA-256 `812dcc19...`), status **archive**: "Правила размещаются на Сайте. Стандарты ОПКЦ СБП размещаются на Портале."
-and "взаимодействие ... с использованием QR-кода, в соответствии со Стандартами ОПКЦ СБП"; the portal is
-<https://support.nspk.ru>, open to participants only. The text contains no `qr.nspk.ru` link, no identifier shape and no
-query field. The only link examples found are third-party (a Habr article with `?type=01&bank=...&crc=...`), so
-`SbpPaymentLink` checks the host `qr.nspk.ru` over HTTPS, one identifier segment of ASCII letters and digits and a query
-without spaces or fragment, as the plan allows ("otherwise format only (host, id shape)"). Its test link is synthetic.
+NSPK, "СБП API для Участников СБП и Агентов ТСП", ReDoc page <https://sbp.nspk.ru/api/>, OpenAPI document
+<https://sbp.nspk.ru/api/swagger.yaml> (OpenAPI 3.0.1, 570102 bytes, SHA-256
+`8ae05d0e8e7e89403daf02a46639d6ef5bb77c1cdc70243c7a1ee6e923f2947b`, change log up to 2 July 2025, read 2026-11-24 UTC
+with curl), status **reached**. Section "Формат Функциональной ссылки СБП / URL-based QR":
 
-Masking fails closed: with no published field list, `masked()` hides the identifier and rebuilds the query pair by pair.
-It keeps only `type` (`01`, `02`), `bank` (12 digits) and `crc` (one to eight hex digits), the fields of the third-party
-example above, and `sum` (digits with up to two decimals) and `cur` (three capitals), named in the controller's 1.0
-ruling (no source reached defines them); an allowlisted value of another shape becomes `***`. Any other pair is
-author-chosen text in its name as in its value: `***=***`, `***=` for an empty value, `***` without `=`.
+> "В настоящее время Payload QR-кода Операции СБП C2B представляет собой URL следующего формата:
+> `https://HOST/QR_ID?type=QR_TYPE&bank=MEMBER_ID&sum=SUM&cur=CUR&crc=CRC`"; "С 01 октября 2022 новые функциональные
+> ссылки Операции СБП C2B будут создаваться в следующем формате `https://HOST/QR_ID`"
+
+| Parameter | Quote (description; mandatory; format) |
+|---|---|
+| HOST | "qr.nspk.ru - для QR_TYPE = 01 и 02; sub.nspk.ru - для QR_TYPE = 03"; "Да"; "String" |
+| QR_ID | "Идентификатор зарегистрированной Функциональной ссылки СБП"; "Да"; "String-32" |
+| QR_TYPE | "01 - QR-Static; 02 - QR-Dynamic; 03 - QR-Subscription."; "Да"; "String-2 цифры" |
+| MEMBER_ID | "Идентификатор Банка Получателя"; "Да"; "String 12 символов" |
+| SUM | "Сумма операции в копейках"; "Да, если QR_TYPE = 02; Отсутствует, если QR_TYPE = 03"; "String 1...12 цифр" |
+| CUR | "Валюта операции"; "Да, если присутствует SUM"; "String 3 символа" |
+| CRC | "Значение контрольной суммы"; "Да"; "String 4 символа" |
+| B2B HOST, QR_ID | "b2b.cbrpay.ru - для QR_TYPE = 01 и 02"; QR_ID "String-32" |
+
+Examples (the test vectors): `https://qr.nspk.ru/AS10003P3RH0LJ2A9ROO038L6NT5RU1M?type=01&bank=000000000001&sum=10000&cur=RUB&crc=F3D0`,
+`https://qr.nspk.ru/AS10003P3RH0LJ2A9ROO038L6NT5RU1M`,
+`https://sub.nspk.ru/AR50803R2RH0LJ2A9RTU038L6NT5RU1M?type=03&bank=000000000001&crc=F3D0`,
+`https://sub.nspk.ru/AR50803R2RH0LJ2A9RTU038L6NT5RU1M`, `https://b2b.cbrpay.ru/AO1000670LSS7DN18SJQDNP4B05KLJL2`, and
+the schema example `https://qr.nspk.ru/AD1000670LSS7DN18SJQDNP4B05KLJL2?type=01&bank=100000000001&sum=10000&cur=RUB&crc=C08B`.
+Schemas: `qrcId` "minLength: 32 / maxLength: 32"; `memberId` "minLength: 12 / maxLength: 12", example `'100000000001'`.
+The CRC algorithm is **not given**: the `crc` values cannot be checked.
+
+Outcome (controller ruling 2026-11-24 UTC):
+
+- Parse accepts the three hosts (widening in 1.2.0; `MAX_LENGTH` unchanged, the shared 7089 bound), one identifier of
+  ASCII letters and digits and a query without spaces or fragment, as in 1.0. The identifier length and the query
+  fields are stricter than what 1.0 accepted, so they are **reported** by `hasValidFunctionalLinkStructure()`, never
+  enforced in 1.x: identifier of 32 characters; no query, or on `qr.nspk.ru`/`sub.nspk.ru` only: `type` `01`/`02` on
+  `qr.nspk.ru` and `03` on `sub.nspk.ru`, `bank` 12 characters, `crc` 4 characters, `sum` 1 to 12 digits mandatory for
+  `02` and absent for `03`, `cur` 3 characters whenever `sum` is present (the table does not forbid `cur` without
+  `sum`, so that is not reported). Other parameters are not judged; a repeated field with distinct values reports false.
+- `qrType()` decodes `type` into `SbpQrType` (`Static`, `Dynamic`, `Subscription`, the table's names); null for an
+  absent, empty or unknown code.
+- Masking (stricter in 1.2.0): `type` `01`-`03`, `bank` 12 digits, `sum` 1 to 12 digits, `cur` three capitals, `crc`
+  four hex digits. The table types `bank`, `cur` and `crc` only as "String" of a length; only the digits, capitals
+  and hex digits of the examples stay visible (fail-closed: a 12-character `bank` with letters is `***`). Until 1.1.0
+  `sum` allowed decimals and 18 digits and `crc` one to eight hex digits, from the third-party Habr example and the
+  1.0 ruling; NSPK's text replaces them.
+
+Superseded 2026-11-20 finding: NSPK's Rules P.235 v4.0 (archive
+<https://web.archive.org/web/20251221101611id_/https://sbp.nspk.ru/file/pravila-informacionno-tekhnologicheskogo-vzaimodejstviya_v.4.0.pdf>,
+SHA-256 `812dcc19...`) put the QR standards on the participant portal; the API page above is public.
 
 ### NPCI UPI linking specification
 
-The NPCI "UPI Linking Specifications" (deep linking specs 1.5.1, the version NPCI's circulars name) were **not
-reached**: NPCI says they were "provided to member banks"; the copies found (labnol.org, version 1.6 draft) are
-third-party. Reached, from NPCI itself through the Internet Archive:
+NPCI, "UPI Linking Specifications" version 1.5.1 (April 2017, cover "UPI Linking Specifications Version 1.5.1 (Draft)",
+9 pages), NPCI's own file at
+<https://www.npci.org.in/sites/all/themes/npcl/images/PDF/UPI_Linking_Specs_ver_1.5.1.pdf> (live: 403), Internet
+Archive copy
+<https://web.archive.org/web/20190917070533id_/https://www.npci.org.in/sites/all/themes/npcl/images/PDF/UPI_Linking_Specs_ver_1.5.1.pdf>
+(696898 bytes, SHA-256 `c5d2263ecd755c74f20a74683f484190d4add4df6856fadd01540aa097a7c7e1`, read 2026-11-24 UTC), status
+**archive**. OC 37 names 1.5.1 as the binding version; the archive's listing of NPCI's PDF folder has no other version
+(1.6 exists only as third-party copies).
+
+- 1.2: "UPI Deep linking URL spec must be as follows ... `upi://pay?parm-name=param-value&param-name=pram-value&...`"
+- Table (static / dynamic): "pa String M M Payee VPA"; "pn String M M Payee name"; "mc String O O Payee merchant code";
+  "tid String O O ... PSP generated id"; "tr String O C Transaction reference ID ... Mandatory for Merchant transactions
+  and dynamic URL generation."; "tn String O O Transaction note"; "am String O M Transaction amount in decimal format.";
+  "mam String O C Minimum amount"; "cu String O O Currency code. Currently ONLY "INR" is the supported value."; "url
+  String O O ... MUST BE related to the particular transaction".
+- Note 4 a): "space (" ") should be represented as "%20" and not "%" as to be compliant with existing Internet Standard
+  RFC 3986 section 2.1 ... the Bank PSP should support both "%" and "%20"".
+- Example (2.1, 2.2; printed with line breaks inside values, the test vector joins them):
+  `upi://pay?pa=nadeem@npci&pn=nadeem%20chinna&mc=0000&tid=cxnkjcnkjdfdvjndkjfvn&tr=4894398cndhcd23&tn=Pay%20to%20mystar%20store&am=10&mam=null&cu=INR&url=https://mystar.com/orderid=9298yw89e8973e87389e78923ue892`.
+
+Reached before, from NPCI through the Internet Archive:
 
 - NPCI/UPI/OC No. 18/2016-17, 20 March 2017, "Bank Compliances to enable UPI Merchant ecosystem",
   <https://web.archive.org/web/2024id_/https://www.npci.org.in/PDF/npci/upi/circular/2017/Circular18_BankCompliances_to_enbaleUPIMerchantecosystem_0.pdf>
   (SHA-256 `6e543716...`), status **archive**. Annexure A Table 1 "QR (Key Deep Linking parameters)", column "As per
   'Deep linking specs'": "Pa Payee virtual payment address M", "Pn Payee Name M", "Tr Transaction Ref No. (upto 35
-  digits) C", "Am Amount O", "Mam Minimum amount O"; "PN: ... other additional parameters which are optional and can be
-  referred to, from the Deep Linking Specs provided to member banks." D.7: "While generating an intent/QR string,
-  ‘space’ has to be represented by ’%’ ... ‘’tn=test%transaction’’".
+  digits) C", "Am Amount O", "Mam Minimum amount O". D.7: "While generating an intent/QR string, ‘space’ has to be
+  represented by ’%’ ... ‘’tn=test%transaction’’" (the legacy form that 1.5.1 still requires PSPs to read).
 - NPCI/UPI/OC No. 37/2017-18, 1 November 2017,
   <https://web.archive.org/web/20241010082959id_/https://www.npci.org.in/PDF/npci/upi/circular/2017/Circular%20on%20Non-compliance%20of%20UPI%20apps%20to%20Deeplinking%20specs%20Circular%2037-%201.11.2017.pdf>
-  (SHA-256 `6b39d795...`): "UPI Deep linking Specs 1.5.1" is the binding version; no parameter text.
+  (SHA-256 `6b39d795...`): "UPI Deep linking Specs 1.5.1" is the binding version.
 
-Outcome: `pa` and `pn` present and filled; `tr` 1 to 35 characters (the length; "digits" is not enforced, merchant
-references are commonly alphanumeric and the specification itself was not read); no percent-decoding (the bare `%`
-space). The scheme `upi://pay` is **not confirmed** from an NPCI text (the plan's and the marker table's); the test URI
-is synthetic.
+Outcome: the scheme `upi://pay` is **confirmed**; `pa` and `pn` present and filled; `tr` 1 to 35 characters (OC 18's
+length; 1.5.1 types it "String", so digits are not enforced); no percent-decoding (both `%20` and the bare `%` are
+kept as written). The official example is a test vector. Not enforced, since 1.0 accepted more: `tr` for dynamic
+URIs, `cu` = `INR`.
 
 Masking fails closed, as for SBP: the query is rebuilt pair by pair. `pa` keeps the first character of the VPA's local
 part and the handle (a VPA often embeds a name or a phone number); `pn` its first character; the references `tr` and
-`tid` their first and last character; `tn` (D.7's own example `tn=test%transaction` shows it is free text), `url` and
-`sign` become `***`. The codes `am`, `mam`, `cu`, `mc`, `mode`, `purpose`, `qrMedium` and `orgid` stay only in a code
-shape (the deep-linking specification itself was not reached, so these are masking shapes). Any other pair, a name in
-other case included, becomes `***=***`, `***=` or `***`.
+`tid` their first and last character; `tn`, `url` become `***`. The codes stay only in a code shape: `am`, `mam`
+(digits with up to two decimals; 1.5.1 says "decimal format"), `cu` only `INR` (1.5.1; three capitals until 1.1.0),
+`mc` four digits. `mode`, `purpose`, `orgid`, `qrMedium` and `sign` are not in 1.5.1 (they come from later versions
+read only as third-party copies; OC 96/2020-21 mentions a two-digit "Purpose Code – 20" as an API attribute, not a URI
+parameter), so from 1.2.0 their name stays and their value is `***` (until 1.1.0 two or six digits stayed visible).
+Any other pair, a name in other case included, becomes `***=***`, `***=` or `***`.
 
 ### Search log: non-EMVCo payment payloads
 
-All times 2026-11-20, UTC.
+All times 2026-11-20, UTC, except the 2026-11-24 rows at the end.
 
 | Time | Topic | Attempt | Result |
 |---|---|---|---|
@@ -1050,3 +1171,8 @@ All times 2026-11-20, UTC.
 | 12:24 | UPI | Internet Archive CDX `url=npci.org.in/PDF/npci/upi/&matchType=prefix` | 312 rows; OC 37 on the deep linking specs; no specification PDF |
 | 12:24 | UPI | WebSearch ""upi://pay" site:npci.org.in" | the UPI Product Booklet and pages; none defines the URI |
 | 12:25 | UPI | archive copy of Product-Booklet.pdf (20241007101808) | read: "UPI Intent", QR scan; no `upi://pay` text |
+| 2026-11-24 05:00-05:40 | SBP | curl <https://sbp.nspk.ru/api/> and <https://sbp.nspk.ru/api/swagger.yaml> | 200; OpenAPI document read (SHA-256 above) |
+| 2026-11-24 05:00-05:40 | UPI | Internet Archive raw copy (`id_`) of NPCI's `UPI_Linking_Specs_ver_1.5.1.pdf`; the live NPCI path | archive 200, read; live 403 |
+| 2026-11-24 05:00-05:40 | УФЭБС | curl <https://cbr.ru/development/formats/> and the 2026.09 album zip | 200; XSD leaf types and the budget-checks PDF read |
+| 2026-11-24 05:00-05:40 | ISO 4914 | curl the CPMI-IOSCO guidance on bis.org; anna-dsb.com/upi/; iosco.org copy | bis.org 200, read; the other two 403 |
+| 2026-11-24 05:00-05:40 | VietQR | searches for TCCS 03:2018 and "1928/QĐ-NHNN" | no copy; no result confirms the decision number |

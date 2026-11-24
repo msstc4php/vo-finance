@@ -14,18 +14,20 @@ use MSSTC4PHP\ValueObject\Support\AbstractStringValueObject;
 use Override;
 
 /**
- * Payment link of the Russian Faster Payments System (SBP): `https://qr.nspk.ru/` and the QR identifier (one path
- * segment of ASCII letters and digits), optionally followed by a query. Format only: NSPK publishes the link layout
- * and its query fields only in the SBP OPKTs standards on its closed participant portal, so neither the identifier
- * length nor any query field is checked. Scheme and host are compared case-insensitively; the link is kept as given.
- * {@see masked()} hides the identifier and fails closed on the query: it keeps only the codes and amounts `type`,
- * `bank`, `sum`, `cur` and `crc` (names compared exactly) in their code shape (`sum=Anna` and a phone number as
- * `bank` give `***`).
- * With no published field list, any other pair may hold free text in its name as in its value, so it becomes
- * `***=***`, `***=` for an empty value and `***` without `=`; an empty pair stays empty. At most 7089 characters, the
- * largest QR content: a bound against abusive input.
+ * Functional link of the Russian Faster Payments System (SBP): `https://`, one of the hosts NSPK's API documentation
+ * names (`qr.nspk.ru` for QR_TYPE 01 and 02, `sub.nspk.ru` for 03, `b2b.cbrpay.ru` for B2B links), the QR identifier
+ * (one path segment of ASCII letters and digits) and an optional query. Parse checks only that shape: NSPK gives the
+ * identifier 32 characters and the query fields `type`, `bank`, `sum`, `cur` and `crc` their formats, and 1.0 accepted
+ * links outside them, so {@see hasValidFunctionalLinkStructure()} reports them instead. Scheme and host are compared
+ * case-insensitively; the link is kept as given. {@see masked()} hides the identifier and fails closed on the query:
+ * it keeps only `type` (`01`, `02`, `03`), `bank` (12 digits), `sum` (1 to 12 digits, kopecks), `cur` (three capital
+ * letters) and `crc` (four hex digits), names compared exactly; another value of these becomes `***`, so `sum=Anna`
+ * and a phone number as `bank` give `***`.
+ * Any other pair may hold free text in its name as in its value, so it becomes `***=***`, `***=` for an empty value
+ * and `***` without `=`; an empty pair stays empty. At most 7089 characters, the largest QR content: a bound against
+ * abusive input.
  *
- * @see https://sbp.nspk.ru/file/pravila-informacionno-tekhnologicheskogo-vzaimodejstviya_v.4.0.pdf NSPK, Rules P.235 v4.0 (2024): the SBP OPKTs standards are published on the NSPK portal
+ * @see https://sbp.nspk.ru/api/ NSPK, "СБП API для Участников СБП и Агентов ТСП", section "Формат Функциональной ссылки СБП / URL-based QR"
  * @see https://github.com/msstc4php/vo-finance/blob/main/docs/sources/FINANCE.md "NSPK SBP"
  */
 final class SbpPaymentLink extends AbstractStringValueObject implements PaymentPayload
@@ -36,19 +38,30 @@ final class SbpPaymentLink extends AbstractStringValueObject implements PaymentP
     private const string TYPE = 'SbpPaymentLink';
 
     /**
-     * The query fields kept visible, with the shape a value must have: `type` (`01`, `02`), `bank` (12 digits) and
-     * `crc` (hex) as in the only link examples found (third-party; NSPK publishes none), `sum` (digits with up to two
-     * decimals) and `cur` (three capital letters) by ruling.
+     * The query fields kept visible, with the shape a value must have. NSPK's table gives `bank` "String 12 символов",
+     * `cur` "String 3 символа" and `crc` "String 4 символа"; only the digits, capitals and hex digits of its examples
+     * stay visible.
      */
     private const array VISIBLE_PARAMETERS = [
-        'type' => '/^0[12]$/D',
+        'type' => '/^0[123]$/D',
         'bank' => '/^\d{12}$/D',
-        'sum' => '/^\d{1,18}(\.\d{1,2})?$/D',
+        'sum' => self::SUM,
         'cur' => '/^[A-Z]{3}$/D',
-        'crc' => '/^[0-9A-Fa-f]{1,8}$/D',
+        'crc' => '/^[0-9A-Fa-f]{4}$/D',
     ];
 
-    private const string PATTERN = '~^(https://qr\.nspk\.ru/)([A-Za-z0-9]+)(?:\?([\x21-\x22\x24-\x7E]*))?$~Di';
+    /** SUM: "Сумма операции в копейках", "String 1...12 цифр". */
+    private const string SUM = '/^\d{1,12}$/D';
+
+    private const string PATTERN = '~^(https://(qr\.nspk\.ru|sub\.nspk\.ru|b2b\.cbrpay\.ru)/)([A-Za-z0-9]+)(?:\?([\x21-\x22\x24-\x7E]*))?$~Di';
+
+    private const string B2B_HOST = 'b2b.cbrpay.ru';
+
+    /** @var non-empty-string */
+    private string $prefix;
+
+    /** @var lowercase-string&non-empty-string */
+    private string $host;
 
     /** @var non-empty-string */
     private string $id;
@@ -76,6 +89,53 @@ final class SbpPaymentLink extends AbstractStringValueObject implements PaymentP
     }
 
     /**
+     * The decoded `type`; null when absent, empty or not one of NSPK's codes.
+     *
+     * @throws AmbiguousPaymentQrFieldException when `type` repeats with distinct values
+     */
+    public function qrType(): ?SbpQrType
+    {
+        return SbpQrType::tryFrom($this->get('type') ?? '');
+    }
+
+    /**
+     * Whether the link has the structure of NSPK's table, which parse does not enforce: an identifier of 32
+     * characters, and either no query or, on `qr.nspk.ru` and `sub.nspk.ru` only, `type` `01` or `02` on `qr.nspk.ru`
+     * and `03` on `sub.nspk.ru`, `bank` of 12 characters, `sum` of 1 to 12 digits mandatory for `02` and absent for
+     * `03`, `cur` of three characters whenever `sum` is present, and `crc` of four characters. A repeated parameter
+     * with distinct values, or an empty one where a value is mandatory, gives false. Never refuses anything.
+     */
+    public function hasValidFunctionalLinkStructure(): bool
+    {
+        if (\strlen($this->id) !== 32) {
+            return false;
+        }
+
+        if (!$this->query instanceof QueryString) {
+            return true;
+        }
+
+        try {
+            [$type, $bank, $sum, $cur, $crc] = \array_map($this->get(...), ['type', 'bank', 'sum', 'cur', 'crc']);
+        } catch (AmbiguousPaymentQrFieldException) {
+            return false;
+        }
+
+        return $this->host !== self::B2B_HOST
+            && \in_array($type, ['01', '02', '03'], true)
+            && $this->host === ($type === '03' ? 'sub.nspk.ru' : 'qr.nspk.ru')
+            && \strlen($bank ?? '') === 12
+            && \strlen($crc ?? '') === 4
+            && match ($type) {
+                '02' => $sum !== null,
+                '03' => $sum === null,
+                default => true,
+            }
+        && ($sum === null || (\preg_match(self::SUM, $sum) === 1 && $cur !== null))
+        && ($cur === null || \strlen($cur) === 3);
+    }
+
+    /**
      * @return list<string>
      */
     public function parameterNames(): array
@@ -86,7 +146,7 @@ final class SbpPaymentLink extends AbstractStringValueObject implements PaymentP
     #[Override]
     public function masked(): string
     {
-        $masked = \substr($this->value, 0, 19) . Mask::keepEnds($this->id);
+        $masked = $this->prefix . Mask::keepEnds($this->id);
         if (!$this->query instanceof QueryString) {
             return $masked;
         }
@@ -99,11 +159,13 @@ final class SbpPaymentLink extends AbstractStringValueObject implements PaymentP
     {
         PayloadBound::ensure($value, self::TYPE);
         if (\preg_match(self::PATTERN, $value, $match) !== 1) {
-            throw new InvalidPaymentQrException(\sprintf('%s requires https://qr.nspk.ru/, an identifier of letters and digits and an optional query without spaces or fragment.', self::TYPE));
+            throw new InvalidPaymentQrException(\sprintf('%s requires https://, an SBP host, an identifier of letters and digits and an optional query without spaces or fragment.', self::TYPE));
         }
 
-        $this->id = $match[2];
-        $this->query = isset($match[3]) ? QueryString::parse($match[3]) : null;
+        $this->prefix = $match[1];
+        $this->host = \strtolower($match[2]);
+        $this->id = $match[3];
+        $this->query = isset($match[4]) ? QueryString::parse($match[4]) : null;
 
         return $value;
     }

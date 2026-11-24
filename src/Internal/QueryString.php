@@ -8,8 +8,9 @@ use Closure;
 use MSSTC4PHP\ValueObject\Financial\Exception\AmbiguousPaymentQrFieldException;
 
 /**
- * The `name=value` pairs of a URI query, split on `&` and the first `=`, kept as written (no percent-decoding: UPI
- * writes a space as a bare `%`). A pair without `=` has the empty value; empty pairs are skipped.
+ * The `name=value` pairs of a URI query, split on `&` and the first `=`, kept as written (no percent-decoding: UPI PSPs
+ * must read the legacy bare `%` as a space as well as `%20`). A pair without `=` has the empty value; empty pairs are
+ * skipped.
  *
  * @internal
  */

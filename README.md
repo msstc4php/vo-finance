@@ -166,12 +166,14 @@ code and town, the unstructured message, the alternative procedures and any othe
 | `BIC` | nine digits (parse) |
 | `CorrespAcc`, `CBC` | `0` or 20 digits |
 | `Sum`, `AddAmount` | up to 18 digits |
-| `PayeeINN` | 10 or 12 digits |
-| `DrawerStatus`, `PayerIdType`, `TechCode` | two digits |
+| `PayeeINN` | 10 digits (УФЭБС) |
+| `DrawerStatus` | one of the 23 codes of the УФЭБС field 101 list |
+| `PayerIdType`, `TechCode` | two digits |
 | `KPP` | four digits, two digits or capitals, three digits |
-| `OKTMO` | `0`, 8 or 11 digits |
-| `PaytReason`, `TaxPaytKind` | one or two digits or capitals |
-| `TaxPeriod` | `0`, `DD.MM.YYYY` or a period such as `МС.02.2014` |
+| `OKTMO` | `0` or 8 digits (УФЭБС) |
+| `PaytReason` | `0` or a code of the УФЭБС field 106 list (`ПК`, `КЭ`, ..., `00`) |
+| `TaxPaytKind` | one or two digits or capitals |
+| `TaxPeriod` | `0`, `DD.MM.YYYY` or a period such as `МС.02.2014`; the 8-digit customs code of УФЭБС 2026 becomes `***` |
 | `DocDate`, `PaymTerm`, `QuittDate` | `0` or `DD.MM.YYYY` |
 | `PaymPeriod` | `MMYYYY` or `MM.YYYY` |
 | `CounterVal` | up to 15 digits, up to six decimals after `.` or `,` |
@@ -186,11 +188,11 @@ of Annex V table В.1; `***=***` for an alias outside table В.1.
 
 | Visible | Shape |
 |---|---|
-| `type` | `01` or `02` |
+| `type` | `01`, `02` or `03` |
 | `bank` | 12 digits |
-| `sum` | digits with up to two decimals |
+| `sum` | 1 to 12 digits (kopecks) |
 | `cur` | three capital letters |
-| `crc` | one to eight hex digits |
+| `crc` | four hex digits |
 
 Masked by rule: the identifier keep ends; any other pair `***=***` (`***=` when empty, `***` without `=`).
 
@@ -199,14 +201,13 @@ Masked by rule: the identifier keep ends; any other pair `***=***` (`***=` when 
 | Visible | Shape |
 |---|---|
 | `am`, `mam` | up to 18 digits with up to two decimals |
-| `cu` | three capital letters |
+| `cu` | `INR` |
 | `mc` | four digits |
-| `mode`, `purpose`, `qrMedium` | two digits |
-| `orgid` | six digits |
 
-Masked by rule: `pa` keeps the first character of its local part and its handle (`a***@okaxis`; `***` without a
-handle of letters, digits, `.` and `-`); `pn` `X***`; `tr` and `tid` first and last character; `tn`, `url`, `sign`
-`***`; any other pair, a name in other case included, `***=***` (`***=` when empty, `***` without `=`).
+Masked by rule: `pa` keeps the first character of its local part and its handle (`a***@okaxis`; `***` without a handle
+of letters, digits, `.` and `-`); `pn` `X***`; `tr` and `tid` first and last character; `tn`, `url` and the parameters
+that NPCI's 1.5.1 does not define (`mode`, `purpose`, `orgid`, `qrMedium`, `sign`) `***`; any other pair, a name in
+other case included, `***=***` (`***=` when empty, `***` without `=`).
 
 `serialize()` stores only the payload, and `unserialize()` validates it again, so the parsed fields are never restored
 apart from the value they came from (vo-base 1.3 runs `parse()` again). A forged payload throws the class's
@@ -223,10 +224,10 @@ keys are ignored.
 | `PaymentQr\Japan\JpqrCode` | JPQR (Payments Japan): `storeId()` (29-digit unified store ID), `alternateMerchantName()`; lists `storeIds()`; `MAX_BYTES` 512 |
 | `PaymentQr\Epc\EpcQr` | EPC QR for a SEPA credit transfer (EPC069-12 v3.0, versions 001 and 002): `version()`, `characterSet()`, `bic()` (vo-base `Bic`), `beneficiaryName()`, `iban()`, `writtenAmount()`, `amount()`, `purpose()`, `reference()`, `creditorReference()`, `remittanceText()`, `beneficiaryToOriginatorInformation()`; `fromBytes()` for character sets 2 to 8 |
 | `PaymentQr\Swiss\QrBill` | Swiss QR-bill (SIX IG 2.3): `iban()`, `isQrIban()`, `creditor()` and `ultimateDebtor()` (`QrBillAddress`), `writtenAmount()`, `amount()`, `currency()`, `referenceType()` (`QrBillReferenceType`), `reference()` (`QrReference` or `CreditorReference`), `unstructuredMessage()`, `billingInformation()`, `alternativeProcedures()` |
-| `PaymentQr\Ru\Gost56042Payload` | GOST R 56042-2014: `characterSet()`, `separator()`, `name()`, `personalAccount()`, `bankName()`, `bik()` (the nine-digit Russian BIK), `correspondentAccount()`, `get()` by alias; `fromBytes()` for WIN1251 and KOI8-R |
-| `PaymentQr\Ru\SbpPaymentLink` | SBP link `https://qr.nspk.ru/<id>` (format only): `id()`, `get()`, `parameterNames()` |
+| `PaymentQr\Ru\Gost56042Payload` | GOST R 56042-2014: `characterSet()`, `separator()`, `name()`, `personalAccount()`, `bankName()`, `bik()` (the nine-digit Russian BIK), `correspondentAccount()`, `get()` by alias, `hasValidBudgetPaymentDetails()` (УФЭБС budget checks, report only); `fromBytes()` for WIN1251 and KOI8-R |
+| `PaymentQr\Ru\SbpPaymentLink` | SBP functional link `https://qr.nspk.ru/<id>`, `https://sub.nspk.ru/<id>` or `https://b2b.cbrpay.ru/<id>`: `id()`, `get()`, `parameterNames()`, `qrType()` (`SbpQrType`: `Static`, `Dynamic`, `Subscription`), `hasValidFunctionalLinkStructure()` (NSPK's table, report only) |
 | `PaymentQr\India\UpiPaymentUri` | UPI `upi://pay?` URI: `payeeAddress()`, `payeeName()`, `transactionReference()`, `writtenAmount()`, `amount()`, `get()`, `parameterNames()` |
-| `PaymentQr\PaymentQrFactory` | `fromString()` and `fromBytes()`, returning `PaymentPayload`: by leading marker `BCD`, `SPC`, `ST0001`, `https://qr.nspk.ru/`, `upi://` the class above; otherwise the EMVCo profiles the payload identifies (Pix GUI, PromptPay AID in 29/30, DuitNow AID in 26, template 29/30 with country KH, JPQR GUI) and the one of them that accepts it; several accepting throw `AmbiguousValueException`. When every identified profile refuses, `MerchantPresentedQr` is the one candidate left: it is returned when it accepts the payload (a Pix GUI with currency 840 is a valid EMVCo payload, not a valid Pix code), otherwise the first profile's `InvalidPaymentQrException` is thrown. A payload that identifies no built profile gives `MerchantPresentedQr`. `tryFromString()` and `tryFromBytes()` return null where the `from…()` twin throws a value refusal (no class accepts, several profiles accept, other bytes are not UTF-8); the `LogicException` of `fromBytes()` without ext-mbstring still propagates |
+| `PaymentQr\PaymentQrFactory` | `fromString()` and `fromBytes()`, returning `PaymentPayload`: by leading marker `BCD`, `SPC`, `ST0001`, `https://qr.nspk.ru/` (and from 1.2.0 `https://sub.nspk.ru/`, `https://b2b.cbrpay.ru/`), `upi://` the class above; otherwise the EMVCo profiles the payload identifies (Pix GUI, PromptPay AID in 29/30, DuitNow AID in 26, template 29/30 with country KH, JPQR GUI) and the one of them that accepts it; several accepting throw `AmbiguousValueException`. When every identified profile refuses, `MerchantPresentedQr` is the one candidate left: it is returned when it accepts the payload (a Pix GUI with currency 840 is a valid EMVCo payload, not a valid Pix code), otherwise the first profile's `InvalidPaymentQrException` is thrown. A payload that identifies no built profile gives `MerchantPresentedQr`. `tryFromString()` and `tryFromBytes()` return null where the `from…()` twin throws a value refusal (no class accepts, several profiles accept, other bytes are not UTF-8); the `LogicException` of `fromBytes()` without ext-mbstring still propagates |
 
 `EmvcoPayload`, on `MerchantPresentedQr` and the five profiles: `pointOfInitiation()` (`PointOfInitiation`, null when
 absent), `merchantAccounts()` (list of `MerchantAccount`), `merchantCategoryCode()`, `currency()` (vo-base
@@ -277,7 +278,8 @@ Checked for length and character set, never for a check digit or a range no offi
 [`docs/sources/FINANCE.md`](docs/sources/FINANCE.md).
 
 - `Upi`: the format is the Regulatory Oversight Committee's (`QZ` and ten characters); the check character is not
-  verified, because ISO 4914 Annex C and the ANNA DSB guidance are not reachable.
+  verified: the CPMI-IOSCO technical guidance (2017) asks for 12 alphanumerics with a check character but gives no
+  algorithm, and ISO 4914 Annex C and the ANNA DSB guidance are not reachable.
 - `Cusip`: the check digit is verified only for an all-digit CUSIP; letters and `*`, `@`, `#` have no published value.
 - `Isin`: the prefix is two letters and is never refused for being outside ISO 3166 (`XS`, `EZ`, `ZZ` and other prefixes
   set by the registration authority exist); `countryCode()` is null for them.
@@ -322,15 +324,21 @@ Checked for length and character set, never for a check digit or a range no offi
   conditional number gives a valid key. Treasury accounts of the Federal Treasury (first digit 0, e.g. `03100...`) are
   outside the order's scope (accounts of credit institutions and RKCs) and are never refused for their key. `masked()`
   hides `PersonalAcc`, `PersAcc`, `PersonalAccount`, `PensAcc`, `PayerIdNum` and `PayerINN`. The separator must be an
-  ASCII graphic character (inferred from the eight-byte service block).
+  ASCII graphic character (inferred from the eight-byte service block). From 1.2.0 an account with a Latin letter of
+  the Bank of Russia УФЭБС album in the sixth place (`\d{5}[0-9ABCEHKMPTX]\d{14}`) is accepted; its control key is
+  **not verified**, because the letter's digit value (Bank of Russia 579-П) was not reached.
+  `hasValidBudgetPaymentDetails()` reports the field formats of the УФЭБС budget checks (2026.09, section 1); the
+  checks that depend on the payee's account or on other fields are not applied.
 - `Gost56042Payload`, `SbpPaymentLink`, `UpiPaymentUri`: at most 7089 characters, the largest QR content and, as on the
   EMVCo classes, only a bound against abusive input.
-- `SbpPaymentLink`: format only. NSPK keeps the link layout in its SBP OPKTs standards on a closed portal, so neither
-  the identifier length nor any query field (`type`, `bank`, `sum`, `cur`, `crc`) is checked.
-- `UpiPaymentUri`: the NPCI linking specification was not reached; NPCI's circular OC 18 gives `pa` and `pn` as
-  mandatory and `tr` "upto 35 digits" (the length is enforced, not the digits, which merchant references do not follow).
-  The scheme `upi://pay` is the plan's, not confirmed from an NPCI text; nothing is percent-decoded (NPCI writes a space
-  as a bare `%`).
+- `SbpPaymentLink`: parse checks the host, one identifier of letters and digits and a query without spaces or
+  fragment. NSPK's API documentation gives the identifier 32 characters and the query fields `type`, `bank`, `sum`,
+  `cur` and `crc` their formats; 1.0 accepted links outside them, so `hasValidFunctionalLinkStructure()` reports them
+  and nothing refuses them. The `crc` algorithm is not published: its value is never checked.
+- `UpiPaymentUri`: NPCI's UPI Linking Specifications 1.5.1 (an archived NPCI copy) confirm `upi://pay`; with circular
+  OC 18 they give `pa` and `pn` as mandatory and `tr` "upto 35 digits" (the length is enforced, not the digits: 1.5.1
+  types `tr` "String"). `cu` "INR" only and `tr` for dynamic URIs are not enforced. Nothing is percent-decoded: 1.5.1
+  writes a space as `%20` and requires PSPs to read the legacy bare `%` as well.
 
 ## Profiles not built
 
@@ -342,8 +350,9 @@ members), so their payloads parse as the generic `MerchantPresentedQr`:
   no data-object rule.
 - QRIS (Bank Indonesia/ASPI): PADG 21/18/PADG/2019 article 5 makes the QRIS document available only on written request
   to the standards body; the regulation has no data-object annex.
-- VietQR (NAPAS): the State Bank of Vietnam's base standard TCCS 03:2018 (Decision 1928/QĐ-NHNN) was not reached
-  (Decision 2525/QĐ-NHNN is the customer-presented standard); the NAPAS specification circulates only as third-party
+- VietQR (NAPAS): the State Bank of Vietnam's 2018 merchant-presented base standard TCCS 03:2018 was not reached, and
+  no source reached confirms its decision number (often cited as 1928/QĐ-NHNN); Decision 2525/QĐ-NHNN is the
+  customer-presented standard; the NAPAS specification circulates only as third-party
   copies.
 - HK FPS (HKICL): not reached; the HKICL/HKMA publications reached (the HKMA common template and implementation
   guideline, HKICL's QR page and scheme documents) carry no data-object rule for the FPS template.
@@ -369,7 +378,8 @@ Rules for minor releases:
   value would throw on hydration, so a check that gets an official source later is reported only, by a new
   `hasValid…(): bool` method; refusing waits for 2.0. The format-only checks this concerns are listed under "Format
   only": the UPI check character, CUSIP letters and `*@#`, `Valor`, `Mic`, `Wkn`, the query fields of
-  `SbpPaymentLink` and `UpiPaymentUri`, the Pix txid character set and the EMVCo "var. up to" maxima.
+  `SbpPaymentLink` (now reported by `hasValidFunctionalLinkStructure()`) and `UpiPaymentUri`, the Pix txid character
+  set and the EMVCo "var. up to" maxima.
 - A minor may accept more (relax a rule, for example a UnionPay range without Luhn), but only values within the frozen
   `MAX_LENGTH`.
 - **The IIN table** ships in minors; a range is added when a reached publication states it. It only decodes, so a new

@@ -8,6 +8,7 @@ use BackedEnum;
 use MSSTC4PHP\ValueObject\Financial\Card\CardScheme;
 use MSSTC4PHP\ValueObject\Financial\PaymentQr\Brazil\PixKeyType;
 use MSSTC4PHP\ValueObject\Financial\PaymentQr\Emvco\PointOfInitiation;
+use MSSTC4PHP\ValueObject\Financial\PaymentQr\Ru\SbpQrType;
 use MSSTC4PHP\ValueObject\Financial\PaymentQr\Swiss\QrBillReferenceType;
 use MSSTC4PHP\ValueObject\Financial\PaymentQr\Thailand\PromptPayProxyType;
 use MSSTC4PHP\ValueObject\Financial\Security\CfiCategory;
@@ -31,6 +32,7 @@ final class BackedValuesTest extends TestCase
         yield 'PromptPayProxyType' => [PromptPayProxyType::class, ['MobileNumber' => '01', 'NationalOrTaxId' => '02', 'EWalletId' => '03', 'BankAccount' => '04']];
         yield 'QrBillReferenceType' => [QrBillReferenceType::class, ['QrReference' => 'QRR', 'CreditorReference' => 'SCOR', 'None' => 'NON']];
         yield 'PointOfInitiation' => [PointOfInitiation::class, ['Static' => '11', 'Dynamic' => '12']];
+        yield 'SbpQrType' => [SbpQrType::class, ['Static' => '01', 'Dynamic' => '02', 'Subscription' => '03']];
         yield 'CfiCategory' => [CfiCategory::class, [
             'Equities' => 'E', 'CollectiveInvestmentVehicles' => 'C', 'DebtInstruments' => 'D', 'Entitlements' => 'R',
             'ListedOptions' => 'O', 'Futures' => 'F', 'Swaps' => 'S', 'NonListedAndComplexListedOptions' => 'H',

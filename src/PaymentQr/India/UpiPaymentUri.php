@@ -16,21 +16,22 @@ use MSSTC4PHP\ValueObject\Support\AbstractStringValueObject;
 use Override;
 
 /**
- * UPI payment URI `upi://pay?` with its query parameters. Enforced from NPCI's circular OC 18 (which quotes the deep
- * linking specification): the payee address `pa` and the payee name `pn` are present and filled, and a transaction
- * reference `tr` has 1 to 35 characters. The scheme is the plan's; the NPCI linking specification itself was not
- * reached, so no other parameter, the VPA shape or the amount format is checked. Values are kept as written: NPCI
- * writes a space as a bare `%`, so nothing is percent-decoded. A repeated parameter makes its single-value accessor
- * throw. {@see masked()} rebuilds the query fail-closed: the payee address `pa` keeps the first character of its.
+ * UPI payment URI `upi://pay?` with its query parameters, the deep-linking URL of NPCI's UPI Linking Specifications
+ * 1.5.1. Enforced from NPCI's circular OC 18 (which quotes that specification): the payee address `pa` and the payee
+ * name `pn` are present and filled, and a transaction reference `tr` has 1 to 35 characters; no other parameter, the
+ * VPA shape or the amount format is checked. Values are kept as written: 1.5.1 writes a space as `%20` and requires
+ * PSPs to read the legacy bare `%` too, so nothing is percent-decoded. A repeated parameter makes its single-value
+ * accessor throw. {@see masked()} rebuilds the query fail-closed: the payee address `pa` keeps the first character of.
  *
- * local part and its handle (`a***@okaxis`; `***` without a handle of letters, digits, `.` and `-`), the payee name
- * `pn` its first character, the transaction reference `tr` and the transaction ID `tid` their first and last
- * character, and the note `tn`, `url` and `sign` become `***`; the codes `am` and `mam` (digits with up to two
- * decimals), `cu` (three capital letters), `mc` (four digits), `mode`, `purpose` and `qrMedium` (two digits) and
- * `orgid` (six digits) stay only in that shape, otherwise `***`. Any other pair, a name that differs in case included,
+ * its local part and its handle (`a***@okaxis`; `***` without a handle of letters, digits, `.` and `-`), the payee name
+ * `pn` its first character, the transaction reference `tr` and the transaction ID `tid` their first and last character,
+ * and the note `tn` and `url` become `***`, as do `mode`, `purpose`, `orgid`, `qrMedium` and `sign`, which 1.5.1 does
+ * not define; the codes `am` and `mam` (digits with up to two decimals), `cu` (`INR`, the one value 1.5.1 allows) and
+ * `mc` (four digits) stay only in that shape, otherwise `***`. Any other pair, a name that differs in case included,
  * becomes `***=***`, `***=` when empty, and every pair without `=` becomes `***`; an empty value of a known parameter
  * and an empty pair stay empty. At most 7089 characters, the largest QR content: a bound against abusive input.
  *
+ * @see https://web.archive.org/web/20190917070533id_/https://www.npci.org.in/sites/all/themes/npcl/images/PDF/UPI_Linking_Specs_ver_1.5.1.pdf NPCI, UPI Linking Specifications 1.5.1, section 1.2 and notes
  * @see https://www.npci.org.in/PDF/npci/upi/circular/2017/Circular18_BankCompliances_to_enbaleUPIMerchantecosystem_0.pdf NPCI, UPI OC No. 18/2016-17, Annexure A Table 1 and D.7
  * @see https://github.com/msstc4php/vo-finance/blob/main/docs/sources/FINANCE.md "NPCI UPI linking specification"
  */
@@ -47,16 +48,15 @@ final class UpiPaymentUri extends AbstractStringValueObject implements PaymentPa
     private const array VISIBLE_PARAMETERS = [
         'am' => self::AMOUNT,
         'mam' => self::AMOUNT,
-        'cu' => '/^[A-Z]{3}$/D',
+        'cu' => '/^INR$/D',
         'mc' => '/^\d{4}$/D',
-        'mode' => '/^\d{2}$/D',
-        'purpose' => '/^\d{2}$/D',
-        'qrMedium' => '/^\d{2}$/D',
-        'orgid' => '/^\d{6}$/D',
     ];
 
-    /** NPCI parameters whose name stays and whose value is masked: payee, references, note, URL and signature. */
-    private const array MASKED_PARAMETERS = ['pa', 'pn', 'tr', 'tid', 'tn', 'url', 'sign'];
+    /**
+     * Parameters whose name stays and whose value is masked: the payee, references, note and URL of 1.5.1, and the
+     * later parameters `mode`, `purpose`, `orgid`, `qrMedium` and `sign`, for which no NPCI text was reached.
+     */
+    private const array MASKED_PARAMETERS = ['pa', 'pn', 'tr', 'tid', 'tn', 'url', 'mode', 'purpose', 'orgid', 'qrMedium', 'sign'];
 
     private QueryString $query;
 

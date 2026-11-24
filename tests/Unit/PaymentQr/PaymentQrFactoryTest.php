@@ -494,11 +494,26 @@ final class PaymentQrFactoryTest extends TestCase
         self::assertInstanceOf(Gost56042Payload::class, PaymentQrFactory::fromString($payload));
     }
 
-    public function testAnSbpLinkGivesSbpPaymentLink(): void
+    /**
+     * @return iterable<string, array{string}>
+     */
+    public static function sbpLinks(): iterable
     {
-        // Synthetic (see FINANCE.md "NSPK SBP").
-        self::assertInstanceOf(SbpPaymentLink::class, PaymentQrFactory::fromString('https://qr.nspk.ru/AS1000670LSS7DN18SJQDNP4B05KLJL2?type=01'));
-        self::assertInstanceOf(SbpPaymentLink::class, PaymentQrFactory::fromString('HTTPS://QR.NSPK.RU/AS1000670LSS7DN18SJQDNP4B05KLJL2'));
+        // NSPK, "СБП API", the URL-based payload examples, and the hosts in another case.
+        yield 'qr.nspk.ru' => ['https://qr.nspk.ru/AS10003P3RH0LJ2A9ROO038L6NT5RU1M?type=01&bank=000000000001&sum=10000&cur=RUB&crc=F3D0'];
+        yield 'sub.nspk.ru' => ['https://sub.nspk.ru/AR50803R2RH0LJ2A9RTU038L6NT5RU1M?type=03&bank=000000000001&crc=F3D0'];
+        yield 'b2b.cbrpay.ru' => ['https://b2b.cbrpay.ru/AO1000670LSS7DN18SJQDNP4B05KLJL2'];
+        yield 'qr.nspk.ru in capitals' => ['HTTPS://QR.NSPK.RU/AS1000670LSS7DN18SJQDNP4B05KLJL2'];
+        yield 'sub.nspk.ru in capitals' => ['HTTPS://SUB.NSPK.RU/AS1000670LSS7DN18SJQDNP4B05KLJL2'];
+        yield 'b2b.cbrpay.ru in capitals' => ['HTTPS://B2B.CBRPAY.RU/AS1000670LSS7DN18SJQDNP4B05KLJL2'];
+    }
+
+    #[DataProvider('sbpLinks')]
+    public function testAnSbpLinkGivesSbpPaymentLink(string $link): void
+    {
+        self::assertInstanceOf(SbpPaymentLink::class, PaymentQrFactory::fromString($link));
+        self::assertInstanceOf(SbpPaymentLink::class, PaymentQrFactory::fromBytes($link));
+        self::assertInstanceOf(SbpPaymentLink::class, PaymentQrFactory::tryFromString($link));
     }
 
     public function testAUpiUriGivesUpiPaymentUri(): void
@@ -517,6 +532,8 @@ final class PaymentQrFactoryTest extends TestCase
         yield 'Swiss' => ["SPC\n0200"];
         yield 'GOST' => ['ST00012|Name=A'];
         yield 'SBP' => ['https://qr.nspk.ru/'];
+        yield 'SBP subscription' => ['https://sub.nspk.ru/?type=03'];
+        yield 'SBP B2B' => ['https://b2b.cbrpay.ru/AO10#x'];
         yield 'UPI' => ['upi://pay?pn=A'];
     }
 
@@ -537,6 +554,9 @@ final class PaymentQrFactoryTest extends TestCase
     public static function nearMarkers(): iterable
     {
         yield 'SBP host with another suffix' => ['https://qr.nspk.rux/AS1000670LSS7DN18SJQDNP4B05KLJL2'];
+        yield 'SBP subscription host with another suffix' => ['https://sub.nspk.ru.example/AS1000670LSS7DN18SJQDNP4B05KLJL2'];
+        yield 'SBP B2B host without its slash' => ['https://b2b.cbrpay.ru'];
+        yield 'another NSPK host' => ['https://sbp.nspk.ru/AS1000670LSS7DN18SJQDNP4B05KLJL2'];
         yield 'UPI with one slash' => ['upi:/pay?pa=a@b&pn=A'];
     }
 

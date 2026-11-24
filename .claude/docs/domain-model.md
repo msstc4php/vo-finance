@@ -30,7 +30,11 @@ references.
   `QrReference|CreditorReference|null`. Amount 0.00 accepted (notification bill).
 - GOST: last occurrence of an alias wins (standard); every occurrence of a mandatory alias must have its format;
   20-digit accounts in Order 515's scope (first digit 1-9; treasury `0...` exempt), every occurrence, must pass the key
-  with either the RKC (`0`+BIC[5..6]) or credit-institution (BIC[7..9]) number.
+  with either the RKC (`0`+BIC[5..6]) or credit-institution (BIC[7..9]) number. Since 1.2.0 an account may carry an
+  УФЭБС album letter (`ABCEHKMPTX`) in place 6; it is outside the key scope (unverified key).
+- SBP (1.2.0): hosts `qr.nspk.ru`, `sub.nspk.ru`, `b2b.cbrpay.ru`; `qrType(): ?SbpQrType`; NSPK's table (QR_ID 32,
+  type/host pairing, bank 12, sum 1-12 digits for 02 / absent for 03, cur with sum, crc 4) is report-only via
+  `hasValidFunctionalLinkStructure()`. GOST `hasValidBudgetPaymentDetails()` is report-only (УФЭБС budget checks).
 - `masked()` (1.0 rule, fix10..fix11 round 4): fail-closed on every payment profile. A field is visible only on the
   profile's allowlist AND in its shape; everything else (unknown alias, RFU, bare pair, unknown parameter name) is
   masked. The per-profile tables in the README ("Payment QR payloads") are the single source; keep code, README,

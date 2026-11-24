@@ -25,17 +25,18 @@ use MSSTC4PHP\ValueObject\Financial\PaymentQr\Thailand\PromptPayQr;
 
 /**
  * Builds a payment payload by its leading marker: `BCD` an {@see EpcQr}, `SPC` a {@see QrBill}, `ST0001` a {@see
- * Gost56042Payload}, `https://qr.nspk.ru/` an {@see SbpPaymentLink} and `upi://` an {@see UpiPaymentUri} (the last two
- * compared case-insensitively, as URI schemes and hosts are). The markers exclude one another and the EMVCo `000201`,
- * so a marked payload that its class refuses throws that class's exception. Any other payload is EMVCo: the factory
- * tries the national profiles the payload identifies (the Pix GUI `br.gov.bcb.pix` in a template 26 to 51, a
- * PromptPay AID in template 29 or 30, the DuitNow AID in template 26, a template 29 or 30 with country `KH` for KHQR,
- * the GUI `jp.or.paymentsjapan` for JPQR) and builds the one that accepts it. When the payload identifies profiles but
- * none accepts it, the generic {@see MerchantPresentedQr} is the one candidate left: it is returned when it accepts
- * the payload (a Pix GUI with currency 840 is a valid EMVCo payload, not a valid Pix code), and otherwise the first
- * identified profile's exception is thrown. A payload that identifies no built profile (one that is not built, such
- * as SGQR or QRIS) gives {@see MerchantPresentedQr}. A payload that fits several profiles, which a code carrying
- * several arrangements can, throws {@see AmbiguousValueException} listing them; the factory never picks silently.
+ * Gost56042Payload}, `https://qr.nspk.ru/`, `https://sub.nspk.ru/` or `https://b2b.cbrpay.ru/` an {@see SbpPaymentLink}
+ * and `upi://` an {@see UpiPaymentUri} (the last two compared case-insensitively, as URI schemes and hosts are). The
+ * markers exclude one another and the EMVCo `000201`, so a marked payload that its class refuses throws that class's
+ * exception. Any other payload is EMVCo: the factory tries the national profiles the payload identifies (the Pix GUI
+ * `br.gov.bcb.pix` in a template 26 to 51, a PromptPay AID in template 29 or 30, the DuitNow AID in template 26, a
+ * template 29 or 30 with country `KH` for KHQR, the GUI `jp.or.paymentsjapan` for JPQR) and builds the one that accepts
+ * it. When the payload identifies profiles but none accepts it, the generic {@see MerchantPresentedQr} is the one
+ * candidate left: it is returned when it accepts the payload (a Pix GUI with currency 840 is a valid EMVCo payload, not
+ * a valid Pix code), and otherwise the first identified profile's exception is thrown. A payload that identifies no
+ * built profile (one that is not built, such as SGQR or QRIS) gives {@see MerchantPresentedQr}. A payload that fits
+ * several profiles, which a code carrying several arrangements can, throws {@see AmbiguousValueException} listing them;
+ * the factory never picks silently.
  *
  * The candidate set is frozen for 1.x: a profile added in a minor release is usable directly and joins the factory in
  * the next major, so a payload keeps resolving to the same class within 1.x.
@@ -50,6 +51,9 @@ final class PaymentQrFactory
         KhqrCode::class,
         JpqrCode::class,
     ];
+
+    /** @var non-empty-list<non-empty-string> */
+    private const array SBP_PREFIXES = ['https://qr.nspk.ru/', 'https://sub.nspk.ru/', 'https://b2b.cbrpay.ru/'];
 
     private const string PIX_GUI = 'br.gov.bcb.pix';
 
@@ -117,7 +121,7 @@ final class PaymentQrFactory
             \str_starts_with($payload, 'BCD') => new EpcQr($payload),
             \str_starts_with($payload, 'SPC') => new QrBill($payload),
             \str_starts_with($payload, 'ST0001') => new Gost56042Payload($payload),
-            \strncasecmp($payload, 'https://qr.nspk.ru/', 19) === 0 => new SbpPaymentLink($payload),
+            self::isSbpLink($payload) => new SbpPaymentLink($payload),
             \strncasecmp($payload, 'upi://', 6) === 0 => new UpiPaymentUri($payload),
             default => null,
         };
@@ -160,6 +164,11 @@ final class PaymentQrFactory
         } catch (InvalidValueObjectException) {
             return null;
         }
+    }
+
+    private static function isSbpLink(string $payload): bool
+    {
+        return \array_any(self::SBP_PREFIXES, static fn (string $prefix): bool => \strncasecmp($payload, $prefix, \strlen($prefix)) === 0);
     }
 
     /**

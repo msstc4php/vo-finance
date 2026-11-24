@@ -226,15 +226,18 @@ final class MaskedLeakTest extends TestCase
                 }
             }
 
-            foreach (['https://qr.nspk.ru/' . $personal, ...\array_map(static fn (string $query): string => 'https://qr.nspk.ru/AD10006M?' . $query, $queries)] as $link) {
-                if (SbpPaymentLink::isValid($link)) {
-                    $this->assertNoLeak(SbpPaymentLink::from($link)->masked(), $link);
-                    $accepted++;
+            foreach (['https://qr.nspk.ru/', 'https://sub.nspk.ru/', 'https://b2b.cbrpay.ru/'] as $host) {
+                foreach ([$host . $personal, ...\array_map(static fn (string $query): string => $host . 'AD10006M?' . $query, $queries)] as $link) {
+                    if (SbpPaymentLink::isValid($link)) {
+                        $this->assertNoLeak(SbpPaymentLink::from($link)->masked(), $link);
+                        $accepted++;
+                    }
                 }
             }
         }
 
-        self::assertSame(16, $accepted);
+        // 16 per host: 1.2.0 added the hosts sub.nspk.ru and b2b.cbrpay.ru.
+        self::assertSame(48, $accepted);
     }
 
     public function testUpiMaskedShowsNoPersonalData(): void
