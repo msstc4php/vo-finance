@@ -36,7 +36,7 @@ final class FisnTest extends TestCase
     #[DataProvider('valid')]
     public function testAccepts(string $value): void
     {
-        self::assertSame($value, (new Fisn($value))->value);
+        self::assertSame($value, new Fisn($value)->value);
     }
 
     public function testLowercaseIsStoredUppercase(): void

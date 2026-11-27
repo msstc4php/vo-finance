@@ -45,7 +45,7 @@ final class IsinTest extends TestCase
     #[DataProvider('valid')]
     public function testAccepts(string $value): void
     {
-        self::assertSame($value, (new Isin($value))->value);
+        self::assertSame($value, new Isin($value)->value);
     }
 
     public function testLowercaseIsUppercased(): void
